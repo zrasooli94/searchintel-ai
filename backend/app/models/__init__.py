@@ -1,3 +1,8 @@
+from app.models.prompt import Prompt
+from app.models.ai_run import AIRun
+from app.models.ai_response import AIResponse
+from app.models.ai_model import AIModel
+from app.models.ai_engine import AIEngine
 from app.models.brand import Brand
 from app.models.page import Page
 from app.models.project import Project
@@ -8,6 +13,11 @@ from app.models.technical_recommendation import TechnicalRecommendation
 from app.models.website import Website
 
 __all__ = [
+    "Prompt",
+    "AIRun",
+    "AIResponse",
+    "AIModel",
+    "AIEngine",
     "Brand",
     "Page",
     "Project",
