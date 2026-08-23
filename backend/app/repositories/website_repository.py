@@ -46,3 +46,16 @@ class WebsiteRepository:
         )
 
         return db.scalar(statement)
+
+    @staticmethod
+    def list_by_brand(
+        db: Session,
+        brand_id: int,
+    ) -> list[Website]:
+        statement = select(Website).where(
+            Website.brand_id == brand_id
+        )
+
+        return list(
+            db.scalars(statement).all()
+        )

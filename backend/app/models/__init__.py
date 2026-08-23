@@ -1,3 +1,6 @@
+from app.models.metric_snapshot import MetricSnapshot
+from app.models.citation import Citation
+from app.models.brand_mention import BrandMention
 from app.models.prompt import Prompt
 from app.models.ai_run import AIRun
 from app.models.ai_response import AIResponse
@@ -13,6 +16,9 @@ from app.models.technical_recommendation import TechnicalRecommendation
 from app.models.website import Website
 
 __all__ = [
+    "MetricSnapshot",
+    "Citation",
+    "BrandMention",
     "Prompt",
     "AIRun",
     "AIResponse",

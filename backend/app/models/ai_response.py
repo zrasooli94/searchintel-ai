@@ -34,6 +34,11 @@ class AIResponse(Base):
         nullable=True,
     )
 
+    visibility_analyzed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
@@ -43,4 +48,16 @@ class AIResponse(Base):
     run = relationship(
         "AIRun",
         back_populates="response",
+    )
+
+    brand_mentions = relationship(
+        "BrandMention",
+        back_populates="response",
+        cascade="all, delete-orphan",
+    )
+
+    citations = relationship(
+        "Citation",
+        back_populates="response",
+        cascade="all, delete-orphan",
     )

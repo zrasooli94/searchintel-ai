@@ -1,6 +1,7 @@
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.models.brand import Brand
 from app.models.project_brand import ProjectBrand
 
 
@@ -51,4 +52,27 @@ class ProjectBrandRepository:
 
         return list(
             db.scalars(statement).all()
+        )
+
+    @staticmethod
+    def list_brand_roles(
+        db: Session,
+        project_id: int,
+    ) -> list:
+        statement = (
+            select(
+                Brand,
+                ProjectBrand.role,
+            )
+            .join(
+                ProjectBrand,
+                ProjectBrand.brand_id == Brand.id,
+            )
+            .where(
+                ProjectBrand.project_id == project_id
+            )
+        )
+
+        return list(
+            db.execute(statement).all()
         )
