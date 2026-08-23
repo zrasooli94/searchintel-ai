@@ -72,4 +72,9 @@ class Website(Base):
         back_populates="website",
         cascade="all, delete-orphan",
     )
-    
+
+    technical_audits = relationship(
+        "TechnicalAudit",
+        back_populates="website",
+        cascade="all, delete-orphan",
+    )

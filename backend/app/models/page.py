@@ -63,6 +63,12 @@ class Page(Base):
         nullable=True,
     )
 
+    h1_count: Mapped[int] = mapped_column(
+        Integer,
+        default=0,
+        nullable=False,
+    )
+
     robots_meta: Mapped[str | None] = mapped_column(
         String(255),
         nullable=True,

@@ -184,14 +184,15 @@ class CrawlerService:
                                 )
                             )
 
-                        h1_tag = soup.find("h1")
+                        h1_tags = soup.find_all("h1")
+                        h1_count = len(h1_tags)
 
                         h1 = (
-                            h1_tag.get_text(
+                            h1_tags[0].get_text(
                                 " ",
                                 strip=True,
                             )
-                            if h1_tag
+                            if h1_tags
                             else None
                         )
 
@@ -323,6 +324,7 @@ class CrawlerService:
                                 "h1": cls.clean_text(
                                     h1
                                 ),
+                                "h1_count": h1_count,
                                 "robots_meta": cls.clean_text(
                                     robots_meta
                                 ),

@@ -12,6 +12,7 @@ class PageRead(BaseModel):
     title: str | None
     meta_description: str | None
     h1: str | None
+    h1_count: int
     robots_meta: str | None
     word_count: int
     internal_link_count: int
