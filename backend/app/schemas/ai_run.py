@@ -44,3 +44,14 @@ class AIRunRead(BaseModel):
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+
+class AIExecutionResult(BaseModel):
+    run_id: int
+    status: str
+    model: str
+    response_text: str
+    latency_ms: int | None
+    input_tokens: int | None
+    output_tokens: int | None

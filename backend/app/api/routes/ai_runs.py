@@ -5,6 +5,7 @@ from app.db.deps import get_db
 from app.schemas.ai_run import (
     AIRunCreate,
     AIRunRead,
+    AIExecutionResult,
     AIResponseCreate,
 )
 from app.services.ai_run_service import (
@@ -61,4 +62,19 @@ def list_runs(
     return AIRunService.list_by_project(
         db,
         project_id,
+    )
+
+
+
+@router.post(
+    "/ai-runs/{run_id}/execute",
+    response_model=AIExecutionResult,
+)
+def execute_run(
+    run_id: int,
+    db: Session = Depends(get_db),
+):
+    return AIRunService.execute(
+        db,
+        run_id,
     )
