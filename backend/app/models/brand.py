@@ -46,3 +46,11 @@ class Brand(Base):
         back_populates="brand",
         cascade="all, delete-orphan",
     )
+
+    websites = relationship(
+        "Website",
+        back_populates="brand",
+        cascade="all, delete-orphan",
+    )
+
+    

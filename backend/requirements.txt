@@ -4,3 +4,5 @@ psycopg[binary]
 alembic
 pydantic-settings
 python-dotenv
+httpx
+beautifulsoup4

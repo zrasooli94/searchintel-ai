@@ -15,6 +15,17 @@ class ProjectService:
     ) -> Project:
         name = data.name.strip()
 
+        existing = ProjectRepository.get_by_name(
+            db,
+            name,
+        )
+        
+        if existing:
+            raise HTTPException(
+                status_code=409,
+                detail="Project already exists.",
+            )
+
         if len(name) < 3:
             raise HTTPException(
                 status_code=400,

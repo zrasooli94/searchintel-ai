@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.models.project import Project
@@ -23,6 +23,17 @@ class ProjectRepository:
 
         return project
 
+    @staticmethod
+    def get_by_name(
+        db: Session,
+        name: str,
+    ) -> Project | None:
+        statement = select(Project).where(
+            func.lower(Project.name) == name.lower()
+        )
+    
+        return db.scalar(statement)
+    
     @staticmethod
     def get_by_id(
         db: Session,
