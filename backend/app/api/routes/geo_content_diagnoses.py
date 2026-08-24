@@ -5,6 +5,11 @@ from app.db.deps import get_db
 from app.schemas.geo_content_diagnosis import (
     GeoContentDiagnosisRead,
     GeoContentDiagnosisRequest,
+    GeoDiagnosisBatchRequest,
+    GeoDiagnosisBatchResult,
+)
+from app.services.geo_diagnosis_batch_service import (
+    GeoDiagnosisBatchService,
 )
 from app.services.geo_content_diagnosis_service import (
     GeoContentDiagnosisService,
@@ -43,4 +48,24 @@ def latest_diagnosis(
     return GeoContentDiagnosisService.latest(
         db,
         opportunity_id,
+    )
+
+
+
+@router.post(
+    "/geo-experiments/{experiment_id}/diagnoses/refresh",
+    response_model=GeoDiagnosisBatchResult,
+)
+def refresh_experiment_diagnoses(
+    experiment_id: int,
+    data: GeoDiagnosisBatchRequest,
+    db: Session = Depends(get_db),
+):
+    return GeoDiagnosisBatchService.run(
+        db=db,
+        experiment_id=experiment_id,
+        model_id=data.model_id,
+        priorities=data.priorities,
+        limit=data.limit,
+        force=data.force,
     )

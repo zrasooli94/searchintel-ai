@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class GeoContentDiagnosisRequest(BaseModel):
@@ -28,3 +28,33 @@ class GeoContentDiagnosisRead(BaseModel):
     model_config = ConfigDict(
         from_attributes=True
     )
+
+
+
+class GeoDiagnosisBatchRequest(BaseModel):
+    model_id: int
+
+    priorities: list[str] = [
+        "high",
+        "medium",
+    ]
+
+    limit: int = Field(
+        default=20,
+        ge=1,
+        le=50,
+    )
+
+    force: bool = False
+
+
+class GeoDiagnosisBatchResult(BaseModel):
+    experiment_id: int
+    selected_count: int
+
+    diagnosed_count: int
+    reused_count: int
+    failed_count: int
+
+    diagnosis_ids: list[int]
+    errors: list[dict]

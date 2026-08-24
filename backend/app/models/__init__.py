@@ -1,3 +1,5 @@
+from app.models.geo_action_item import GeoActionItem
+from app.models.geo_action_plan import GeoActionPlan
 from app.models.geo_content_diagnosis import GeoContentDiagnosis
 from app.models.geo_prompt_opportunity import GeoPromptOpportunity
 from app.models.geo_experiment import GeoExperiment
@@ -23,6 +25,8 @@ from app.models.technical_recommendation import TechnicalRecommendation
 from app.models.website import Website
 
 __all__ = [
+    "GeoActionItem",
+    "GeoActionPlan",
     "GeoContentDiagnosis",
     "GeoPromptOpportunity",
     "GeoExperiment",

@@ -1,3 +1,4 @@
+from app.api.routes.geo_action_plans import router as geo_action_plans_router
 from app.api.routes.geo_content_diagnoses import router as geo_content_diagnoses_router
 from app.api.routes.geo_opportunities import router as geo_opportunities_router
 from app.api.routes.geo_experiments import router as geo_experiments_router
@@ -37,3 +38,4 @@ api_router.include_router(brand_aliases_router)
 api_router.include_router(geo_experiments_router)
 api_router.include_router(geo_opportunities_router)
 api_router.include_router(geo_content_diagnoses_router)
+api_router.include_router(geo_action_plans_router)
