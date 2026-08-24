@@ -1,3 +1,4 @@
+from app.models.geo_content_diagnosis import GeoContentDiagnosis
 from app.models.geo_prompt_opportunity import GeoPromptOpportunity
 from app.models.geo_experiment import GeoExperiment
 from app.models.entity_resolution_rule import EntityResolutionRule
@@ -22,6 +23,7 @@ from app.models.technical_recommendation import TechnicalRecommendation
 from app.models.website import Website
 
 __all__ = [
+    "GeoContentDiagnosis",
     "GeoPromptOpportunity",
     "GeoExperiment",
     "EntityResolutionRule",
