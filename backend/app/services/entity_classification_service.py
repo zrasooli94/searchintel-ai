@@ -42,6 +42,7 @@ class EntityClassificationService:
         "operated_by",
         "service_of",
         "related_to",
+        "brand_of",
     }
 
     @staticmethod
@@ -325,27 +326,32 @@ Parent relationships:
   operated_by
   service_of
   related_to
+  brand_of
 - If the parent is unclear, use null for both fields.
 - Never infer a parent merely because names look similar.
 - Do NOT merge similarly named entities.
-- "ChargeOps AI", "ChargeOps", "ChargeOS", and
-  "ChargeOps Cloud" may represent different entities.
+- Similar-looking names may represent completely
+  different entities.
+- Never merge entities merely because their names
+  overlap.
 - Prefer null over guessing.
 
-Examples:
-PowerFlex X
+Generic examples:
+
+A named software suite offered by a company
 → product
-→ parent PowerFlex
+→ parent company
 → product_of
 
-ChargePilot
-→ product
-→ parent The Mobility House
-→ product_of
-
-CitrineOS
+A named open-source charging framework
 → software_project
 → parent null
+
+A consulting sub-brand belonging to a larger
+company
+→ brand
+→ parent company
+→ brand_of
 
 Return ONLY JSON:
 

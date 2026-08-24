@@ -39,6 +39,53 @@ class SearchEntityRepository:
         return db.scalar(statement)
 
     @staticmethod
+    def get_by_normalized_name(
+        db: Session,
+        normalized_name: str,
+        entity_type: str | None = None,
+    ) -> SearchEntity | None:
+
+        statement = select(
+            SearchEntity
+        ).where(
+            SearchEntity.normalized_name
+            == normalized_name
+        )
+
+        if entity_type is not None:
+            statement = statement.where(
+                SearchEntity.entity_type
+                == entity_type
+            )
+
+        statement = (
+            statement
+            .order_by(SearchEntity.id)
+            .limit(1)
+        )
+
+        return db.scalar(statement)
+
+    @staticmethod
+    def list_by_normalized_name(
+        db: Session,
+        normalized_name: str,
+    ) -> list[SearchEntity]:
+
+        statement = (
+            select(SearchEntity)
+            .where(
+                SearchEntity.normalized_name
+                == normalized_name
+            )
+            .order_by(SearchEntity.id)
+        )
+
+        return list(
+            db.scalars(statement).all()
+        )
+
+    @staticmethod
     def create(
         db: Session,
         name: str,
