@@ -7,6 +7,9 @@ from urllib.parse import urlparse
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
+from app.repositories.brand_alias_repository import (
+    BrandAliasRepository,
+)
 from app.repositories.ai_run_repository import (
     AIRunRepository,
 )
@@ -359,6 +362,16 @@ class VisibilityAnalysisService:
             aliases = cls.brand_aliases(
                 brand.name
             )
+
+            for alias_record in (
+                BrandAliasRepository.list_by_brand(
+                    db,
+                    brand.id,
+                )
+            ):
+                aliases.add(
+                    alias_record.alias
+                )
 
             best_alias = None
             best_position = None
