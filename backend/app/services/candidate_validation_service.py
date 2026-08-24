@@ -11,6 +11,9 @@ from app.integrations.ai.provider_factory import (
 from app.models.ai_response import AIResponse
 from app.models.ai_run import AIRun
 from app.models.brand_mention import BrandMention
+from app.repositories.entity_resolution_rule_repository import (
+    EntityResolutionRuleRepository,
+)
 from app.repositories.ai_engine_repository import (
     AIEngineRepository,
 )
@@ -295,6 +298,19 @@ Candidates:
                         0.90,
                     )
 
+                EntityResolutionRuleRepository.upsert(
+                    db=db,
+                    project_id=project_id,
+                    normalized_name=candidate[
+                        "normalized_name"
+                    ],
+                    display_name=candidate["name"],
+                    status="candidate",
+                    brand_id=None,
+                    confidence=0.90,
+                    source="ai_validator",
+                )
+
                 valid_names.append(
                     candidate["name"]
                 )
@@ -305,6 +321,19 @@ Candidates:
                         "rejected"
                     )
                     mention.confidence = 0.0
+
+                EntityResolutionRuleRepository.upsert(
+                    db=db,
+                    project_id=project_id,
+                    normalized_name=candidate[
+                        "normalized_name"
+                    ],
+                    display_name=candidate["name"],
+                    status="rejected",
+                    brand_id=None,
+                    confidence=1.0,
+                    source="ai_validator",
+                )
 
                 rejected_names.append(
                     candidate["name"]

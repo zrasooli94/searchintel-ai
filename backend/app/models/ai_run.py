@@ -2,6 +2,7 @@ from datetime import datetime
 from decimal import Decimal
 
 from sqlalchemy import (
+    Boolean,
     DateTime,
     ForeignKey,
     Integer,
@@ -34,6 +35,22 @@ class AIRun(Base):
     model_id: Mapped[int] = mapped_column(
         ForeignKey("ai_models.id"),
         nullable=False,
+        index=True,
+    )
+
+    run_type: Mapped[str] = mapped_column(
+        String(30),
+        nullable=False,
+        default="ad_hoc",
+        server_default="ad_hoc",
+        index=True,
+    )
+
+    include_in_metrics: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=True,
+        server_default="true",
         index=True,
     )
 

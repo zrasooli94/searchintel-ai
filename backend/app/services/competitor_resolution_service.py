@@ -8,6 +8,9 @@ from app.models.ai_response import AIResponse
 from app.models.ai_run import AIRun
 from app.models.brand_mention import BrandMention
 from app.repositories.brand_repository import BrandRepository
+from app.repositories.entity_resolution_rule_repository import (
+    EntityResolutionRuleRepository,
+)
 from app.repositories.project_brand_repository import (
     ProjectBrandRepository,
 )
@@ -195,6 +198,17 @@ class CompetitorResolutionService:
                 mention.brand_id = brand.id
                 mention.resolution_status = "resolved"
                 mention.confidence = 1.0
+
+            EntityResolutionRuleRepository.upsert(
+                db=db,
+                project_id=project_id,
+                normalized_name=normalized,
+                display_name=display_name,
+                status="resolved",
+                brand_id=brand.id,
+                confidence=1.0,
+                source="manual_resolution",
+            )
 
             resolved.append(
                 {

@@ -10,6 +10,9 @@ from sqlalchemy.orm import Session
 from app.repositories.brand_alias_repository import (
     BrandAliasRepository,
 )
+from app.repositories.entity_resolution_rule_repository import (
+    EntityResolutionRuleRepository,
+)
 from app.repositories.ai_run_repository import (
     AIRunRepository,
 )
@@ -341,6 +344,12 @@ class VisibilityAnalysisService:
             )
         )
 
+        target_brand_ids = {
+            brand.id
+            for brand, role in project_brand_rows
+            if role == "target"
+        }
+
         known_normalized: set[str] = set()
 
         detected: list[dict] = []
@@ -451,21 +460,56 @@ class VisibilityAnalysisService:
             if position is None:
                 continue
 
+            rule = (
+                EntityResolutionRuleRepository.get(
+                    db,
+                    run.project_id,
+                    normalized,
+                )
+            )
+
+            brand_id = None
+            resolution_status = "unresolved"
+            confidence = 0.70
+            is_target = False
+
+            if rule is not None:
+                resolution_status = rule.status
+                brand_id = rule.brand_id
+                confidence = rule.confidence
+
+                if (
+                    resolution_status == "resolved"
+                    and brand_id is None
+                ):
+                    resolution_status = "unresolved"
+                    confidence = 0.70
+
+                if brand_id is not None:
+                    is_target = (
+                        brand_id
+                        in target_brand_ids
+                    )
+
             detected.append(
                 {
-                    "brand_id": None,
+                    "brand_id": brand_id,
                     "mention_text": candidate,
-                    "normalized_name": normalized,
-                    "char_position": position,
+                    "normalized_name":
+                        normalized,
+                    "char_position":
+                        position,
                     "mention_count":
                         cls.occurrence_count(
                             text,
                             candidate,
                         ),
-                    "is_target": False,
+                    "is_target":
+                        is_target,
                     "resolution_status":
-                        "unresolved",
-                    "confidence": 0.70,
+                        resolution_status,
+                    "confidence":
+                        confidence,
                 }
             )
 

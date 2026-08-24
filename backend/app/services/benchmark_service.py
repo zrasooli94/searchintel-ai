@@ -236,6 +236,8 @@ class BenchmarkService:
                         project_id=job.project_id,
                         prompt_id=item.prompt_id,
                         model_id=job.model_id,
+                        run_type="benchmark",
+                        include_in_metrics=True,
                     )
 
                     item = BenchmarkRepository.get_item(

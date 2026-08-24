@@ -1,3 +1,4 @@
+from app.models.entity_resolution_rule import EntityResolutionRule
 from app.models.brand_alias import BrandAlias
 from app.models.benchmark_job_item import BenchmarkJobItem
 from app.models.benchmark_job import BenchmarkJob
@@ -19,6 +20,7 @@ from app.models.technical_recommendation import TechnicalRecommendation
 from app.models.website import Website
 
 __all__ = [
+    "EntityResolutionRule",
     "BrandAlias",
     "BenchmarkJobItem",
     "BenchmarkJob",

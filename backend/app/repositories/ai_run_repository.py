@@ -13,17 +13,21 @@ class AIRunRepository:
         project_id: int,
         prompt_id: int,
         model_id: int,
+        run_type: str = "ad_hoc",
+        include_in_metrics: bool = True,
     ) -> AIRun:
+
         run = AIRun(
             project_id=project_id,
             prompt_id=prompt_id,
             model_id=model_id,
+            run_type=run_type,
+            include_in_metrics=include_in_metrics,
             status="pending",
         )
 
         db.add(run)
-        db.commit()
-        db.refresh(run)
+        db.flush()
 
         return run
 
@@ -44,6 +48,7 @@ class AIRunRepository:
         response_text: str,
         raw_response: dict | None,
     ) -> AIResponse:
+
         response = AIResponse(
             run_id=run_id,
             response_text=response_text,
@@ -60,12 +65,16 @@ class AIRunRepository:
         db: Session,
         project_id: int,
     ) -> list[AIRun]:
+
         statement = (
             select(AIRun)
             .where(
-                AIRun.project_id == project_id
+                AIRun.project_id
+                == project_id
             )
-            .order_by(AIRun.id.desc())
+            .order_by(
+                AIRun.id.desc()
+            )
         )
 
         return list(

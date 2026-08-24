@@ -87,6 +87,7 @@ class VisibilityMetricsService:
             )
             .where(
                 AIRun.project_id == project_id,
+                AIRun.include_in_metrics.is_(True),
                 AIResponse.visibility_analyzed_at
                 .is_not(None),
             )
