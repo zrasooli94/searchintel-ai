@@ -574,6 +574,12 @@ class VisibilityMetricsService:
         target_source_share_of_voice = None
         target_citation_share_of_voice = None
 
+        target_source_exposure_share_of_voice = None
+        target_citation_exposure_share_of_voice = None
+
+        source_exposure_share_of_voice = []
+        citation_exposure_share_of_voice = []
+
         resolved_first_party_source_rate = None
 
         unique_search_source_urls = 0
@@ -874,6 +880,115 @@ class VisibilityMetricsService:
                     )
                 )
 
+            # ---------------------------------------------
+            # Per-response source URL exposure
+            #
+            # Same normalized URL can count again in
+            # another response, but duplicate occurrences
+            # inside one response count only once.
+            # ---------------------------------------------
+
+            resolved_source_exposure_pairs: set[
+                tuple[int, str, int]
+            ] = set()
+
+            for source in web_sources:
+
+                if source.brand_id is None:
+                    continue
+
+                normalized_url = (
+                    VisibilityAnalysisService
+                    .normalize_url_for_match(
+                        source.url
+                    )
+                )
+
+                if not normalized_url:
+                    continue
+
+                resolved_source_exposure_pairs.add(
+                    (
+                        source.response_id,
+                        normalized_url,
+                        source.brand_id,
+                    )
+                )
+
+            source_exposure_counts = defaultdict(int)
+
+            for (
+                _response_id,
+                _url,
+                brand_id,
+            ) in resolved_source_exposure_pairs:
+
+                source_exposure_counts[
+                    brand_id
+                ] += 1
+
+            total_source_exposures = len(
+                resolved_source_exposure_pairs
+            )
+
+            project_brand_names = {
+                brand.id: brand.name
+                for brand, _role
+                in project_brands
+            }
+
+            source_exposure_share_of_voice = []
+
+            for (
+                brand_id,
+                exposure_count,
+            ) in source_exposure_counts.items():
+
+                source_exposure_share_of_voice.append(
+                    {
+                        "brand_id":
+                            brand_id,
+                        "name":
+                            project_brand_names.get(
+                                brand_id,
+                                f"Brand {brand_id}",
+                            ),
+                        "source_exposures":
+                            exposure_count,
+                        "source_exposure_share_of_voice":
+                            cls.percent(
+                                exposure_count,
+                                total_source_exposures,
+                            ),
+                    }
+                )
+
+            source_exposure_share_of_voice.sort(
+                key=lambda item: (
+                    -item["source_exposures"],
+                    item["name"].lower(),
+                )
+            )
+
+            target_source_exposure_count = (
+                source_exposure_counts.get(
+                    target_brand.id,
+                    0,
+                )
+            )
+
+            if total_source_exposures:
+                target_source_exposure_share_of_voice = (
+                    cls.percent(
+                        target_source_exposure_count,
+                        total_source_exposures,
+                    )
+                )
+            else:
+                target_source_exposure_share_of_voice = (
+                    0.0
+                )
+
             target_source_pair_count = sum(
                 1
                 for _, brand_id
@@ -931,6 +1046,111 @@ class VisibilityMetricsService:
                         normalized_url,
                         citation.brand_id,
                     )
+                )
+
+            # ---------------------------------------------
+            # Per-response citation URL exposure
+            # ---------------------------------------------
+
+            resolved_citation_exposure_pairs: set[
+                tuple[int, str, int]
+            ] = set()
+
+            for citation in all_citations:
+
+                if (
+                    citation.response_id
+                    not in web_response_ids
+                    or citation.brand_id is None
+                ):
+                    continue
+
+                normalized_url = (
+                    VisibilityAnalysisService
+                    .normalize_url_for_match(
+                        citation.url
+                    )
+                )
+
+                if not normalized_url:
+                    continue
+
+                resolved_citation_exposure_pairs.add(
+                    (
+                        citation.response_id,
+                        normalized_url,
+                        citation.brand_id,
+                    )
+                )
+
+            citation_exposure_counts = defaultdict(
+                int
+            )
+
+            for (
+                _response_id,
+                _url,
+                brand_id,
+            ) in resolved_citation_exposure_pairs:
+
+                citation_exposure_counts[
+                    brand_id
+                ] += 1
+
+            total_citation_exposures = len(
+                resolved_citation_exposure_pairs
+            )
+
+            citation_exposure_share_of_voice = []
+
+            for (
+                brand_id,
+                exposure_count,
+            ) in citation_exposure_counts.items():
+
+                citation_exposure_share_of_voice.append(
+                    {
+                        "brand_id":
+                            brand_id,
+                        "name":
+                            project_brand_names.get(
+                                brand_id,
+                                f"Brand {brand_id}",
+                            ),
+                        "citation_exposures":
+                            exposure_count,
+                        "citation_exposure_share_of_voice":
+                            cls.percent(
+                                exposure_count,
+                                total_citation_exposures,
+                            ),
+                    }
+                )
+
+            citation_exposure_share_of_voice.sort(
+                key=lambda item: (
+                    -item["citation_exposures"],
+                    item["name"].lower(),
+                )
+            )
+
+            target_citation_exposure_count = (
+                citation_exposure_counts.get(
+                    target_brand.id,
+                    0,
+                )
+            )
+
+            if total_citation_exposures:
+                target_citation_exposure_share_of_voice = (
+                    cls.percent(
+                        target_citation_exposure_count,
+                        total_citation_exposures,
+                    )
+                )
+            else:
+                target_citation_exposure_share_of_voice = (
+                    0.0
                 )
 
             target_citation_pair_count = sum(
@@ -1012,6 +1232,12 @@ class VisibilityMetricsService:
 
                     "target_grounded_response_share_of_voice":
                         target_grounded_response_share_of_voice,
+
+                    "target_source_exposure_share_of_voice":
+                        target_source_exposure_share_of_voice,
+
+                    "target_citation_exposure_share_of_voice":
+                        target_citation_exposure_share_of_voice,
 
                     "source_to_citation_conversion":
                         source_to_citation_conversion,
@@ -1150,6 +1376,12 @@ class VisibilityMetricsService:
             "target_grounded_response_share_of_voice":
                 target_grounded_response_share_of_voice,
 
+            "target_source_exposure_share_of_voice":
+                target_source_exposure_share_of_voice,
+
+            "target_citation_exposure_share_of_voice":
+                target_citation_exposure_share_of_voice,
+
             "target_source_presence_rate":
                 target_source_presence_rate,
 
@@ -1190,4 +1422,10 @@ class VisibilityMetricsService:
 
             "grounded_response_share_of_voice":
                 grounded_response_share_of_voice,
+
+            "source_exposure_share_of_voice":
+                source_exposure_share_of_voice,
+
+            "citation_exposure_share_of_voice":
+                citation_exposure_share_of_voice,
         }

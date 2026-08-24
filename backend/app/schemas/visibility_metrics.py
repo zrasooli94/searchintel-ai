@@ -26,6 +26,22 @@ class GroundedResponseShareOfVoiceItem(BaseModel):
     grounded_response_coverage: float
 
 
+class SourceExposureShareOfVoiceItem(BaseModel):
+    brand_id: int
+    name: str
+
+    source_exposures: int
+    source_exposure_share_of_voice: float
+
+
+class CitationExposureShareOfVoiceItem(BaseModel):
+    brand_id: int
+    name: str
+
+    citation_exposures: int
+    citation_exposure_share_of_voice: float
+
+
 class AIVisibilityMetrics(BaseModel):
     project_id: int
     experiment_id: int | None = None
@@ -79,6 +95,10 @@ class AIVisibilityMetrics(BaseModel):
     target_source_share_of_voice: float | None
     target_citation_share_of_voice: float | None
 
+    # Per-response URL exposure SOV.
+    target_source_exposure_share_of_voice: float | None
+    target_citation_exposure_share_of_voice: float | None
+
     resolved_first_party_source_rate: float | None
 
     # Frequency-based leaderboard.
@@ -95,4 +115,12 @@ class AIVisibilityMetrics(BaseModel):
     # per web-search response.
     grounded_response_share_of_voice: list[
         GroundedResponseShareOfVoiceItem
+    ]
+
+    source_exposure_share_of_voice: list[
+        SourceExposureShareOfVoiceItem
+    ]
+
+    citation_exposure_share_of_voice: list[
+        CitationExposureShareOfVoiceItem
     ]
