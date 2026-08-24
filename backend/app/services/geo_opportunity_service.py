@@ -8,6 +8,9 @@ from app.models.ai_response import AIResponse
 from app.models.ai_run import AIRun
 from app.models.brand_mention import BrandMention
 from app.models.prompt import Prompt
+from app.models.web_search_source import (
+    WebSearchSource,
+)
 from app.repositories.geo_experiment_repository import (
     GeoExperimentRepository,
 )
@@ -195,6 +198,7 @@ class GeoOpportunityService:
             select(
                 AIRun.id.label("run_id"),
                 AIRun.prompt_id,
+                AIRun.benchmark_mode,
                 AIResponse.id.label(
                     "response_id"
                 ),
@@ -229,6 +233,34 @@ class GeoOpportunityService:
                     "measurement runs."
                 ),
             )
+
+        benchmark_modes = {
+            (
+                row.benchmark_mode
+                or "memory"
+            )
+            for row in run_rows
+        }
+
+        if len(benchmark_modes) > 1:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "Prompt opportunity analysis "
+                    "does not support mixed benchmark "
+                    "modes in one experiment."
+                ),
+            )
+
+        benchmark_mode = next(
+            iter(benchmark_modes)
+        )
+
+        measurement_basis = (
+            "grounded_response_presence"
+            if benchmark_mode == "web_search"
+            else "resolved_textual_mention"
+        )
 
         response_to_prompt = {
             row.response_id: row.prompt_id
@@ -289,6 +321,41 @@ class GeoOpportunityService:
             ).all()
         )
 
+        grounded_brand_response_pairs: set[
+            tuple[int, int]
+        ] = set()
+
+        if benchmark_mode == "web_search":
+
+            source_statement = (
+                select(
+                    WebSearchSource.response_id,
+                    WebSearchSource.brand_id,
+                )
+                .where(
+                    WebSearchSource.response_id.in_(
+                        response_ids
+                    ),
+                    WebSearchSource.brand_id
+                    .is_not(None),
+                )
+            )
+
+            grounded_brand_response_pairs = {
+                (
+                    response_id,
+                    brand_id,
+                )
+                for (
+                    response_id,
+                    brand_id,
+                )
+                in db.execute(
+                    source_statement
+                ).all()
+                if brand_id is not None
+            }
+
         target_response_sets = defaultdict(
             set
         )
@@ -309,6 +376,16 @@ class GeoOpportunityService:
             )
 
             if prompt_id is None:
+                continue
+
+            if (
+                benchmark_mode == "web_search"
+                and (
+                    mention.response_id,
+                    mention.brand_id,
+                )
+                not in grounded_brand_response_pairs
+            ):
                 continue
 
             if mention.brand_id == target.id:
@@ -527,6 +604,29 @@ class GeoOpportunityService:
                         visibility_gap,
                     "category_weight":
                         category_weight,
+
+                    "benchmark_mode":
+                        benchmark_mode,
+
+                    "measurement_basis":
+                        measurement_basis,
+
+                    "web_grounding_note": (
+                        (
+                            "Web-search opportunity "
+                            "presence requires both a "
+                            "resolved textual brand "
+                            "mention and same-brand "
+                            "first-party source retrieval "
+                            "within the response. "
+                            "Competitor pressure depends "
+                            "on registered domain "
+                            "coverage."
+                        )
+                        if benchmark_mode
+                        == "web_search"
+                        else None
+                    ),
                 },
                 recommendation=
                     recommendation,
