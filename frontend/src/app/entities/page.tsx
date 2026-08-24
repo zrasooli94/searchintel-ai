@@ -1,19 +1,29 @@
-import SectionPage from "@/components/dashboard/section-page";
+import EntitiesDashboard from "@/components/dashboard/entities-dashboard";
+
 import {
+  getEntitiesSummary,
   getLatestCompletedVisibilitySummary,
 } from "@/lib/api";
 
+
 export const dynamic = "force-dynamic";
 
+
 export default async function Page() {
-  const summary =
-    await getLatestCompletedVisibilitySummary();
+  const [
+    visibilitySummary,
+    entities,
+  ] = await Promise.all([
+    getLatestCompletedVisibilitySummary(),
+    getEntitiesSummary(),
+  ]);
 
   return (
-    <SectionPage
-      summary={summary}
-      title='Entities'
-      description='Manage brands, companies, products, software projects, aliases, relationships, and resolution rules.'
+    <EntitiesDashboard
+      visibilitySummary={
+        visibilitySummary
+      }
+      entities={entities}
     />
   );
 }

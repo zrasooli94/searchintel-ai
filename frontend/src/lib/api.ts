@@ -1,5 +1,6 @@
 import type {
   AIVisibilityMetrics,
+  EntitiesSummary,
   ExperimentComparison,
   ExperimentsSummary,
   GeoExperiment,
@@ -159,5 +160,12 @@ export async function getExperimentComparison(
 ): Promise<ExperimentComparison> {
   return fetchJson<ExperimentComparison>(
     `${apiBaseUrl()}/projects/${projectId()}/geo-experiments/compare?baseline_id=${baselineId}&comparison_id=${comparisonId}`,
+  );
+}
+
+
+export async function getEntitiesSummary(): Promise<EntitiesSummary> {
+  return fetchJson<EntitiesSummary>(
+    `${apiBaseUrl()}/projects/${projectId()}/entities-summary`,
   );
 }

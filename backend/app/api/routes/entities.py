@@ -2,6 +2,10 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.db.deps import get_db
+from app.schemas.entity_summary import (
+    EntitiesSummary,
+)
+
 from app.schemas.entity import (
     EntityCandidateRead,
     EntityClassificationRequest,
@@ -9,6 +13,10 @@ from app.schemas.entity import (
     ResolveEntitiesRequest,
     ResolveEntitiesResult,
 )
+from app.services.entity_summary_service import (
+    EntitySummaryService,
+)
+
 from app.services.entity_classification_service import (
     EntityClassificationService,
 )
@@ -20,6 +28,20 @@ from app.services.entity_resolution_service import (
 router = APIRouter(
     tags=["Search Entities"],
 )
+
+
+@router.get(
+    "/projects/{project_id}/entities-summary",
+    response_model=EntitiesSummary,
+)
+def entities_summary(
+    project_id: int,
+    db: Session = Depends(get_db),
+):
+    return EntitySummaryService.build(
+        db=db,
+        project_id=project_id,
+    )
 
 
 @router.post(

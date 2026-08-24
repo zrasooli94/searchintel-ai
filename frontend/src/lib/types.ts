@@ -470,3 +470,94 @@ export type ExperimentComparison = {
 
   resolved_first_party_source_rate: ExperimentMetricValue;
 };
+
+export type EntityRelationshipSummary = {
+  id: number;
+
+  subject_entity_id: number;
+  subject_name: string;
+  subject_type: string;
+
+  relationship_type: string;
+
+  object_entity_id: number;
+  object_name: string;
+  object_type: string;
+
+  confidence: number;
+  source: string;
+};
+
+export type EntityRegistryItem = {
+  id: number;
+
+  name: string;
+  normalized_name: string;
+  entity_type: string;
+
+  rollup_brand_id: number | null;
+  rollup_brand: string | null;
+  project_role: string | null;
+
+  description: string | null;
+
+  aliases: string[];
+
+  parent_relationships:
+    EntityRelationshipSummary[];
+
+  child_relationships:
+    EntityRelationshipSummary[];
+};
+
+export type EntityCandidateSummary = {
+  rule_id: number;
+
+  name: string;
+  normalized_name: string;
+
+  entity_type: string | null;
+
+  proposed_parent_name: string | null;
+  proposed_relationship_type:
+    | string
+    | null;
+
+  classification_confidence:
+    | number
+    | null;
+
+  classification_source:
+    | string
+    | null;
+};
+
+export type EntitiesSummary = {
+  project_id: number;
+
+  stats: {
+    total_entities: number;
+
+    brands: number;
+    companies: number;
+    products: number;
+    software_projects: number;
+    organizations: number;
+    services: number;
+
+    aliases: number;
+    relationships: number;
+
+    candidates: number;
+    resolved_rules: number;
+    rejected_rules: number;
+  };
+
+  entities: EntityRegistryItem[];
+
+  relationships:
+    EntityRelationshipSummary[];
+
+  candidates:
+    EntityCandidateSummary[];
+};
