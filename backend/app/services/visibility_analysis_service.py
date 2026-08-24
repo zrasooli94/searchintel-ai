@@ -2,7 +2,12 @@ import re
 
 from datetime import datetime, timezone
 
-from urllib.parse import urlparse
+from urllib.parse import (
+    parse_qsl,
+    urlencode,
+    urlparse,
+    urlunparse,
+)
 
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
@@ -52,6 +57,137 @@ class VisibilityAnalysisService:
         "pci",
         "gdpr",
     )
+
+    @staticmethod
+    def normalize_hostname(
+        hostname: str | None,
+    ) -> str:
+
+        value = (
+            hostname or ""
+        ).lower().strip(".")
+
+        if value.startswith("www."):
+            value = value[4:]
+
+        return value
+
+    @classmethod
+    def normalize_url_for_match(
+        cls,
+        url: str,
+    ) -> str:
+
+        parsed = urlparse(url)
+
+        hostname = cls.normalize_hostname(
+            parsed.hostname
+        )
+
+        tracking_keys = {
+            "gclid",
+            "fbclid",
+            "msclkid",
+        }
+
+        query_items = [
+            (key, value)
+            for key, value
+            in parse_qsl(
+                parsed.query,
+                keep_blank_values=True,
+            )
+            if not key.lower().startswith(
+                "utm_"
+            )
+            and key.lower()
+            not in tracking_keys
+        ]
+
+        normalized_query = urlencode(
+            sorted(query_items)
+        )
+
+        path = parsed.path or "/"
+
+        if path != "/":
+            path = path.rstrip("/")
+
+        return urlunparse(
+            (
+                parsed.scheme.lower()
+                or "https",
+                hostname,
+                path,
+                "",
+                normalized_query,
+                "",
+            )
+        )
+
+    @classmethod
+    def resolve_brand_for_hostname(
+        cls,
+        hostname: str,
+        domain_brand_pairs:
+            list[tuple[str, int]],
+    ) -> int | None:
+
+        hostname = cls.normalize_hostname(
+            hostname
+        )
+
+        matches: list[
+            tuple[int, int]
+        ] = []
+
+        for domain, brand_id in (
+            domain_brand_pairs
+        ):
+            normalized_domain = (
+                cls.normalize_hostname(
+                    domain
+                )
+            )
+
+            if (
+                hostname
+                == normalized_domain
+                or hostname.endswith(
+                    "." + normalized_domain
+                )
+            ):
+                matches.append(
+                    (
+                        len(
+                            normalized_domain
+                        ),
+                        brand_id,
+                    )
+                )
+
+        if not matches:
+            return None
+
+        longest = max(
+            length
+            for length, _
+            in matches
+        )
+
+        brand_ids = {
+            brand_id
+            for length, brand_id
+            in matches
+            if length == longest
+        }
+
+        if len(brand_ids) != 1:
+            return None
+
+        return next(
+            iter(brand_ids)
+        )
 
     @staticmethod
     def normalize_name(
@@ -304,6 +440,95 @@ class VisibilityAnalysisService:
         return results
 
     @classmethod
+    def extract_web_search_sources(
+        cls,
+        value,
+    ) -> list[dict]:
+
+        results: list[dict] = []
+
+        output = (
+            value.get("output", [])
+            if isinstance(value, dict)
+            else []
+        )
+
+        search_call_index = 0
+
+        for item in output:
+            if not isinstance(
+                item,
+                dict,
+            ):
+                continue
+
+            if (
+                item.get("type")
+                != "web_search_call"
+            ):
+                continue
+
+            action = (
+                item.get("action")
+                or {}
+            )
+
+            sources = (
+                action.get("sources")
+                or []
+            )
+
+            if not sources:
+                continue
+
+            search_call_index += 1
+
+            query = action.get("query")
+
+            if isinstance(query, list):
+                query = " | ".join(
+                    str(value)
+                    for value in query
+                )
+
+            elif query is not None:
+                query = str(query)
+
+            for index, source in enumerate(
+                sources,
+                start=1,
+            ):
+                if not isinstance(
+                    source,
+                    dict,
+                ):
+                    continue
+
+                url = source.get("url")
+
+                if not url:
+                    continue
+
+                results.append(
+                    {
+                        "search_call_index":
+                            search_call_index,
+                        "source_position":
+                            index,
+                        "search_query":
+                            query,
+                        "url":
+                            url,
+                        "title":
+                            source.get(
+                                "title"
+                            ),
+                    }
+                )
+
+        return results
+
+    @classmethod
     def analyze(
         cls,
         db: Session,
@@ -354,19 +579,15 @@ class VisibilityAnalysisService:
 
         detected: list[dict] = []
 
-        brand_domains: dict[str, int] = {}
+        domain_brand_pairs = (
+            WebsiteRepository
+            .list_domain_brand_pairs_by_project(
+                db,
+                run.project_id,
+            )
+        )
 
         for brand, role in project_brand_rows:
-
-            for website in (
-                WebsiteRepository.list_by_brand(
-                    db,
-                    brand.id,
-                )
-            ):
-                brand_domains[
-                    website.domain.lower()
-                ] = brand.id
 
             aliases = cls.brand_aliases(
                 brand.name
@@ -574,16 +795,15 @@ class VisibilityAnalysisService:
 
             seen_urls.add(url)
 
-            hostname = (
+            hostname = cls.normalize_hostname(
                 urlparse(url).hostname
-                or ""
-            ).lower()
+            )
 
-            if hostname.startswith("www."):
-                hostname = hostname[4:]
-
-            brand_id = brand_domains.get(
-                hostname
+            brand_id = (
+                cls.resolve_brand_for_hostname(
+                    hostname,
+                    domain_brand_pairs,
+                )
             )
 
             VisibilityRepository.create_citation(
@@ -599,6 +819,66 @@ class VisibilityAnalysisService:
             )
 
             citation_position += 1
+
+        stored_citation_urls = {
+            cls.normalize_url_for_match(
+                citation.url
+            )
+            for citation in (
+                VisibilityRepository.list_citations(
+                    db,
+                    response.id,
+                )
+            )
+        }
+
+        web_sources = (
+            cls.extract_web_search_sources(
+                response.raw_response or {}
+            )
+        )
+
+        for source in web_sources:
+            url = source["url"]
+
+            hostname = cls.normalize_hostname(
+                urlparse(url).hostname
+            )
+
+            brand_id = (
+                cls.resolve_brand_for_hostname(
+                    hostname,
+                    domain_brand_pairs,
+                )
+            )
+
+            normalized_url = (
+                cls.normalize_url_for_match(
+                    url
+                )
+            )
+
+            VisibilityRepository.create_web_search_source(
+                db=db,
+                response_id=response.id,
+                brand_id=brand_id,
+                search_call_index=source[
+                    "search_call_index"
+                ],
+                source_position=source[
+                    "source_position"
+                ],
+                search_query=source[
+                    "search_query"
+                ],
+                url=url,
+                domain=hostname or None,
+                title=source["title"],
+                is_cited=(
+                    normalized_url
+                    in stored_citation_urls
+                ),
+            )
 
         response.visibility_analyzed_at = datetime.now(
             timezone.utc
@@ -638,6 +918,20 @@ class VisibilityAnalysisService:
             for citation in stored_citations
         )
 
+        stored_web_sources = (
+            VisibilityRepository
+            .list_web_search_sources(
+                db,
+                response.id,
+            )
+        )
+
+        target_source_present = any(
+            source.brand_id
+            in target_brand_ids
+            for source in stored_web_sources
+        )
+
         return {
             "run_id": run.id,
             "response_id": response.id,
@@ -649,6 +943,12 @@ class VisibilityAnalysisService:
                 len(mentions),
             "citation_count":
                 len(stored_citations),
+            "web_search_source_count":
+                len(stored_web_sources),
+            "target_source_present":
+                target_source_present,
             "mentions": mentions,
             "citations": stored_citations,
+            "web_search_sources":
+                stored_web_sources,
         }

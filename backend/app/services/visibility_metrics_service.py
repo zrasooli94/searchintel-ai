@@ -9,6 +9,7 @@ from app.models.ai_run import AIRun
 from app.models.brand import Brand
 from app.models.brand_mention import BrandMention
 from app.models.citation import Citation
+from app.models.web_search_source import WebSearchSource
 from app.repositories.geo_experiment_repository import (
     GeoExperimentRepository,
 )
@@ -20,6 +21,9 @@ from app.repositories.project_brand_repository import (
 )
 from app.repositories.project_repository import (
     ProjectRepository,
+)
+from app.services.visibility_analysis_service import (
+    VisibilityAnalysisService,
 )
 
 
@@ -46,6 +50,7 @@ class VisibilityMetricsService:
         experiment_id: int | None = None,
         persist_snapshot: bool = True,
     ) -> dict:
+
         project = ProjectRepository.get_by_id(
             db,
             project_id,
@@ -96,22 +101,24 @@ class VisibilityMetricsService:
         if not target_rows:
             raise HTTPException(
                 status_code=400,
-                detail=(
-                    "Project has no target brand."
-                ),
+                detail="Project has no target brand.",
             )
 
         target_brand = target_rows[0][0]
+
+        # -------------------------------------------------
+        # Measurement population
+        # -------------------------------------------------
 
         response_statement = (
             select(
                 AIResponse.id,
                 AIRun.prompt_id,
+                AIRun.benchmark_mode,
             )
             .join(
                 AIRun,
-                AIResponse.run_id
-                == AIRun.id,
+                AIResponse.run_id == AIRun.id,
             )
             .where(
                 AIRun.project_id == project_id,
@@ -154,28 +161,38 @@ class VisibilityMetricsService:
             for row in analyzed_rows
         }
 
-        analyzed_runs = len(
-            response_ids
-        )
+        analyzed_runs = len(response_ids)
 
         analyzed_prompt_ids = set(
             response_to_prompt.values()
         )
 
-        target_statement = (
-            select(BrandMention)
-            .where(
-                BrandMention.response_id.in_(
-                    response_ids
-                ),
-                BrandMention.brand_id
-                == target_brand.id,
-            )
+        benchmark_modes = sorted(
+            {
+                row.benchmark_mode or "memory"
+                for row in analyzed_rows
+            }
         )
+
+        benchmark_mode = (
+            benchmark_modes[0]
+            if len(benchmark_modes) == 1
+            else "mixed"
+        )
+
+        # -------------------------------------------------
+        # Target mention metrics
+        # -------------------------------------------------
 
         target_mentions = list(
             db.scalars(
-                target_statement
+                select(BrandMention).where(
+                    BrandMention.response_id.in_(
+                        response_ids
+                    ),
+                    BrandMention.brand_id
+                    == target_brand.id,
+                )
             ).all()
         )
 
@@ -207,22 +224,26 @@ class VisibilityMetricsService:
             len(analyzed_prompt_ids),
         )
 
-        citation_statement = (
-            select(Citation)
-            .where(
-                Citation.response_id.in_(
-                    response_ids
-                ),
-                Citation.brand_id
-                == target_brand.id,
-            )
-        )
+        # -------------------------------------------------
+        # Citation metrics
+        # -------------------------------------------------
 
-        target_citations = list(
+        all_citations = list(
             db.scalars(
-                citation_statement
+                select(Citation).where(
+                    Citation.response_id.in_(
+                        response_ids
+                    )
+                )
             ).all()
         )
+
+        target_citations = [
+            citation
+            for citation in all_citations
+            if citation.brand_id
+            == target_brand.id
+        ]
 
         cited_response_ids = {
             citation.response_id
@@ -233,6 +254,10 @@ class VisibilityMetricsService:
             len(cited_response_ids),
             analyzed_runs,
         )
+
+        # -------------------------------------------------
+        # Mention position
+        # -------------------------------------------------
 
         average_position = None
 
@@ -252,35 +277,35 @@ class VisibilityMetricsService:
             position_quality = round(
                 min(
                     100.0,
-                    100.0
-                    / average_position,
+                    100.0 / average_position,
                 ),
                 2,
             )
 
-        all_mentions_statement = (
-            select(
-                BrandMention,
-                Brand.name,
-            )
-            .outerjoin(
-                Brand,
-                BrandMention.brand_id
-                == Brand.id,
-            )
-            .where(
-                BrandMention.response_id.in_(
-                    response_ids
-                ),
-                BrandMention.resolution_status
-                == "resolved",
-                BrandMention.brand_id.is_not(None),
-            )
-        )
+        # -------------------------------------------------
+        # Mention Share of Voice V1
+        # -------------------------------------------------
 
         all_mentions = list(
             db.execute(
-                all_mentions_statement
+                select(
+                    BrandMention,
+                    Brand.name,
+                )
+                .outerjoin(
+                    Brand,
+                    BrandMention.brand_id
+                    == Brand.id,
+                )
+                .where(
+                    BrandMention.response_id.in_(
+                        response_ids
+                    ),
+                    BrandMention.resolution_status
+                    == "resolved",
+                    BrandMention.brand_id
+                    .is_not(None),
+                )
             ).all()
         )
 
@@ -293,24 +318,16 @@ class VisibilityMetricsService:
         )
 
         for mention, brand_name in all_mentions:
-            if mention.brand_id is not None:
-                key = f"brand:{mention.brand_id}"
-                name = (
-                    brand_name
-                    or mention.mention_text
-                )
-            else:
-                key = (
-                    "unresolved:"
-                    + mention.normalized_name
-                )
-                name = mention.mention_text
+            key = f"brand:{mention.brand_id}"
 
             grouped[key]["brand_id"] = (
                 mention.brand_id
             )
 
-            grouped[key]["name"] = name
+            grouped[key]["name"] = (
+                brand_name
+                or mention.mention_text
+            )
 
             grouped[key]["mention_count"] += (
                 mention.mention_count
@@ -359,6 +376,10 @@ class VisibilityMetricsService:
                 ]
                 break
 
+        # -------------------------------------------------
+        # Existing V1 score
+        # -------------------------------------------------
+
         visibility_score = round(
             (
                 mention_rate * 0.50
@@ -369,8 +390,282 @@ class VisibilityMetricsService:
             2,
         )
 
+        # -------------------------------------------------
+        # Web-search measurement population
+        # -------------------------------------------------
+
+        web_rows = [
+            row
+            for row in analyzed_rows
+            if row.benchmark_mode
+            == "web_search"
+        ]
+
+        web_response_ids = {
+            row.id
+            for row in web_rows
+        }
+
+        web_search_analyzed_runs = len(
+            web_response_ids
+        )
+
+        web_response_to_prompt = {
+            row.id: row.prompt_id
+            for row in web_rows
+        }
+
+        web_prompt_ids = set(
+            web_response_to_prompt.values()
+        )
+
+        web_sources: list[
+            WebSearchSource
+        ] = []
+
+        if web_response_ids:
+            web_sources = list(
+                db.scalars(
+                    select(
+                        WebSearchSource
+                    ).where(
+                        WebSearchSource
+                        .response_id.in_(
+                            web_response_ids
+                        )
+                    )
+                ).all()
+            )
+
+        # -------------------------------------------------
+        # Web-search-only metrics
+        # -------------------------------------------------
+
+        target_source_presence_rate = None
+        target_source_prompt_coverage = None
+
+        source_to_citation_conversion = None
+        target_source_to_citation_conversion = None
+
+        target_source_share_of_voice = None
+        target_citation_share_of_voice = None
+
+        resolved_first_party_source_rate = None
+
+        unique_search_source_urls = 0
+        unique_search_domains = 0
+
+        if web_search_analyzed_runs:
+
+            target_source_response_ids = {
+                source.response_id
+                for source in web_sources
+                if source.brand_id
+                == target_brand.id
+            }
+
+            target_source_prompt_ids = {
+                web_response_to_prompt[
+                    response_id
+                ]
+                for response_id
+                in target_source_response_ids
+            }
+
+            target_source_presence_rate = (
+                cls.percent(
+                    len(
+                        target_source_response_ids
+                    ),
+                    web_search_analyzed_runs,
+                )
+            )
+
+            target_source_prompt_coverage = (
+                cls.percent(
+                    len(
+                        target_source_prompt_ids
+                    ),
+                    len(web_prompt_ids),
+                )
+            )
+
+            # A source can appear in several search
+            # calls. Conversion and SOV use unique,
+            # normalized URLs rather than raw rows.
+            unique_source_urls: set[str] = set()
+            unique_domains: set[str] = set()
+
+            cited_source_urls: set[str] = set()
+
+            target_source_urls: set[str] = set()
+            target_cited_source_urls: set[str] = set()
+
+            resolved_source_urls: set[str] = set()
+            resolved_source_pairs: set[
+                tuple[str, int]
+            ] = set()
+
+            for source in web_sources:
+                normalized_url = (
+                    VisibilityAnalysisService
+                    .normalize_url_for_match(
+                        source.url
+                    )
+                )
+
+                if not normalized_url:
+                    continue
+
+                unique_source_urls.add(
+                    normalized_url
+                )
+
+                if source.domain:
+                    unique_domains.add(
+                        source.domain.lower()
+                    )
+
+                if source.is_cited:
+                    cited_source_urls.add(
+                        normalized_url
+                    )
+
+                if source.brand_id is not None:
+                    resolved_source_urls.add(
+                        normalized_url
+                    )
+
+                    resolved_source_pairs.add(
+                        (
+                            normalized_url,
+                            source.brand_id,
+                        )
+                    )
+
+                if (
+                    source.brand_id
+                    == target_brand.id
+                ):
+                    target_source_urls.add(
+                        normalized_url
+                    )
+
+                    if source.is_cited:
+                        target_cited_source_urls.add(
+                            normalized_url
+                        )
+
+            unique_search_source_urls = len(
+                unique_source_urls
+            )
+
+            unique_search_domains = len(
+                unique_domains
+            )
+
+            if unique_source_urls:
+                source_to_citation_conversion = (
+                    cls.percent(
+                        len(cited_source_urls),
+                        len(unique_source_urls),
+                    )
+                )
+
+            if target_source_urls:
+                target_source_to_citation_conversion = (
+                    cls.percent(
+                        len(
+                            target_cited_source_urls
+                        ),
+                        len(target_source_urls),
+                    )
+                )
+
+            target_source_pair_count = sum(
+                1
+                for _, brand_id
+                in resolved_source_pairs
+                if brand_id
+                == target_brand.id
+            )
+
+            if resolved_source_pairs:
+                target_source_share_of_voice = (
+                    cls.percent(
+                        target_source_pair_count,
+                        len(
+                            resolved_source_pairs
+                        ),
+                    )
+                )
+
+            if unique_source_urls:
+                resolved_first_party_source_rate = (
+                    cls.percent(
+                        len(resolved_source_urls),
+                        len(unique_source_urls),
+                    )
+                )
+
+            # Citation SOV is also restricted to
+            # web-search responses and unique URLs.
+            resolved_citation_pairs: set[
+                tuple[str, int]
+            ] = set()
+
+            for citation in all_citations:
+
+                if (
+                    citation.response_id
+                    not in web_response_ids
+                    or citation.brand_id
+                    is None
+                ):
+                    continue
+
+                normalized_url = (
+                    VisibilityAnalysisService
+                    .normalize_url_for_match(
+                        citation.url
+                    )
+                )
+
+                if not normalized_url:
+                    continue
+
+                resolved_citation_pairs.add(
+                    (
+                        normalized_url,
+                        citation.brand_id,
+                    )
+                )
+
+            target_citation_pair_count = sum(
+                1
+                for _, brand_id
+                in resolved_citation_pairs
+                if brand_id
+                == target_brand.id
+            )
+
+            if resolved_citation_pairs:
+                target_citation_share_of_voice = (
+                    cls.percent(
+                        target_citation_pair_count,
+                        len(
+                            resolved_citation_pairs
+                        ),
+                    )
+                )
+
+        # -------------------------------------------------
+        # Metric persistence
+        # -------------------------------------------------
+
         metrics = {
-            "mention_rate": mention_rate,
+            "mention_rate":
+                mention_rate,
             "prompt_coverage":
                 prompt_coverage,
             "citation_rate":
@@ -381,51 +676,127 @@ class VisibilityMetricsService:
                 visibility_score,
         }
 
+        if web_search_analyzed_runs:
+            metrics.update(
+                {
+                    "target_source_presence_rate":
+                        target_source_presence_rate,
+
+                    "target_source_prompt_coverage":
+                        target_source_prompt_coverage,
+
+                    "source_to_citation_conversion":
+                        source_to_citation_conversion,
+
+                    "target_source_to_citation_conversion":
+                        target_source_to_citation_conversion,
+
+                    "target_source_share_of_voice":
+                        target_source_share_of_voice,
+
+                    "target_citation_share_of_voice":
+                        target_citation_share_of_voice,
+
+                    "resolved_first_party_source_rate":
+                        resolved_first_party_source_rate,
+                }
+            )
+
         if persist_snapshot:
-            for metric_name, value in metrics.items():
+
+            snapshot_details = {
+                "analyzed_prompts":
+                    len(
+                        analyzed_prompt_ids
+                    ),
+
+                "benchmark_mode":
+                    benchmark_mode,
+
+                "web_search_analyzed_runs":
+                    web_search_analyzed_runs,
+
+                "unique_search_source_urls":
+                    unique_search_source_urls,
+
+                "unique_search_domains":
+                    unique_search_domains,
+            }
+
+            for metric_name, value in (
+                metrics.items()
+            ):
+
+                if value is None:
+                    continue
+
                 MetricSnapshotRepository.create(
                     db=db,
                     project_id=project_id,
                     brand_id=target_brand.id,
                     metric_name=metric_name,
                     metric_value=value,
-                    sample_size=analyzed_runs,
-                    details={
-                        "analyzed_prompts":
-                            len(
-                                analyzed_prompt_ids
-                            )
-                    },
+                    sample_size=(
+                        web_search_analyzed_runs
+                        if metric_name in {
+                            "target_source_presence_rate",
+                            "target_source_prompt_coverage",
+                            "source_to_citation_conversion",
+                            "target_source_to_citation_conversion",
+                            "target_source_share_of_voice",
+                            "target_citation_share_of_voice",
+                            "resolved_first_party_source_rate",
+                        }
+                        else analyzed_runs
+                    ),
+                    details=snapshot_details,
                     experiment_id=experiment_id,
                 )
 
             db.commit()
 
         return {
-            "project_id": project_id,
-            "experiment_id": experiment_id,
+            "project_id":
+                project_id,
+
+            "experiment_id":
+                experiment_id,
+
+            "benchmark_mode":
+                benchmark_mode,
+
             "target_brand_id":
                 target_brand.id,
+
             "target_brand":
                 target_brand.name,
 
             "analyzed_runs":
                 analyzed_runs,
+
             "analyzed_prompts":
-                len(analyzed_prompt_ids),
+                len(
+                    analyzed_prompt_ids
+                ),
+
+            "web_search_analyzed_runs":
+                web_search_analyzed_runs,
 
             "target_mention_count":
                 target_mention_count,
 
             "mention_rate":
                 mention_rate,
+
             "prompt_coverage":
                 prompt_coverage,
+
             "citation_rate":
                 citation_rate,
 
             "average_mention_position":
                 average_position,
+
             "target_share_of_voice":
                 target_sov,
 
@@ -434,6 +805,33 @@ class VisibilityMetricsService:
 
             "visibility_score_v1":
                 visibility_score,
+
+            "target_source_presence_rate":
+                target_source_presence_rate,
+
+            "target_source_prompt_coverage":
+                target_source_prompt_coverage,
+
+            "unique_search_source_urls":
+                unique_search_source_urls,
+
+            "unique_search_domains":
+                unique_search_domains,
+
+            "source_to_citation_conversion":
+                source_to_citation_conversion,
+
+            "target_source_to_citation_conversion":
+                target_source_to_citation_conversion,
+
+            "target_source_share_of_voice":
+                target_source_share_of_voice,
+
+            "target_citation_share_of_voice":
+                target_citation_share_of_voice,
+
+            "resolved_first_party_source_rate":
+                resolved_first_party_source_rate,
 
             "share_of_voice":
                 share_of_voice,

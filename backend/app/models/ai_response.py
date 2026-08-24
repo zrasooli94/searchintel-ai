@@ -61,3 +61,9 @@ class AIResponse(Base):
         back_populates="response",
         cascade="all, delete-orphan",
     )
+
+    web_search_sources = relationship(
+        "WebSearchSource",
+        back_populates="response",
+        cascade="all, delete-orphan",
+    )

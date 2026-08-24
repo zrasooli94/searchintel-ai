@@ -51,3 +51,14 @@ class ExperimentComparison(BaseModel):
     target_share_of_voice: ExperimentMetricValue
     visibility_score_v1: ExperimentMetricValue
     average_mention_position: ExperimentMetricValue
+
+    target_source_presence_rate: ExperimentMetricValue
+    target_source_prompt_coverage: ExperimentMetricValue
+
+    source_to_citation_conversion: ExperimentMetricValue
+    target_source_to_citation_conversion: ExperimentMetricValue
+
+    target_source_share_of_voice: ExperimentMetricValue
+    target_citation_share_of_voice: ExperimentMetricValue
+
+    resolved_first_party_source_rate: ExperimentMetricValue

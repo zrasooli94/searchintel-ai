@@ -32,12 +32,35 @@ class CitationRead(BaseModel):
     )
 
 
+class WebSearchSourceRead(BaseModel):
+    id: int
+    response_id: int
+    brand_id: int | None
+    search_call_index: int
+    source_position: int
+    search_query: str | None
+    url: str
+    domain: str | None
+    title: str | None
+    is_cited: bool
+
+    model_config = ConfigDict(
+        from_attributes=True
+    )
+
+
 class VisibilityAnalysisRead(BaseModel):
     run_id: int
     response_id: int
+
     target_mentioned: bool
     target_cited: bool
+    target_source_present: bool
+
     mention_count: int
     citation_count: int
+    web_search_source_count: int
+
     mentions: list[BrandMentionRead]
     citations: list[CitationRead]
+    web_search_sources: list[WebSearchSourceRead]

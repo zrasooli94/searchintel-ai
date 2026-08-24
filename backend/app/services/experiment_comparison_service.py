@@ -98,8 +98,17 @@ class ExperimentComparisonService:
             )
         )
 
+        def compare_metric(
+            name: str,
+        ) -> dict:
+            return cls.metric(
+                baseline.get(name),
+                comparison.get(name),
+            )
+
         return {
-            "project_id": project_id,
+            "project_id":
+                project_id,
 
             "baseline_experiment_id":
                 baseline_id,
@@ -120,50 +129,67 @@ class ExperimentComparisonService:
                 comparison["analyzed_runs"],
 
             "mention_rate":
-                cls.metric(
-                    baseline["mention_rate"],
-                    comparison["mention_rate"],
+                compare_metric(
+                    "mention_rate"
                 ),
 
             "prompt_coverage":
-                cls.metric(
-                    baseline["prompt_coverage"],
-                    comparison["prompt_coverage"],
+                compare_metric(
+                    "prompt_coverage"
                 ),
 
             "citation_rate":
-                cls.metric(
-                    baseline["citation_rate"],
-                    comparison["citation_rate"],
+                compare_metric(
+                    "citation_rate"
                 ),
 
             "target_share_of_voice":
-                cls.metric(
-                    baseline[
-                        "target_share_of_voice"
-                    ],
-                    comparison[
-                        "target_share_of_voice"
-                    ],
+                compare_metric(
+                    "target_share_of_voice"
                 ),
 
             "visibility_score_v1":
-                cls.metric(
-                    baseline[
-                        "visibility_score_v1"
-                    ],
-                    comparison[
-                        "visibility_score_v1"
-                    ],
+                compare_metric(
+                    "visibility_score_v1"
                 ),
 
             "average_mention_position":
-                cls.metric(
-                    baseline[
-                        "average_mention_position"
-                    ],
-                    comparison[
-                        "average_mention_position"
-                    ],
+                compare_metric(
+                    "average_mention_position"
+                ),
+
+            "target_source_presence_rate":
+                compare_metric(
+                    "target_source_presence_rate"
+                ),
+
+            "target_source_prompt_coverage":
+                compare_metric(
+                    "target_source_prompt_coverage"
+                ),
+
+            "source_to_citation_conversion":
+                compare_metric(
+                    "source_to_citation_conversion"
+                ),
+
+            "target_source_to_citation_conversion":
+                compare_metric(
+                    "target_source_to_citation_conversion"
+                ),
+
+            "target_source_share_of_voice":
+                compare_metric(
+                    "target_source_share_of_voice"
+                ),
+
+            "target_citation_share_of_voice":
+                compare_metric(
+                    "target_citation_share_of_voice"
+                ),
+
+            "resolved_first_party_source_rate":
+                compare_metric(
+                    "resolved_first_party_source_rate"
                 ),
         }

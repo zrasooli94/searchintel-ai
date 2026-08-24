@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.models.brand_mention import BrandMention
 from app.models.citation import Citation
+from app.models.web_search_source import WebSearchSource
 
 
 class VisibilityRepository:
@@ -21,6 +22,13 @@ class VisibilityRepository:
         db.execute(
             delete(Citation).where(
                 Citation.response_id == response_id
+            )
+        )
+
+        db.execute(
+            delete(WebSearchSource).where(
+                WebSearchSource.response_id
+                == response_id
             )
         )
 
@@ -83,6 +91,42 @@ class VisibilityRepository:
             )
             .order_by(
                 Citation.position
+            )
+        )
+
+        return list(
+            db.scalars(statement).all()
+        )
+
+
+    @staticmethod
+    def create_web_search_source(
+        db: Session,
+        **data,
+    ) -> WebSearchSource:
+
+        source = WebSearchSource(**data)
+
+        db.add(source)
+        db.flush()
+
+        return source
+
+    @staticmethod
+    def list_web_search_sources(
+        db: Session,
+        response_id: int,
+    ) -> list[WebSearchSource]:
+
+        statement = (
+            select(WebSearchSource)
+            .where(
+                WebSearchSource.response_id
+                == response_id
+            )
+            .order_by(
+                WebSearchSource.search_call_index,
+                WebSearchSource.source_position,
             )
         )
 

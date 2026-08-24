@@ -1,3 +1,4 @@
+from app.models.web_search_source import WebSearchSource
 from app.models.geo_action_item import GeoActionItem
 from app.models.geo_action_plan import GeoActionPlan
 from app.models.geo_content_diagnosis import GeoContentDiagnosis
@@ -25,6 +26,7 @@ from app.models.technical_recommendation import TechnicalRecommendation
 from app.models.website import Website
 
 __all__ = [
+    "WebSearchSource",
     "GeoActionItem",
     "GeoActionPlan",
     "GeoContentDiagnosis",

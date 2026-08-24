@@ -2,6 +2,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.website import Website
+from app.models.project_brand import ProjectBrand
 
 
 class WebsiteRepository:
@@ -59,3 +60,32 @@ class WebsiteRepository:
         return list(
             db.scalars(statement).all()
         )
+
+
+    @staticmethod
+    def list_domain_brand_pairs_by_project(
+        db: Session,
+        project_id: int,
+    ) -> list[tuple[str, int]]:
+
+        statement = (
+            select(
+                Website.domain,
+                Website.brand_id,
+            )
+            .join(
+                ProjectBrand,
+                ProjectBrand.brand_id
+                == Website.brand_id,
+            )
+            .where(
+                ProjectBrand.project_id
+                == project_id
+            )
+        )
+
+        return [
+            (domain.lower(), brand_id)
+            for domain, brand_id
+            in db.execute(statement).all()
+        ]
