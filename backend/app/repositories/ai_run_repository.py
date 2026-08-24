@@ -16,6 +16,8 @@ class AIRunRepository:
         run_type: str = "ad_hoc",
         include_in_metrics: bool = True,
         experiment_id: int | None = None,
+        benchmark_mode: str = "memory",
+        config_snapshot: dict | None = None,
     ) -> AIRun:
 
         run = AIRun(
@@ -25,6 +27,8 @@ class AIRunRepository:
             run_type=run_type,
             include_in_metrics=include_in_metrics,
             experiment_id=experiment_id,
+            benchmark_mode=benchmark_mode,
+            config_snapshot=config_snapshot or {},
             status="pending",
         )
 

@@ -17,5 +17,6 @@ class AIProvider(Protocol):
         self,
         prompt: str,
         model_id: str,
+        mode: str = "memory",
     ) -> ProviderResult:
         ...

@@ -38,6 +38,7 @@ def start_benchmark(
         project_id=project_id,
         model_id=data.model_id,
         experiment_id=data.experiment_id,
+        benchmark_mode=data.benchmark_mode,
     )
 
     background_tasks.add_task(

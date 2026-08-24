@@ -14,6 +14,8 @@ class BenchmarkRepository:
         model_id: int,
         total_prompts: int,
         experiment_id: int | None = None,
+        benchmark_mode: str = "memory",
+        config_snapshot: dict | None = None,
     ) -> BenchmarkJob:
         job = BenchmarkJob(
             project_id=project_id,
@@ -21,6 +23,8 @@ class BenchmarkRepository:
             status="pending",
             total_prompts=total_prompts,
             experiment_id=experiment_id,
+            benchmark_mode=benchmark_mode,
+            config_snapshot=config_snapshot or {},
             completed_runs=0,
             failed_runs=0,
         )
@@ -34,15 +38,18 @@ class BenchmarkRepository:
     def create_items(
         db: Session,
         benchmark_job_id: int,
-        prompt_ids: list[int],
+        prompt_snapshots: list[dict],
     ) -> None:
         items = [
             BenchmarkJobItem(
                 benchmark_job_id=benchmark_job_id,
-                prompt_id=prompt_id,
+                prompt_id=item["prompt_id"],
+                prompt_text_snapshot=item[
+                    "prompt_text_snapshot"
+                ],
                 status="pending",
             )
-            for prompt_id in prompt_ids
+            for item in prompt_snapshots
         ]
 
         db.add_all(items)

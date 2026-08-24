@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict
 
@@ -7,11 +8,19 @@ class BenchmarkStartRequest(BaseModel):
     model_id: int
     experiment_id: int | None = None
 
+    benchmark_mode: Literal[
+        "memory",
+        "web_search",
+    ] = "memory"
+
 
 class BenchmarkJobRead(BaseModel):
     id: int
+    experiment_id: int | None
     project_id: int
     model_id: int
+    benchmark_mode: str
+    config_snapshot: dict
     status: str
 
     total_prompts: int
@@ -30,6 +39,7 @@ class BenchmarkJobItemRead(BaseModel):
     id: int
     benchmark_job_id: int
     prompt_id: int
+    prompt_text_snapshot: str | None
     ai_run_id: int | None
     status: str
     error_message: str | None

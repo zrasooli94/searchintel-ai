@@ -6,6 +6,7 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Integer,
+    JSON,
     Numeric,
     String,
     func,
@@ -61,6 +62,21 @@ class AIRun(Base):
         default=True,
         server_default="true",
         index=True,
+    )
+
+    benchmark_mode: Mapped[str] = mapped_column(
+        String(30),
+        nullable=False,
+        default="memory",
+        server_default="memory",
+        index=True,
+    )
+
+    config_snapshot: Mapped[dict] = mapped_column(
+        JSON,
+        nullable=False,
+        default=dict,
+        server_default="{}",
     )
 
     status: Mapped[str] = mapped_column(

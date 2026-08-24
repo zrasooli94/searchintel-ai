@@ -8,6 +8,11 @@ from app.integrations.ai.base import ProviderResult
 
 class OpenAIProvider:
 
+    SUPPORTED_MODES = {
+        "memory",
+        "web_search",
+    }
+
     def __init__(self) -> None:
         if not settings.openai_api_key:
             raise RuntimeError(
@@ -22,13 +27,46 @@ class OpenAIProvider:
         self,
         prompt: str,
         model_id: str,
+        mode: str = "memory",
     ) -> ProviderResult:
+
+        if mode not in self.SUPPORTED_MODES:
+            raise ValueError(
+                f"Unsupported benchmark mode: {mode}"
+            )
+
+        request: dict = {
+            "model": model_id,
+            "input": prompt,
+        }
+
+        if mode == "web_search":
+            request.update(
+                {
+                    "tools": [
+                        {
+                            "type": "web_search",
+                        }
+                    ],
+
+                    # There is only one available tool,
+                    # so required means this benchmark
+                    # actually performs web search.
+                    "tool_choice": "required",
+
+                    # Persist complete source evidence
+                    # in raw_response for our citation
+                    # and source-analysis layers.
+                    "include": [
+                        "web_search_call.action.sources",
+                    ],
+                }
+            )
 
         started = perf_counter()
 
         response = self.client.responses.create(
-            model=model_id,
-            input=prompt,
+            **request
         )
 
         latency_ms = round(

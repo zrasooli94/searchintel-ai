@@ -85,12 +85,31 @@ class AIRunService:
                 detail="AI model is inactive.",
             )
 
-        return AIRunRepository.create(
+        config_snapshot = {
+            "benchmark_mode":
+                data.benchmark_mode,
+            "provider_model_id":
+                model.provider_model_id,
+            "web_search_enabled":
+                data.benchmark_mode
+                == "web_search",
+        }
+
+        run = AIRunRepository.create(
             db=db,
             project_id=project_id,
             prompt_id=data.prompt_id,
             model_id=data.model_id,
+            benchmark_mode=data.benchmark_mode,
+            include_in_metrics=
+                data.include_in_metrics,
+            config_snapshot=config_snapshot,
         )
+
+        db.commit()
+        db.refresh(run)
+
+        return run
 
     @staticmethod
     def complete(
@@ -146,6 +165,7 @@ class AIRunService:
     def execute(
         db: Session,
         run_id: int,
+        prompt_override: str | None = None,
     ) -> dict:
 
         run = AIRunRepository.get_by_id(
@@ -232,9 +252,16 @@ class AIRunService:
         db.commit()
 
         try:
+            prompt_text = (
+                prompt_override
+                if prompt_override is not None
+                else prompt.text
+            )
+
             result = provider.execute(
-                prompt=prompt.text,
+                prompt=prompt_text,
                 model_id=model.provider_model_id,
+                mode=run.benchmark_mode,
             )
 
             AIRunRepository.create_response(
@@ -263,6 +290,8 @@ class AIRunService:
                 "run_id": run.id,
                 "status": run.status,
                 "model": model.provider_model_id,
+                "benchmark_mode":
+                    run.benchmark_mode,
                 "response_text": result.response_text,
                 "latency_ms": result.latency_ms,
                 "input_tokens": result.input_tokens,

@@ -1,5 +1,6 @@
 from datetime import datetime
 from decimal import Decimal
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict
 
@@ -7,6 +8,11 @@ from pydantic import BaseModel, ConfigDict
 class AIRunCreate(BaseModel):
     prompt_id: int
     model_id: int
+    benchmark_mode: Literal[
+        "memory",
+        "web_search",
+    ] = "memory"
+    include_in_metrics: bool = True
 
 
 class AIResponseCreate(BaseModel):
@@ -30,9 +36,14 @@ class AIResponseRead(BaseModel):
 
 class AIRunRead(BaseModel):
     id: int
+    experiment_id: int | None
     project_id: int
     prompt_id: int
     model_id: int
+    run_type: str
+    include_in_metrics: bool
+    benchmark_mode: str
+    config_snapshot: dict
     status: str
     started_at: datetime | None
     completed_at: datetime | None
@@ -51,6 +62,7 @@ class AIExecutionResult(BaseModel):
     run_id: int
     status: str
     model: str
+    benchmark_mode: str
     response_text: str
     latency_ms: int | None
     input_tokens: int | None

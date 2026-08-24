@@ -53,6 +53,12 @@ class BenchmarkService:
             "id": job.id,
             "project_id": job.project_id,
             "model_id": job.model_id,
+            "experiment_id":
+                job.experiment_id,
+            "benchmark_mode":
+                job.benchmark_mode,
+            "config_snapshot":
+                job.config_snapshot or {},
             "status": job.status,
             "total_prompts":
                 job.total_prompts,
@@ -79,6 +85,7 @@ class BenchmarkService:
         project_id: int,
         model_id: int,
         experiment_id: int | None = None,
+        benchmark_mode: str = "memory",
     ) -> dict:
         project = ProjectRepository.get_by_id(
             db,
@@ -106,6 +113,18 @@ class BenchmarkService:
             raise HTTPException(
                 status_code=400,
                 detail="AI model is inactive.",
+            )
+
+        if benchmark_mode not in {
+            "memory",
+            "web_search",
+        }:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "Unsupported benchmark mode: "
+                    f"{benchmark_mode}"
+                ),
             )
 
         if experiment_id is not None:
@@ -146,19 +165,52 @@ class BenchmarkService:
                 ),
             )
 
+        config_snapshot = {
+            "benchmark_mode":
+                benchmark_mode,
+
+            "provider_model_id":
+                model.provider_model_id,
+
+            "web_search_enabled":
+                benchmark_mode
+                == "web_search",
+
+            "tool_choice": (
+                "required"
+                if benchmark_mode
+                == "web_search"
+                else "none"
+            ),
+
+            "capture_web_sources":
+                benchmark_mode
+                == "web_search",
+
+            "prompt_count":
+                len(prompts),
+        }
+
         job = BenchmarkRepository.create_job(
             db=db,
             project_id=project_id,
             model_id=model_id,
             total_prompts=len(prompts),
             experiment_id=experiment_id,
+            benchmark_mode=benchmark_mode,
+            config_snapshot=config_snapshot,
         )
 
         BenchmarkRepository.create_items(
             db=db,
             benchmark_job_id=job.id,
-            prompt_ids=[
-                prompt.id
+            prompt_snapshots=[
+                {
+                    "prompt_id":
+                        prompt.id,
+                    "prompt_text_snapshot":
+                        prompt.text,
+                }
                 for prompt in prompts
             ],
         )
@@ -267,6 +319,13 @@ class BenchmarkService:
                         run_type="benchmark",
                         include_in_metrics=True,
                         experiment_id=job.experiment_id,
+                        benchmark_mode=
+                            job.benchmark_mode,
+                        config_snapshot=
+                            dict(
+                                job.config_snapshot
+                                or {}
+                            ),
                     )
 
                     item = BenchmarkRepository.get_item(
@@ -285,6 +344,9 @@ class BenchmarkService:
                     AIRunService.execute(
                         db,
                         run.id,
+                        prompt_override=(
+                            item.prompt_text_snapshot
+                        ),
                     )
 
                     VisibilityAnalysisService.analyze(

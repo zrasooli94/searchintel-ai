@@ -46,6 +46,11 @@ class BenchmarkJobItem(Base):
         index=True,
     )
 
+    prompt_text_snapshot: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,
+    )
+
     ai_run_id: Mapped[int | None] = mapped_column(
         ForeignKey(
             "ai_runs.id",
