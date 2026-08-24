@@ -49,8 +49,9 @@ class CompetitorResolutionService:
             )
             .where(
                 AIRun.project_id == project_id,
-                BrandMention.resolution_status
-                == "unresolved",
+                BrandMention.resolution_status.in_(
+                    ["unresolved", "candidate"]
+                ),
             )
         )
 

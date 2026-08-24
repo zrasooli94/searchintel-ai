@@ -234,7 +234,10 @@ class VisibilityMetricsService:
             .where(
                 BrandMention.response_id.in_(
                     response_ids
-                )
+                ),
+                BrandMention.resolution_status
+                == "resolved",
+                BrandMention.brand_id.is_not(None),
             )
         )
 
