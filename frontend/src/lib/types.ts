@@ -161,3 +161,159 @@ export type TechnicalSEOSummary = {
 
   recommendations: TechnicalSEORecommendation[];
 };
+
+export type MentionShareOfVoiceItem = {
+  brand_id: number;
+  name: string;
+  mention_count: number;
+  share_of_voice: number;
+};
+
+export type ResponseVisibilityItem = {
+  brand_id: number;
+  name: string;
+  response_exposures: number;
+  response_share_of_voice: number;
+  response_coverage: number;
+};
+
+export type RetrievalVisibilityItem = {
+  brand_id: number;
+  name: string;
+  grounded_response_exposures: number;
+  grounded_response_share_of_voice: number;
+  grounded_response_coverage: number;
+};
+
+export type CitedVisibilityItem = {
+  brand_id: number;
+  name: string;
+  cited_response_exposures: number;
+  cited_response_share_of_voice: number;
+  cited_response_coverage: number;
+};
+
+export type SourceExposureItem = {
+  brand_id: number;
+  name: string;
+  source_exposures: number;
+  source_exposure_share_of_voice: number;
+};
+
+export type CitationExposureItem = {
+  brand_id: number;
+  name: string;
+  citation_exposures: number;
+  citation_exposure_share_of_voice: number;
+};
+
+export type BrandCitationConversionItem = {
+  brand_id: number;
+  name: string;
+  source_exposures: number;
+  citation_exposures: number;
+  citation_exposure_conversion: number;
+};
+
+export type AIVisibilityMetrics = {
+  project_id: number;
+  experiment_id: number | null;
+  benchmark_mode: string;
+
+  target_brand_id: number;
+  target_brand: string;
+
+  analyzed_runs: number;
+  analyzed_prompts: number;
+  web_search_analyzed_runs: number;
+
+  target_mention_count: number;
+
+  mention_rate: number;
+  prompt_coverage: number;
+  citation_rate: number;
+
+  average_mention_position: number | null;
+
+  target_share_of_voice: number;
+  target_response_share_of_voice: number;
+  target_response_coverage: number;
+
+  position_quality: number;
+  visibility_score_v1: number;
+  web_visibility_score_v1: number | null;
+
+  target_source_presence_rate: number | null;
+  target_source_prompt_coverage: number | null;
+
+  grounded_target_mention_rate: number | null;
+  grounded_target_prompt_coverage: number | null;
+
+  target_grounded_response_share_of_voice:
+    | number
+    | null;
+
+  target_cited_response_share_of_voice:
+    | number
+    | null;
+
+  target_cited_response_coverage:
+    | number
+    | null;
+
+  unique_search_source_urls: number;
+  unique_search_domains: number;
+
+  source_to_citation_conversion:
+    | number
+    | null;
+
+  target_source_to_citation_conversion:
+    | number
+    | null;
+
+  target_source_share_of_voice:
+    | number
+    | null;
+
+  target_citation_share_of_voice:
+    | number
+    | null;
+
+  target_source_exposure_share_of_voice:
+    | number
+    | null;
+
+  target_citation_exposure_share_of_voice:
+    | number
+    | null;
+
+  target_citation_exposure_conversion:
+    | number
+    | null;
+
+  resolved_first_party_source_rate:
+    | number
+    | null;
+
+  share_of_voice:
+    MentionShareOfVoiceItem[];
+
+  response_share_of_voice:
+    ResponseVisibilityItem[];
+
+  grounded_response_share_of_voice:
+    RetrievalVisibilityItem[];
+
+  cited_response_share_of_voice:
+    CitedVisibilityItem[];
+
+  source_exposure_share_of_voice:
+    SourceExposureItem[];
+
+  citation_exposure_share_of_voice:
+    CitationExposureItem[];
+
+  brand_citation_conversion:
+    BrandCitationConversionItem[];
+};

@@ -1,19 +1,27 @@
-import SectionPage from "@/components/dashboard/section-page";
+import AIVisibilityDashboard from "@/components/dashboard/ai-visibility-dashboard";
+
 import {
+  getLatestCompletedAIVisibilityMetrics,
   getLatestCompletedVisibilitySummary,
 } from "@/lib/api";
 
+
 export const dynamic = "force-dynamic";
 
+
 export default async function Page() {
-  const summary =
-    await getLatestCompletedVisibilitySummary();
+  const [
+    summary,
+    metrics,
+  ] = await Promise.all([
+    getLatestCompletedVisibilitySummary(),
+    getLatestCompletedAIVisibilityMetrics(),
+  ]);
 
   return (
-    <SectionPage
+    <AIVisibilityDashboard
       summary={summary}
-      title='AI Visibility'
-      description='Analyze brand mentions, retrieval, citations, grounded exposure, and AI search visibility.'
+      metrics={metrics}
     />
   );
 }

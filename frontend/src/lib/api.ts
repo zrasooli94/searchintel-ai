@@ -1,4 +1,5 @@
 import type {
+  AIVisibilityMetrics,
   GeoExperiment,
   TechnicalSEOSummary,
   VisibilitySummary,
@@ -78,5 +79,35 @@ export async function getLatestCompletedVisibilitySummary(): Promise<VisibilityS
 export async function getTechnicalSEOSummary(): Promise<TechnicalSEOSummary> {
   return fetchJson<TechnicalSEOSummary>(
     `${apiBaseUrl()}/projects/${projectId()}/technical-seo-summary`,
+  );
+}
+
+
+export async function getLatestCompletedAIVisibilityMetrics(): Promise<AIVisibilityMetrics> {
+  const experiments = await fetchJson<
+    GeoExperiment[]
+  >(
+    `${apiBaseUrl()}/projects/${projectId()}/geo-experiments`,
+  );
+
+  const completed = experiments
+    .filter(
+      (experiment) =>
+        experiment.status === "completed",
+    )
+    .sort(
+      (a, b) => b.id - a.id,
+    );
+
+  if (completed.length === 0) {
+    throw new Error(
+      "No completed experiment exists for this project.",
+    );
+  }
+
+  const experiment = completed[0];
+
+  return fetchJson<AIVisibilityMetrics>(
+    `${apiBaseUrl()}/geo-experiments/${experiment.id}/visibility-metrics`,
   );
 }
