@@ -1,3 +1,4 @@
+from app.api.routes.benchmarks import router as benchmarks_router
 from app.api.routes.visibility_metrics import router as visibility_metrics_router
 from app.api.routes.competitors import router as competitors_router
 from app.api.routes.visibility import router as visibility_router
@@ -27,3 +28,4 @@ api_router.include_router(prompts_router)
 api_router.include_router(visibility_router)
 api_router.include_router(competitors_router)
 api_router.include_router(visibility_metrics_router)
+api_router.include_router(benchmarks_router)

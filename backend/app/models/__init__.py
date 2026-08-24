@@ -1,3 +1,5 @@
+from app.models.benchmark_job_item import BenchmarkJobItem
+from app.models.benchmark_job import BenchmarkJob
 from app.models.metric_snapshot import MetricSnapshot
 from app.models.citation import Citation
 from app.models.brand_mention import BrandMention
@@ -16,6 +18,8 @@ from app.models.technical_recommendation import TechnicalRecommendation
 from app.models.website import Website
 
 __all__ = [
+    "BenchmarkJobItem",
+    "BenchmarkJob",
     "MetricSnapshot",
     "Citation",
     "BrandMention",

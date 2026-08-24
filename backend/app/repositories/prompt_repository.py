@@ -66,3 +66,22 @@ class PromptRepository:
         return list(
             db.scalars(statement).all()
         )
+
+
+    @staticmethod
+    def list_active_by_project(
+        db: Session,
+        project_id: int,
+    ) -> list[Prompt]:
+        statement = (
+            select(Prompt)
+            .where(
+                Prompt.project_id == project_id,
+                Prompt.is_active.is_(True),
+            )
+            .order_by(Prompt.id)
+        )
+
+        return list(
+            db.scalars(statement).all()
+        )
