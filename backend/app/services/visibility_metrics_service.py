@@ -568,6 +568,10 @@ class VisibilityMetricsService:
         target_grounded_response_share_of_voice = None
         grounded_response_share_of_voice = []
 
+        target_cited_response_share_of_voice = None
+        target_cited_response_coverage = None
+        cited_response_share_of_voice = []
+
         source_to_citation_conversion = None
         target_source_to_citation_conversion = None
 
@@ -788,6 +792,128 @@ class VisibilityMetricsService:
                 )
             else:
                 target_grounded_response_share_of_voice = (
+                    0.0
+                )
+
+            # ---------------------------------------------
+            # Cited brand response exposure
+            #
+            # Stronger than source retrieval:
+            # the brand must be textually mentioned and
+            # the same brand must have a citation in the
+            # same web-search response.
+            # ---------------------------------------------
+
+            web_citation_exposures: set[
+                tuple[int, int]
+            ] = {
+                (
+                    citation.response_id,
+                    citation.brand_id,
+                )
+                for citation in all_citations
+                if (
+                    citation.response_id
+                    in web_response_ids
+                    and citation.brand_id
+                    is not None
+                )
+            }
+
+            cited_brand_exposures = (
+                web_mention_exposures
+                & web_citation_exposures
+            )
+
+            cited_brand_response_sets: dict[
+                int,
+                set[int],
+            ] = defaultdict(set)
+
+            for (
+                response_id,
+                brand_id,
+            ) in cited_brand_exposures:
+
+                cited_brand_response_sets[
+                    brand_id
+                ].add(
+                    response_id
+                )
+
+            total_cited_brand_exposures = sum(
+                len(response_set)
+                for response_set
+                in cited_brand_response_sets.values()
+            )
+
+            cited_response_share_of_voice = []
+
+            for (
+                brand_id,
+                response_set,
+            ) in cited_brand_response_sets.items():
+
+                exposure_count = len(
+                    response_set
+                )
+
+                cited_response_share_of_voice.append(
+                    {
+                        "brand_id":
+                            brand_id,
+                        "name":
+                            brand_names.get(
+                                brand_id,
+                                "",
+                            ),
+                        "cited_response_exposures":
+                            exposure_count,
+                        "cited_response_share_of_voice":
+                            cls.percent(
+                                exposure_count,
+                                total_cited_brand_exposures,
+                            ),
+                        "cited_response_coverage":
+                            cls.percent(
+                                exposure_count,
+                                web_search_analyzed_runs,
+                            ),
+                    }
+                )
+
+            cited_response_share_of_voice.sort(
+                key=lambda item: (
+                    -item[
+                        "cited_response_exposures"
+                    ],
+                    item["name"].lower(),
+                )
+            )
+
+            target_cited_response_count = len(
+                cited_brand_response_sets.get(
+                    target_brand.id,
+                    set(),
+                )
+            )
+
+            target_cited_response_coverage = (
+                cls.percent(
+                    target_cited_response_count,
+                    web_search_analyzed_runs,
+                )
+            )
+
+            if total_cited_brand_exposures:
+                target_cited_response_share_of_voice = (
+                    cls.percent(
+                        target_cited_response_count,
+                        total_cited_brand_exposures,
+                    )
+                )
+            else:
+                target_cited_response_share_of_voice = (
                     0.0
                 )
 
@@ -1340,6 +1466,12 @@ class VisibilityMetricsService:
                     "target_grounded_response_share_of_voice":
                         target_grounded_response_share_of_voice,
 
+                    "target_cited_response_share_of_voice":
+                        target_cited_response_share_of_voice,
+
+                    "target_cited_response_coverage":
+                        target_cited_response_coverage,
+
                     "target_source_exposure_share_of_voice":
                         target_source_exposure_share_of_voice,
 
@@ -1486,6 +1618,12 @@ class VisibilityMetricsService:
             "target_grounded_response_share_of_voice":
                 target_grounded_response_share_of_voice,
 
+            "target_cited_response_share_of_voice":
+                target_cited_response_share_of_voice,
+
+            "target_cited_response_coverage":
+                target_cited_response_coverage,
+
             "target_source_exposure_share_of_voice":
                 target_source_exposure_share_of_voice,
 
@@ -1535,6 +1673,9 @@ class VisibilityMetricsService:
 
             "grounded_response_share_of_voice":
                 grounded_response_share_of_voice,
+
+            "cited_response_share_of_voice":
+                cited_response_share_of_voice,
 
             "source_exposure_share_of_voice":
                 source_exposure_share_of_voice,

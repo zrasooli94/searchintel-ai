@@ -52,6 +52,15 @@ class BrandCitationConversionItem(BaseModel):
     citation_exposure_conversion: float
 
 
+class CitedResponseShareOfVoiceItem(BaseModel):
+    brand_id: int
+    name: str
+
+    cited_response_exposures: int
+    cited_response_share_of_voice: float
+    cited_response_coverage: float
+
+
 class AIVisibilityMetrics(BaseModel):
     project_id: int
     experiment_id: int | None = None
@@ -94,7 +103,14 @@ class AIVisibilityMetrics(BaseModel):
     grounded_target_prompt_coverage: float | None
 
     # Hierarchy-safe web-grounded exposure.
+    # V1 retrieval-associated metric:
+    # textual mention + same-brand source retrieved.
     target_grounded_response_share_of_voice: float | None
+
+    # Stronger evidence-used metric:
+    # textual mention + same-brand citation.
+    target_cited_response_share_of_voice: float | None
+    target_cited_response_coverage: float | None
 
     unique_search_source_urls: int
     unique_search_domains: int
@@ -126,8 +142,14 @@ class AIVisibilityMetrics(BaseModel):
 
     # One grounded exposure per brand
     # per web-search response.
+    # Retained V1 name for backward compatibility.
+    # Semantically this is retrieval-associated.
     grounded_response_share_of_voice: list[
         GroundedResponseShareOfVoiceItem
+    ]
+
+    cited_response_share_of_voice: list[
+        CitedResponseShareOfVoiceItem
     ]
 
     source_exposure_share_of_voice: list[
