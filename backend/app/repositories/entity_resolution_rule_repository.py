@@ -74,3 +74,56 @@ class EntityResolutionRuleRepository:
         db.flush()
 
         return rule
+
+    @staticmethod
+    def list_by_status(
+        db: Session,
+        project_id: int,
+        status: str,
+    ) -> list[EntityResolutionRule]:
+
+        statement = (
+            select(EntityResolutionRule)
+            .where(
+                EntityResolutionRule.project_id
+                == project_id,
+                EntityResolutionRule.status
+                == status,
+            )
+            .order_by(
+                EntityResolutionRule.id
+            )
+        )
+
+        return list(
+            db.scalars(statement).all()
+        )
+
+    @staticmethod
+    def set_classification(
+        db: Session,
+        rule: EntityResolutionRule,
+        entity_type: str,
+        proposed_parent_name: str | None,
+        proposed_relationship_type: str | None,
+        classification_confidence: float,
+        classification_source: str,
+    ) -> EntityResolutionRule:
+
+        rule.entity_type = entity_type
+        rule.proposed_parent_name = (
+            proposed_parent_name
+        )
+        rule.proposed_relationship_type = (
+            proposed_relationship_type
+        )
+        rule.classification_confidence = (
+            classification_confidence
+        )
+        rule.classification_source = (
+            classification_source
+        )
+
+        db.flush()
+
+        return rule

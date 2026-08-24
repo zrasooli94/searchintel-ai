@@ -78,6 +78,26 @@ class EntityResolutionRule(Base):
         index=True,
     )
 
+    proposed_parent_name: Mapped[str | None] = mapped_column(
+        String(255),
+        nullable=True,
+    )
+
+    proposed_relationship_type: Mapped[str | None] = mapped_column(
+        String(40),
+        nullable=True,
+    )
+
+    classification_confidence: Mapped[float | None] = mapped_column(
+        Float,
+        nullable=True,
+    )
+
+    classification_source: Mapped[str | None] = mapped_column(
+        String(50),
+        nullable=True,
+    )
+
     confidence: Mapped[float] = mapped_column(
         Float,
         nullable=False,
