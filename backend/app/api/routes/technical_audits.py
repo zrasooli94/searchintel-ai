@@ -3,8 +3,14 @@ from sqlalchemy.orm import Session
 
 from app.db.deps import get_db
 from app.schemas.technical_audit import TechnicalAuditRead
+from app.schemas.technical_seo_summary import (
+    TechnicalSEOSummary,
+)
 from app.services.technical_audit_service import (
     TechnicalAuditService,
+)
+from app.services.technical_seo_summary_service import (
+    TechnicalSEOSummaryService,
 )
 
 
@@ -38,4 +44,18 @@ def get_latest_technical_audit(
     return TechnicalAuditService.latest(
         db,
         website_id,
+    )
+
+
+@router.get(
+    "/projects/{project_id}/technical-seo-summary",
+    response_model=TechnicalSEOSummary,
+)
+def technical_seo_summary(
+    project_id: int,
+    db: Session = Depends(get_db),
+):
+    return TechnicalSEOSummaryService.build(
+        db=db,
+        project_id=project_id,
     )
