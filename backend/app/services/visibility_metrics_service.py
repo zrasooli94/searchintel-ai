@@ -576,6 +576,9 @@ class VisibilityMetricsService:
 
         target_source_exposure_share_of_voice = None
         target_citation_exposure_share_of_voice = None
+        target_citation_exposure_conversion = None
+
+        brand_citation_conversion = []
 
         source_exposure_share_of_voice = []
         citation_exposure_share_of_voice = []
@@ -1153,6 +1156,110 @@ class VisibilityMetricsService:
                     0.0
                 )
 
+            # ---------------------------------------------
+            # Brand source -> citation exposure conversion
+            #
+            # Measures how often a retrieved first-party
+            # URL exposure becomes a citation exposure.
+            # ---------------------------------------------
+
+            brand_citation_conversion = []
+
+            conversion_brand_ids = (
+                set(source_exposure_counts.keys())
+                | set(citation_exposure_counts.keys())
+            )
+
+            for brand_id in conversion_brand_ids:
+
+                source_count = (
+                    source_exposure_counts.get(
+                        brand_id,
+                        0,
+                    )
+                )
+
+                citation_count = (
+                    citation_exposure_counts.get(
+                        brand_id,
+                        0,
+                    )
+                )
+
+                # A citation should normally correspond
+                # to a retrieved source exposure. Keep
+                # conversion bounded defensively.
+                conversion = (
+                    cls.percent(
+                        min(
+                            citation_count,
+                            source_count,
+                        ),
+                        source_count,
+                    )
+                    if source_count
+                    else 0.0
+                )
+
+                brand_citation_conversion.append(
+                    {
+                        "brand_id":
+                            brand_id,
+                        "name":
+                            project_brand_names.get(
+                                brand_id,
+                                f"Brand {brand_id}",
+                            ),
+                        "source_exposures":
+                            source_count,
+                        "citation_exposures":
+                            citation_count,
+                        "citation_exposure_conversion":
+                            conversion,
+                    }
+                )
+
+            brand_citation_conversion.sort(
+                key=lambda item: (
+                    -item[
+                        "citation_exposure_conversion"
+                    ],
+                    -item[
+                        "citation_exposures"
+                    ],
+                    item["name"].lower(),
+                )
+            )
+
+            target_source_exposure_count = (
+                source_exposure_counts.get(
+                    target_brand.id,
+                    0,
+                )
+            )
+
+            target_citation_exposure_count = (
+                citation_exposure_counts.get(
+                    target_brand.id,
+                    0,
+                )
+            )
+
+            if target_source_exposure_count:
+                target_citation_exposure_conversion = (
+                    cls.percent(
+                        min(
+                            target_citation_exposure_count,
+                            target_source_exposure_count,
+                        ),
+                        target_source_exposure_count,
+                    )
+                )
+            else:
+                target_citation_exposure_conversion = (
+                    None
+                )
+
             target_citation_pair_count = sum(
                 1
                 for _, brand_id
@@ -1238,6 +1345,9 @@ class VisibilityMetricsService:
 
                     "target_citation_exposure_share_of_voice":
                         target_citation_exposure_share_of_voice,
+
+                    "target_citation_exposure_conversion":
+                        target_citation_exposure_conversion,
 
                     "source_to_citation_conversion":
                         source_to_citation_conversion,
@@ -1382,6 +1492,9 @@ class VisibilityMetricsService:
             "target_citation_exposure_share_of_voice":
                 target_citation_exposure_share_of_voice,
 
+            "target_citation_exposure_conversion":
+                target_citation_exposure_conversion,
+
             "target_source_presence_rate":
                 target_source_presence_rate,
 
@@ -1428,4 +1541,7 @@ class VisibilityMetricsService:
 
             "citation_exposure_share_of_voice":
                 citation_exposure_share_of_voice,
+
+            "brand_citation_conversion":
+                brand_citation_conversion,
         }

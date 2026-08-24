@@ -42,6 +42,16 @@ class CitationExposureShareOfVoiceItem(BaseModel):
     citation_exposure_share_of_voice: float
 
 
+class BrandCitationConversionItem(BaseModel):
+    brand_id: int
+    name: str
+
+    source_exposures: int
+    citation_exposures: int
+
+    citation_exposure_conversion: float
+
+
 class AIVisibilityMetrics(BaseModel):
     project_id: int
     experiment_id: int | None = None
@@ -99,6 +109,9 @@ class AIVisibilityMetrics(BaseModel):
     target_source_exposure_share_of_voice: float | None
     target_citation_exposure_share_of_voice: float | None
 
+    # Null when target has zero source exposures.
+    target_citation_exposure_conversion: float | None
+
     resolved_first_party_source_rate: float | None
 
     # Frequency-based leaderboard.
@@ -123,4 +136,8 @@ class AIVisibilityMetrics(BaseModel):
 
     citation_exposure_share_of_voice: list[
         CitationExposureShareOfVoiceItem
+    ]
+
+    brand_citation_conversion: list[
+        BrandCitationConversionItem
     ]
