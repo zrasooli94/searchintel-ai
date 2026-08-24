@@ -10,6 +10,7 @@ class ShareOfVoiceItem(BaseModel):
 
 class AIVisibilityMetrics(BaseModel):
     project_id: int
+    experiment_id: int | None = None
     target_brand_id: int
     target_brand: str
 

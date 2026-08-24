@@ -37,6 +37,7 @@ def start_benchmark(
         db=db,
         project_id=project_id,
         model_id=data.model_id,
+        experiment_id=data.experiment_id,
     )
 
     background_tasks.add_task(

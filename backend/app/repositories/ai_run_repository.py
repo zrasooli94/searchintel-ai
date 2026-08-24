@@ -15,6 +15,7 @@ class AIRunRepository:
         model_id: int,
         run_type: str = "ad_hoc",
         include_in_metrics: bool = True,
+        experiment_id: int | None = None,
     ) -> AIRun:
 
         run = AIRun(
@@ -23,6 +24,7 @@ class AIRunRepository:
             model_id=model_id,
             run_type=run_type,
             include_in_metrics=include_in_metrics,
+            experiment_id=experiment_id,
             status="pending",
         )
 

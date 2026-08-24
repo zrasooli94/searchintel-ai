@@ -20,6 +20,15 @@ class AIRun(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
 
+    experiment_id: Mapped[int | None] = mapped_column(
+        ForeignKey(
+            "geo_experiments.id",
+            ondelete="SET NULL",
+        ),
+        nullable=True,
+        index=True,
+    )
+
     project_id: Mapped[int] = mapped_column(
         ForeignKey("projects.id", ondelete="CASCADE"),
         nullable=False,

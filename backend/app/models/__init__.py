@@ -1,3 +1,5 @@
+from app.models.geo_prompt_opportunity import GeoPromptOpportunity
+from app.models.geo_experiment import GeoExperiment
 from app.models.entity_resolution_rule import EntityResolutionRule
 from app.models.brand_alias import BrandAlias
 from app.models.benchmark_job_item import BenchmarkJobItem
@@ -20,6 +22,8 @@ from app.models.technical_recommendation import TechnicalRecommendation
 from app.models.website import Website
 
 __all__ = [
+    "GeoPromptOpportunity",
+    "GeoExperiment",
     "EntityResolutionRule",
     "BrandAlias",
     "BenchmarkJobItem",

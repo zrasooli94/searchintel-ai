@@ -13,6 +13,9 @@ from app.repositories.ai_run_repository import (
 from app.repositories.benchmark_repository import (
     BenchmarkRepository,
 )
+from app.repositories.geo_experiment_repository import (
+    GeoExperimentRepository,
+)
 from app.repositories.project_repository import (
     ProjectRepository,
 )
@@ -75,6 +78,7 @@ class BenchmarkService:
         db: Session,
         project_id: int,
         model_id: int,
+        experiment_id: int | None = None,
     ) -> dict:
         project = ProjectRepository.get_by_id(
             db,
@@ -104,6 +108,29 @@ class BenchmarkService:
                 detail="AI model is inactive.",
             )
 
+        if experiment_id is not None:
+            experiment = (
+                GeoExperimentRepository.get(
+                    db,
+                    experiment_id,
+                )
+            )
+
+            if experiment is None:
+                raise HTTPException(
+                    status_code=404,
+                    detail="Experiment not found.",
+                )
+
+            if experiment.project_id != project_id:
+                raise HTTPException(
+                    status_code=400,
+                    detail=(
+                        "Experiment does not belong "
+                        "to this project."
+                    ),
+                )
+
         prompts = (
             PromptRepository.list_active_by_project(
                 db,
@@ -124,6 +151,7 @@ class BenchmarkService:
             project_id=project_id,
             model_id=model_id,
             total_prompts=len(prompts),
+            experiment_id=experiment_id,
         )
 
         BenchmarkRepository.create_items(
@@ -238,6 +266,7 @@ class BenchmarkService:
                         model_id=job.model_id,
                         run_type="benchmark",
                         include_in_metrics=True,
+                        experiment_id=job.experiment_id,
                     )
 
                     item = BenchmarkRepository.get_item(

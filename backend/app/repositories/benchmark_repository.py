@@ -13,12 +13,14 @@ class BenchmarkRepository:
         project_id: int,
         model_id: int,
         total_prompts: int,
+        experiment_id: int | None = None,
     ) -> BenchmarkJob:
         job = BenchmarkJob(
             project_id=project_id,
             model_id=model_id,
             status="pending",
             total_prompts=total_prompts,
+            experiment_id=experiment_id,
             completed_runs=0,
             failed_runs=0,
         )

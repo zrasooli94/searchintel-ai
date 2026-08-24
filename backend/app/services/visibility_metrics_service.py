@@ -9,6 +9,9 @@ from app.models.ai_run import AIRun
 from app.models.brand import Brand
 from app.models.brand_mention import BrandMention
 from app.models.citation import Citation
+from app.repositories.geo_experiment_repository import (
+    GeoExperimentRepository,
+)
 from app.repositories.metric_snapshot_repository import (
     MetricSnapshotRepository,
 )
@@ -40,6 +43,8 @@ class VisibilityMetricsService:
         cls,
         db: Session,
         project_id: int,
+        experiment_id: int | None = None,
+        persist_snapshot: bool = True,
     ) -> dict:
         project = ProjectRepository.get_by_id(
             db,
@@ -51,6 +56,29 @@ class VisibilityMetricsService:
                 status_code=404,
                 detail="Project not found.",
             )
+
+        if experiment_id is not None:
+            experiment = (
+                GeoExperimentRepository.get(
+                    db,
+                    experiment_id,
+                )
+            )
+
+            if experiment is None:
+                raise HTTPException(
+                    status_code=404,
+                    detail="Experiment not found.",
+                )
+
+            if experiment.project_id != project_id:
+                raise HTTPException(
+                    status_code=400,
+                    detail=(
+                        "Experiment does not belong "
+                        "to this project."
+                    ),
+                )
 
         project_brands = (
             ProjectBrandRepository.list_brand_roles(
@@ -92,6 +120,14 @@ class VisibilityMetricsService:
                 .is_not(None),
             )
         )
+
+        if experiment_id is not None:
+            response_statement = (
+                response_statement.where(
+                    AIRun.experiment_id
+                    == experiment_id
+                )
+            )
 
         analyzed_rows = list(
             db.execute(
@@ -345,26 +381,29 @@ class VisibilityMetricsService:
                 visibility_score,
         }
 
-        for metric_name, value in metrics.items():
-            MetricSnapshotRepository.create(
-                db=db,
-                project_id=project_id,
-                brand_id=target_brand.id,
-                metric_name=metric_name,
-                metric_value=value,
-                sample_size=analyzed_runs,
-                details={
-                    "analyzed_prompts":
-                        len(
-                            analyzed_prompt_ids
-                        )
-                },
-            )
+        if persist_snapshot:
+            for metric_name, value in metrics.items():
+                MetricSnapshotRepository.create(
+                    db=db,
+                    project_id=project_id,
+                    brand_id=target_brand.id,
+                    metric_name=metric_name,
+                    metric_value=value,
+                    sample_size=analyzed_runs,
+                    details={
+                        "analyzed_prompts":
+                            len(
+                                analyzed_prompt_ids
+                            )
+                    },
+                    experiment_id=experiment_id,
+                )
 
-        db.commit()
+            db.commit()
 
         return {
             "project_id": project_id,
+            "experiment_id": experiment_id,
             "target_brand_id":
                 target_brand.id,
             "target_brand":

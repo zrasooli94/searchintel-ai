@@ -1,3 +1,5 @@
+from app.api.routes.geo_opportunities import router as geo_opportunities_router
+from app.api.routes.geo_experiments import router as geo_experiments_router
 from app.api.routes.brand_aliases import router as brand_aliases_router
 from app.api.routes.benchmarks import router as benchmarks_router
 from app.api.routes.visibility_metrics import router as visibility_metrics_router
@@ -31,3 +33,5 @@ api_router.include_router(competitors_router)
 api_router.include_router(visibility_metrics_router)
 api_router.include_router(benchmarks_router)
 api_router.include_router(brand_aliases_router)
+api_router.include_router(geo_experiments_router)
+api_router.include_router(geo_opportunities_router)

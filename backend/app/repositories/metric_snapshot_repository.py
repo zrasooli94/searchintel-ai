@@ -16,6 +16,7 @@ class MetricSnapshotRepository:
         metric_value: float,
         sample_size: int,
         details: dict | None = None,
+        experiment_id: int | None = None,
     ) -> MetricSnapshot:
         snapshot = MetricSnapshot(
             project_id=project_id,
@@ -26,6 +27,7 @@ class MetricSnapshotRepository:
             ),
             sample_size=sample_size,
             details=details,
+            experiment_id=experiment_id,
         )
 
         db.add(snapshot)

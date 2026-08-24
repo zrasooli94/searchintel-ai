@@ -5,6 +5,7 @@ from pydantic import BaseModel, ConfigDict
 
 class BenchmarkStartRequest(BaseModel):
     model_id: int
+    experiment_id: int | None = None
 
 
 class BenchmarkJobRead(BaseModel):
