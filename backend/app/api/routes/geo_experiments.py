@@ -10,6 +10,10 @@ from app.db.deps import get_db
 from app.repositories.geo_experiment_repository import (
     GeoExperimentRepository,
 )
+from app.schemas.experiment_summary import (
+    ExperimentsSummary,
+)
+
 from app.schemas.geo_experiment import (
     AdoptRunsResult,
     ExperimentComparison,
@@ -22,6 +26,10 @@ from app.schemas.visibility_metrics import (
 from app.schemas.visibility_summary import (
     VisibilitySummary,
 )
+from app.services.experiment_summary_service import (
+    ExperimentSummaryService,
+)
+
 from app.services.experiment_comparison_service import (
     ExperimentComparisonService,
 )
@@ -156,6 +164,20 @@ def experiment_visibility_summary(
     return VisibilitySummaryService.build(
         db=db,
         experiment_id=experiment_id,
+    )
+
+
+@router.get(
+    "/projects/{project_id}/experiments-summary",
+    response_model=ExperimentsSummary,
+)
+def experiments_summary(
+    project_id: int,
+    db: Session = Depends(get_db),
+):
+    return ExperimentSummaryService.build(
+        db=db,
+        project_id=project_id,
     )
 
 

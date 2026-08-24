@@ -380,3 +380,93 @@ export type GeoOpportunitySummary = {
 
   opportunities: GeoPromptOpportunity[];
 };
+
+export type ExperimentSummaryItem = {
+  id: number;
+  name: string;
+
+  phase: string;
+  status: string;
+  benchmark_mode: string;
+
+  runs: number;
+  prompts: number;
+
+  mention_rate: number;
+  prompt_coverage: number;
+  citation_rate: number;
+
+  visibility_score_v1: number;
+  web_visibility_score_v1: number | null;
+
+  target_response_coverage: number;
+  grounded_target_mention_rate: number | null;
+  target_cited_response_coverage: number | null;
+  target_source_presence_rate: number | null;
+
+  started_at: string | null;
+  completed_at: string | null;
+  created_at: string;
+};
+
+export type ComparableExperimentPair = {
+  baseline_id: number;
+  baseline_name: string;
+
+  comparison_id: number;
+  comparison_name: string;
+
+  benchmark_mode: string;
+};
+
+export type ExperimentsSummary = {
+  project_id: number;
+
+  total_experiments: number;
+  completed_experiments: number;
+  draft_experiments: number;
+
+  experiments: ExperimentSummaryItem[];
+
+  comparable_pairs: ComparableExperimentPair[];
+};
+
+export type ExperimentMetricValue = {
+  baseline: number | null;
+  comparison: number | null;
+  delta: number | null;
+};
+
+export type ExperimentComparison = {
+  project_id: number;
+
+  baseline_experiment_id: number;
+  comparison_experiment_id: number;
+
+  baseline_name: string;
+  comparison_name: string;
+
+  baseline_runs: number;
+  comparison_runs: number;
+
+  mention_rate: ExperimentMetricValue;
+  prompt_coverage: ExperimentMetricValue;
+  citation_rate: ExperimentMetricValue;
+  target_share_of_voice: ExperimentMetricValue;
+  visibility_score_v1: ExperimentMetricValue;
+  average_mention_position: ExperimentMetricValue;
+
+  target_source_presence_rate: ExperimentMetricValue;
+  target_source_prompt_coverage: ExperimentMetricValue;
+
+  grounded_target_mention_rate: ExperimentMetricValue;
+  grounded_target_prompt_coverage: ExperimentMetricValue;
+
+  source_to_citation_conversion: ExperimentMetricValue;
+  target_source_to_citation_conversion: ExperimentMetricValue;
+
+  target_source_share_of_voice: ExperimentMetricValue;
+  target_citation_share_of_voice: ExperimentMetricValue;
+
+  resolved_first_party_source_rate: ExperimentMetricValue;
+};

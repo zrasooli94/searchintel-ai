@@ -98,6 +98,19 @@ class ExperimentComparisonService:
             )
         )
 
+        if (
+            baseline.get("benchmark_mode")
+            != comparison.get("benchmark_mode")
+        ):
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "Experiments with different "
+                    "benchmark modes cannot be "
+                    "directly compared."
+                ),
+            )
+
         def compare_metric(
             name: str,
         ) -> dict:

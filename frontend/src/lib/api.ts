@@ -1,5 +1,7 @@
 import type {
   AIVisibilityMetrics,
+  ExperimentComparison,
+  ExperimentsSummary,
   GeoExperiment,
   GeoOpportunitySummary,
   TechnicalSEOSummary,
@@ -140,5 +142,22 @@ export async function getLatestCompletedPromptOpportunities(): Promise<GeoOpport
 
   return fetchJson<GeoOpportunitySummary>(
     `${apiBaseUrl()}/geo-experiments/${experiment.id}/opportunities`,
+  );
+}
+
+
+export async function getExperimentsSummary(): Promise<ExperimentsSummary> {
+  return fetchJson<ExperimentsSummary>(
+    `${apiBaseUrl()}/projects/${projectId()}/experiments-summary`,
+  );
+}
+
+
+export async function getExperimentComparison(
+  baselineId: number,
+  comparisonId: number,
+): Promise<ExperimentComparison> {
+  return fetchJson<ExperimentComparison>(
+    `${apiBaseUrl()}/projects/${projectId()}/geo-experiments/compare?baseline_id=${baselineId}&comparison_id=${comparisonId}`,
   );
 }
