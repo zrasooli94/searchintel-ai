@@ -377,6 +377,124 @@ class VisibilityMetricsService:
                 break
 
         # -------------------------------------------------
+        # Brand response-exposure metrics
+        #
+        # A brand counts at most once per AI response,
+        # even when the response mentions both the parent
+        # brand and one or more products that roll up to it.
+        # -------------------------------------------------
+
+        brand_response_sets: dict[
+            int,
+            set[int],
+        ] = defaultdict(set)
+
+        brand_names: dict[
+            int,
+            str,
+        ] = {}
+
+        for mention, brand_name in all_mentions:
+
+            if mention.brand_id is None:
+                continue
+
+            brand_response_sets[
+                mention.brand_id
+            ].add(
+                mention.response_id
+            )
+
+            if mention.brand_id not in brand_names:
+                brand_names[
+                    mention.brand_id
+                ] = (
+                    brand_name
+                    or mention.mention_text
+                )
+
+        total_brand_response_exposures = sum(
+            len(response_set)
+            for response_set
+            in brand_response_sets.values()
+        )
+
+        response_share_of_voice = []
+
+        for (
+            brand_id,
+            response_set,
+        ) in brand_response_sets.items():
+
+            response_exposures = len(
+                response_set
+            )
+
+            response_sov = cls.percent(
+                response_exposures,
+                total_brand_response_exposures,
+            )
+
+            response_coverage = cls.percent(
+                response_exposures,
+                analyzed_runs,
+            )
+
+            response_share_of_voice.append(
+                {
+                    "brand_id":
+                        brand_id,
+                    "name":
+                        brand_names.get(
+                            brand_id,
+                            "",
+                        ),
+                    "response_exposures":
+                        response_exposures,
+                    "response_share_of_voice":
+                        response_sov,
+                    "response_coverage":
+                        response_coverage,
+                }
+            )
+
+        response_share_of_voice.sort(
+            key=lambda item: (
+                -item[
+                    "response_exposures"
+                ],
+                item["name"].lower(),
+            )
+        )
+
+        target_response_ids_resolved = (
+            brand_response_sets.get(
+                target_brand.id,
+                set(),
+            )
+        )
+
+        target_response_coverage = (
+            cls.percent(
+                len(
+                    target_response_ids_resolved
+                ),
+                analyzed_runs,
+            )
+        )
+
+        target_response_share_of_voice = (
+            cls.percent(
+                len(
+                    target_response_ids_resolved
+                ),
+                total_brand_response_exposures,
+            )
+            if total_brand_response_exposures
+            else 0.0
+        )
+
+        # -------------------------------------------------
         # Existing V1 score
         # -------------------------------------------------
 
@@ -446,6 +564,9 @@ class VisibilityMetricsService:
 
         grounded_target_mention_rate = None
         grounded_target_prompt_coverage = None
+
+        target_grounded_response_share_of_voice = None
+        grounded_response_share_of_voice = []
 
         source_to_citation_conversion = None
         target_source_to_citation_conversion = None
@@ -533,6 +654,133 @@ class VisibilityMetricsService:
                     len(web_prompt_ids),
                 )
             )
+
+            # ---------------------------------------------
+            # Web-grounded brand response exposure
+            #
+            # A brand counts once per response only when:
+            # 1. it has a resolved textual mention, and
+            # 2. a source belonging to that same brand was
+            #    retrieved in that same response.
+            # ---------------------------------------------
+
+            web_mention_exposures: set[
+                tuple[int, int]
+            ] = {
+                (
+                    mention.response_id,
+                    mention.brand_id,
+                )
+                for mention, _brand_name
+                in all_mentions
+                if (
+                    mention.response_id
+                    in web_response_ids
+                    and mention.brand_id
+                    is not None
+                )
+            }
+
+            web_source_exposures: set[
+                tuple[int, int]
+            ] = {
+                (
+                    source.response_id,
+                    source.brand_id,
+                )
+                for source in web_sources
+                if source.brand_id is not None
+            }
+
+            grounded_brand_exposures = (
+                web_mention_exposures
+                & web_source_exposures
+            )
+
+            grounded_brand_response_sets: dict[
+                int,
+                set[int],
+            ] = defaultdict(set)
+
+            for (
+                response_id,
+                brand_id,
+            ) in grounded_brand_exposures:
+
+                grounded_brand_response_sets[
+                    brand_id
+                ].add(
+                    response_id
+                )
+
+            total_grounded_brand_exposures = sum(
+                len(response_set)
+                for response_set
+                in grounded_brand_response_sets.values()
+            )
+
+            grounded_response_share_of_voice = []
+
+            for (
+                brand_id,
+                response_set,
+            ) in grounded_brand_response_sets.items():
+
+                exposure_count = len(
+                    response_set
+                )
+
+                grounded_response_share_of_voice.append(
+                    {
+                        "brand_id":
+                            brand_id,
+                        "name":
+                            brand_names.get(
+                                brand_id,
+                                "",
+                            ),
+                        "grounded_response_exposures":
+                            exposure_count,
+                        "grounded_response_share_of_voice":
+                            cls.percent(
+                                exposure_count,
+                                total_grounded_brand_exposures,
+                            ),
+                        "grounded_response_coverage":
+                            cls.percent(
+                                exposure_count,
+                                web_search_analyzed_runs,
+                            ),
+                    }
+                )
+
+            grounded_response_share_of_voice.sort(
+                key=lambda item: (
+                    -item[
+                        "grounded_response_exposures"
+                    ],
+                    item["name"].lower(),
+                )
+            )
+
+            target_grounded_exposure_count = len(
+                grounded_brand_response_sets.get(
+                    target_brand.id,
+                    set(),
+                )
+            )
+
+            if total_grounded_brand_exposures:
+                target_grounded_response_share_of_voice = (
+                    cls.percent(
+                        target_grounded_exposure_count,
+                        total_grounded_brand_exposures,
+                    )
+                )
+            else:
+                target_grounded_response_share_of_voice = (
+                    0.0
+                )
 
             # A source can appear in several search
             # calls. Conversion and SOV use unique,
@@ -739,6 +987,10 @@ class VisibilityMetricsService:
                 citation_rate,
             "target_share_of_voice":
                 target_sov,
+            "target_response_share_of_voice":
+                target_response_share_of_voice,
+            "target_response_coverage":
+                target_response_coverage,
             "visibility_score_v1":
                 visibility_score,
         }
@@ -757,6 +1009,9 @@ class VisibilityMetricsService:
 
                     "grounded_target_prompt_coverage":
                         grounded_target_prompt_coverage,
+
+                    "target_grounded_response_share_of_voice":
+                        target_grounded_response_share_of_voice,
 
                     "source_to_citation_conversion":
                         source_to_citation_conversion,
@@ -878,6 +1133,10 @@ class VisibilityMetricsService:
 
             "target_share_of_voice":
                 target_sov,
+            "target_response_share_of_voice":
+                target_response_share_of_voice,
+            "target_response_coverage":
+                target_response_coverage,
 
             "position_quality":
                 position_quality,
@@ -887,6 +1146,9 @@ class VisibilityMetricsService:
 
             "web_visibility_score_v1":
                 web_visibility_score_v1,
+
+            "target_grounded_response_share_of_voice":
+                target_grounded_response_share_of_voice,
 
             "target_source_presence_rate":
                 target_source_presence_rate,
@@ -923,4 +1185,9 @@ class VisibilityMetricsService:
 
             "share_of_voice":
                 share_of_voice,
+            "response_share_of_voice":
+                response_share_of_voice,
+
+            "grounded_response_share_of_voice":
+                grounded_response_share_of_voice,
         }

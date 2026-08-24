@@ -8,6 +8,24 @@ class ShareOfVoiceItem(BaseModel):
     share_of_voice: float
 
 
+class ResponseShareOfVoiceItem(BaseModel):
+    brand_id: int
+    name: str
+
+    response_exposures: int
+    response_share_of_voice: float
+    response_coverage: float
+
+
+class GroundedResponseShareOfVoiceItem(BaseModel):
+    brand_id: int
+    name: str
+
+    grounded_response_exposures: int
+    grounded_response_share_of_voice: float
+    grounded_response_coverage: float
+
+
 class AIVisibilityMetrics(BaseModel):
     project_id: int
     experiment_id: int | None = None
@@ -28,7 +46,13 @@ class AIVisibilityMetrics(BaseModel):
     citation_rate: float
 
     average_mention_position: float | None
+
+    # Mention-frequency SOV.
     target_share_of_voice: float
+
+    # Hierarchy-safe brand exposure metrics.
+    target_response_share_of_voice: float
+    target_response_coverage: float
 
     position_quality: float
     visibility_score_v1: float
@@ -43,6 +67,9 @@ class AIVisibilityMetrics(BaseModel):
     grounded_target_mention_rate: float | None
     grounded_target_prompt_coverage: float | None
 
+    # Hierarchy-safe web-grounded exposure.
+    target_grounded_response_share_of_voice: float | None
+
     unique_search_source_urls: int
     unique_search_domains: int
 
@@ -54,4 +81,18 @@ class AIVisibilityMetrics(BaseModel):
 
     resolved_first_party_source_rate: float | None
 
-    share_of_voice: list[ShareOfVoiceItem]
+    # Frequency-based leaderboard.
+    share_of_voice: list[
+        ShareOfVoiceItem
+    ]
+
+    # One exposure per brand per response.
+    response_share_of_voice: list[
+        ResponseShareOfVoiceItem
+    ]
+
+    # One grounded exposure per brand
+    # per web-search response.
+    grounded_response_share_of_voice: list[
+        GroundedResponseShareOfVoiceItem
+    ]
