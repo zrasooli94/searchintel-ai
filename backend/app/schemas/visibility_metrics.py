@@ -32,12 +32,16 @@ class AIVisibilityMetrics(BaseModel):
 
     position_quality: float
     visibility_score_v1: float
+    web_visibility_score_v1: float | None
 
     # Web-search-only metrics.
     # Null means no eligible web-search runs
     # were present in this measurement set.
     target_source_presence_rate: float | None
     target_source_prompt_coverage: float | None
+
+    grounded_target_mention_rate: float | None
+    grounded_target_prompt_coverage: float | None
 
     unique_search_source_urls: int
     unique_search_domains: int

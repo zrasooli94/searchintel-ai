@@ -54,6 +54,8 @@ class ExperimentComparison(BaseModel):
 
     target_source_presence_rate: ExperimentMetricValue
     target_source_prompt_coverage: ExperimentMetricValue
+    grounded_target_mention_rate: ExperimentMetricValue
+    grounded_target_prompt_coverage: ExperimentMetricValue
 
     source_to_citation_conversion: ExperimentMetricValue
     target_source_to_citation_conversion: ExperimentMetricValue

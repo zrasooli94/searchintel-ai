@@ -168,6 +168,16 @@ class ExperimentComparisonService:
                     "target_source_prompt_coverage"
                 ),
 
+            "grounded_target_mention_rate":
+                compare_metric(
+                    "grounded_target_mention_rate"
+                ),
+
+            "grounded_target_prompt_coverage":
+                compare_metric(
+                    "grounded_target_prompt_coverage"
+                ),
+
             "source_to_citation_conversion":
                 compare_metric(
                     "source_to_citation_conversion"

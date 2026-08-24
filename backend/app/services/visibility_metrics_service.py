@@ -444,6 +444,9 @@ class VisibilityMetricsService:
         target_source_presence_rate = None
         target_source_prompt_coverage = None
 
+        grounded_target_mention_rate = None
+        grounded_target_prompt_coverage = None
+
         source_to_citation_conversion = None
         target_source_to_citation_conversion = None
 
@@ -454,6 +457,8 @@ class VisibilityMetricsService:
 
         unique_search_source_urls = 0
         unique_search_domains = 0
+
+        web_visibility_score_v1 = None
 
         if web_search_analyzed_runs:
 
@@ -485,6 +490,45 @@ class VisibilityMetricsService:
                 cls.percent(
                     len(
                         target_source_prompt_ids
+                    ),
+                    len(web_prompt_ids),
+                )
+            )
+
+            web_target_mention_response_ids = {
+                response_id
+                for response_id
+                in target_response_ids
+                if response_id
+                in web_response_ids
+            }
+
+            grounded_response_ids = (
+                web_target_mention_response_ids
+                & target_source_response_ids
+            )
+
+            grounded_prompt_ids = {
+                web_response_to_prompt[
+                    response_id
+                ]
+                for response_id
+                in grounded_response_ids
+            }
+
+            grounded_target_mention_rate = (
+                cls.percent(
+                    len(
+                        grounded_response_ids
+                    ),
+                    web_search_analyzed_runs,
+                )
+            )
+
+            grounded_target_prompt_coverage = (
+                cls.percent(
+                    len(
+                        grounded_prompt_ids
                     ),
                     len(web_prompt_ids),
                 )
@@ -659,6 +703,29 @@ class VisibilityMetricsService:
                     )
                 )
 
+            web_visibility_score_v1 = round(
+                (
+                    (
+                        grounded_target_mention_rate
+                        or 0.0
+                    ) * 0.30
+                    + (
+                        target_source_presence_rate
+                        or 0.0
+                    ) * 0.25
+                    + citation_rate * 0.20
+                    + (
+                        grounded_target_prompt_coverage
+                        or 0.0
+                    ) * 0.15
+                    + (
+                        target_source_share_of_voice
+                        or 0.0
+                    ) * 0.10
+                ),
+                2,
+            )
+
         # -------------------------------------------------
         # Metric persistence
         # -------------------------------------------------
@@ -685,6 +752,12 @@ class VisibilityMetricsService:
                     "target_source_prompt_coverage":
                         target_source_prompt_coverage,
 
+                    "grounded_target_mention_rate":
+                        grounded_target_mention_rate,
+
+                    "grounded_target_prompt_coverage":
+                        grounded_target_prompt_coverage,
+
                     "source_to_citation_conversion":
                         source_to_citation_conversion,
 
@@ -699,6 +772,9 @@ class VisibilityMetricsService:
 
                     "resolved_first_party_source_rate":
                         resolved_first_party_source_rate,
+
+                    "web_visibility_score_v1":
+                        web_visibility_score_v1,
                 }
             )
 
@@ -741,11 +817,14 @@ class VisibilityMetricsService:
                         if metric_name in {
                             "target_source_presence_rate",
                             "target_source_prompt_coverage",
+                            "grounded_target_mention_rate",
+                            "grounded_target_prompt_coverage",
                             "source_to_citation_conversion",
                             "target_source_to_citation_conversion",
                             "target_source_share_of_voice",
                             "target_citation_share_of_voice",
                             "resolved_first_party_source_rate",
+                            "web_visibility_score_v1",
                         }
                         else analyzed_runs
                     ),
@@ -806,11 +885,20 @@ class VisibilityMetricsService:
             "visibility_score_v1":
                 visibility_score,
 
+            "web_visibility_score_v1":
+                web_visibility_score_v1,
+
             "target_source_presence_rate":
                 target_source_presence_rate,
 
             "target_source_prompt_coverage":
                 target_source_prompt_coverage,
+
+            "grounded_target_mention_rate":
+                grounded_target_mention_rate,
+
+            "grounded_target_prompt_coverage":
+                grounded_target_prompt_coverage,
 
             "unique_search_source_urls":
                 unique_search_source_urls,

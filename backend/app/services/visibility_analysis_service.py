@@ -212,21 +212,8 @@ class VisibilityAnalysisService:
         cls,
         brand_name: str,
     ) -> set[str]:
-        aliases = {
-            brand_name.strip(),
-        }
-
-        lower = brand_name.lower().strip()
-
-        if lower.endswith(" ai"):
-            aliases.add(
-                brand_name[:-3].strip()
-            )
-
         return {
-            alias
-            for alias in aliases
-            if len(alias) >= 2
+            brand_name.strip()
         }
 
     @staticmethod
