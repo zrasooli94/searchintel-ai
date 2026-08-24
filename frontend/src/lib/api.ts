@@ -1,6 +1,7 @@
 import type {
   AIVisibilityMetrics,
   GeoExperiment,
+  GeoOpportunitySummary,
   TechnicalSEOSummary,
   VisibilitySummary,
 } from "@/lib/types";
@@ -109,5 +110,35 @@ export async function getLatestCompletedAIVisibilityMetrics(): Promise<AIVisibil
 
   return fetchJson<AIVisibilityMetrics>(
     `${apiBaseUrl()}/geo-experiments/${experiment.id}/visibility-metrics`,
+  );
+}
+
+
+export async function getLatestCompletedPromptOpportunities(): Promise<GeoOpportunitySummary> {
+  const experiments = await fetchJson<
+    GeoExperiment[]
+  >(
+    `${apiBaseUrl()}/projects/${projectId()}/geo-experiments`,
+  );
+
+  const completed = experiments
+    .filter(
+      (experiment) =>
+        experiment.status === "completed",
+    )
+    .sort(
+      (a, b) => b.id - a.id,
+    );
+
+  if (completed.length === 0) {
+    throw new Error(
+      "No completed experiment exists for this project.",
+    );
+  }
+
+  const experiment = completed[0];
+
+  return fetchJson<GeoOpportunitySummary>(
+    `${apiBaseUrl()}/geo-experiments/${experiment.id}/opportunities`,
   );
 }

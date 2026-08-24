@@ -317,3 +317,66 @@ export type AIVisibilityMetrics = {
   brand_citation_conversion:
     BrandCitationConversionItem[];
 };
+
+export type PromptGapCompetitorEvidence = {
+  brand_id: number;
+  name: string;
+  run_coverage: number;
+  mention_count: number;
+  average_position: number;
+};
+
+export type GeoPromptOpportunity = {
+  id: number;
+  experiment_id: number;
+  project_id: number;
+  prompt_id: number;
+  target_brand_id: number;
+
+  prompt_text: string;
+  category: string;
+  intent: string | null;
+
+  run_count: number;
+  target_mention_runs: number;
+  target_mention_rate: number;
+
+  top_competitor_brand_id: number | null;
+  top_competitor_name: string | null;
+  top_competitor_run_coverage: number;
+
+  opportunity_score: number;
+  priority: string;
+  gap_type: string;
+
+  evidence: {
+    competitors?: PromptGapCompetitorEvidence[];
+    visibility_gap?: number;
+    category_weight?: number;
+    benchmark_mode?: string;
+    measurement_basis?: string;
+    web_grounding_note?: string | null;
+  } | null;
+
+  recommendation: string;
+};
+
+export type GeoOpportunitySummary = {
+  experiment_id: number;
+  project_id: number;
+
+  target_brand_id: number;
+  target_brand: string;
+
+  total_prompts: number;
+
+  high_priority: number;
+  medium_priority: number;
+  low_priority: number;
+
+  target_absent_prompts: number;
+  competitor_dominance_prompts: number;
+  covered_prompts: number;
+
+  opportunities: GeoPromptOpportunity[];
+};

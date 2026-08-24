@@ -1,19 +1,27 @@
-import SectionPage from "@/components/dashboard/section-page";
+import PromptGapsDashboard from "@/components/dashboard/prompt-gaps-dashboard";
+
 import {
+  getLatestCompletedPromptOpportunities,
   getLatestCompletedVisibilitySummary,
 } from "@/lib/api";
 
+
 export const dynamic = "force-dynamic";
 
+
 export default async function Page() {
-  const summary =
-    await getLatestCompletedVisibilitySummary();
+  const [
+    visibilitySummary,
+    gaps,
+  ] = await Promise.all([
+    getLatestCompletedVisibilitySummary(),
+    getLatestCompletedPromptOpportunities(),
+  ]);
 
   return (
-    <SectionPage
-      summary={summary}
-      title='Prompt Gaps'
-      description='Find high-value prompts where competitors appear but the target brand has weak or missing visibility.'
+    <PromptGapsDashboard
+      visibilitySummary={visibilitySummary}
+      gaps={gaps}
     />
   );
 }
