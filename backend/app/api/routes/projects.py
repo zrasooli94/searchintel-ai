@@ -3,12 +3,18 @@ from sqlalchemy.orm import Session
 
 from app.db.deps import get_db
 from app.schemas.project import ProjectCreate, ProjectRead
+from app.schemas.project_workspace import (
+    ProjectWorkspaceRead,
+)
 from app.schemas.project_brand import (
     ProjectBrandCreate,
     ProjectBrandRead,
 )
 from app.services.project_brand_service import ProjectBrandService
 from app.services.project_service import ProjectService
+from app.services.project_workspace_service import (
+    ProjectWorkspaceService,
+)
 
 
 router = APIRouter(
@@ -40,6 +46,18 @@ def list_projects(
     db: Session = Depends(get_db),
 ):
     return ProjectService.list_all(db)
+
+
+@router.get(
+    "/workspaces",
+    response_model=list[ProjectWorkspaceRead],
+)
+def list_project_workspaces(
+    db: Session = Depends(get_db),
+):
+    return ProjectWorkspaceService.list_all(
+        db,
+    )
 
 
 @router.get(
