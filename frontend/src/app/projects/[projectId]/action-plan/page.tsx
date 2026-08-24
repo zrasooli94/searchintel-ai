@@ -9,13 +9,34 @@ import {
 export const dynamic = "force-dynamic";
 
 
-export default async function Page() {
+type Props = {
+  params: Promise<{
+    projectId: string;
+  }>;
+};
+
+
+export default async function Page({
+  params,
+}: Props) {
+  const {
+    projectId: rawProjectId,
+  } = await params;
+
+  const projectId = Number(
+    rawProjectId,
+  );
+
   const [
     visibilitySummary,
     plan,
   ] = await Promise.all([
-    getLatestCompletedVisibilitySummary(),
-    getActionPlanSummary(),
+    getLatestCompletedVisibilitySummary(
+      projectId,
+    ),
+    getActionPlanSummary(
+      projectId,
+    ),
   ]);
 
   return (

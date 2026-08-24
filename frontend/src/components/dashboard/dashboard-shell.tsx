@@ -7,63 +7,67 @@ import type { ReactNode } from "react";
 import {
   Bot,
   ChevronRight,
+  CircleCheck,
   Database,
   FlaskConical,
+  FolderKanban,
   LayoutDashboard,
   ListChecks,
   Radar,
   Search,
   Sparkles,
-  CircleCheck,
 } from "lucide-react";
 
 import type {
   VisibilitySummary,
 } from "@/lib/types";
 
+
 const navigation = [
   {
     label: "Overview",
-    href: "/",
+    path: "",
     icon: LayoutDashboard,
   },
   {
     label: "Technical SEO",
-    href: "/technical-seo",
+    path: "/technical-seo",
     icon: Search,
   },
   {
     label: "AI Visibility",
-    href: "/ai-visibility",
+    path: "/ai-visibility",
     icon: Bot,
   },
   {
     label: "Prompt Gaps",
-    href: "/prompt-gaps",
+    path: "/prompt-gaps",
     icon: Radar,
   },
   {
     label: "Experiments",
-    href: "/experiments",
+    path: "/experiments",
     icon: FlaskConical,
   },
   {
     label: "Entities",
-    href: "/entities",
+    path: "/entities",
     icon: Database,
   },
   {
     label: "Action Plan",
-    href: "/action-plan",
+    path: "/action-plan",
     icon: ListChecks,
   },
 ];
+
 
 type Props = {
   summary: VisibilitySummary;
   title: string;
   children: ReactNode;
 };
+
 
 export default function DashboardShell({
   summary,
@@ -72,10 +76,16 @@ export default function DashboardShell({
 }: Props) {
   const pathname = usePathname();
 
+  const base =
+    `/projects/${summary.project_id}`;
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
       <aside className="fixed inset-y-0 left-0 hidden w-64 border-r border-slate-800 bg-slate-950 lg:block">
-        <div className="flex h-20 items-center border-b border-slate-800 px-6">
+        <Link
+          href="/"
+          className="flex h-20 items-center border-b border-slate-800 px-6"
+        >
           <div className="mr-3 rounded-xl bg-cyan-400/10 p-2">
             <Sparkles className="h-5 w-5 text-cyan-400" />
           </div>
@@ -89,19 +99,24 @@ export default function DashboardShell({
               Search Intelligence
             </div>
           </div>
-        </div>
+        </Link>
 
         <nav className="space-y-1 p-4">
           {navigation.map(
             ({
               label,
-              href,
+              path,
               icon: Icon,
             }) => {
+              const href =
+                `${base}${path}`;
+
               const active =
-                href === "/"
-                  ? pathname === "/"
-                  : pathname.startsWith(href);
+                path === ""
+                  ? pathname === base
+                  : pathname.startsWith(
+                      href,
+                    );
 
               return (
                 <Link
@@ -127,18 +142,28 @@ export default function DashboardShell({
           )}
         </nav>
 
-        <div className="absolute bottom-5 left-4 right-4 rounded-2xl border border-slate-800 bg-slate-900 p-4">
-          <div className="text-xs uppercase tracking-wider text-slate-500">
-            Current target
+        <div className="absolute bottom-5 left-4 right-4 space-y-3">
+          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4">
+            <div className="text-xs uppercase tracking-wider text-slate-500">
+              Current target
+            </div>
+
+            <div className="mt-2 font-medium text-white">
+              {summary.target.brand}
+            </div>
+
+            <div className="mt-1 text-xs text-slate-500">
+              Project #{summary.project_id}
+            </div>
           </div>
 
-          <div className="mt-2 font-medium text-white">
-            {summary.target.brand}
-          </div>
-
-          <div className="mt-1 text-xs text-slate-500">
-            Project #{summary.project_id}
-          </div>
+          <Link
+            href="/"
+            className="flex items-center justify-center gap-2 rounded-xl border border-slate-800 bg-slate-950 px-3 py-2.5 text-xs font-medium text-slate-400 transition hover:bg-slate-900 hover:text-white"
+          >
+            <FolderKanban className="h-4 w-4" />
+            Switch project
+          </Link>
         </div>
       </aside>
 

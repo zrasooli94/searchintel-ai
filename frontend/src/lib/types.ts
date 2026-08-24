@@ -630,3 +630,29 @@ export type ActionPlanSummary = {
 
   actions: ActionPlanItem[];
 };
+
+export type ProjectWorkspace = {
+  id: number;
+  name: string;
+  description: string | null;
+
+  target_brand_id: number | null;
+  target_brand: string | null;
+
+  website_id: number | null;
+  domain: string | null;
+  base_url: string | null;
+
+  competitor_count: number;
+
+  experiment_count: number;
+  completed_experiment_count: number;
+
+  latest_completed_experiment_id:
+    | number
+    | null;
+
+  latest_completed_experiment_name:
+    | string
+    | null;
+};

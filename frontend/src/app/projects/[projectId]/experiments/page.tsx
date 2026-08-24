@@ -10,13 +10,34 @@ import {
 export const dynamic = "force-dynamic";
 
 
-export default async function Page() {
+type Props = {
+  params: Promise<{
+    projectId: string;
+  }>;
+};
+
+
+export default async function Page({
+  params,
+}: Props) {
+  const {
+    projectId: rawProjectId,
+  } = await params;
+
+  const projectId = Number(
+    rawProjectId,
+  );
+
   const [
     visibilitySummary,
     experiments,
   ] = await Promise.all([
-    getLatestCompletedVisibilitySummary(),
-    getExperimentsSummary(),
+    getLatestCompletedVisibilitySummary(
+      projectId,
+    ),
+    getExperimentsSummary(
+      projectId,
+    ),
   ]);
 
   const pair =
@@ -24,6 +45,7 @@ export default async function Page() {
 
   const comparison = pair
     ? await getExperimentComparison(
+        projectId,
         pair.baseline_id,
         pair.comparison_id,
       )
