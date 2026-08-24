@@ -91,6 +91,33 @@ def adopt_unassigned_runs(
     )
 
 
+@router.get(
+    "/geo-experiments/{experiment_id}/visibility-metrics",
+    response_model=AIVisibilityMetrics,
+)
+def read_experiment_metrics(
+    experiment_id: int,
+    db: Session = Depends(get_db),
+):
+    record = GeoExperimentRepository.get(
+        db,
+        experiment_id,
+    )
+
+    if record is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Experiment not found.",
+        )
+
+    return VisibilityMetricsService.calculate(
+        db=db,
+        project_id=record.project_id,
+        experiment_id=experiment_id,
+        persist_snapshot=False,
+    )
+
+
 @router.post(
     "/geo-experiments/{experiment_id}/visibility-metrics",
     response_model=AIVisibilityMetrics,
