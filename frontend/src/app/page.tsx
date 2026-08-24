@@ -1,26 +1,28 @@
 import OverviewDashboard from "@/components/dashboard/overview-dashboard";
+
 import {
   getLatestCompletedVisibilitySummary,
 } from "@/lib/api";
 
+
 export const dynamic = "force-dynamic";
 
-export default async function Home() {
-  try {
-    const summary =
-      await getLatestCompletedVisibilitySummary();
 
-    return (
-      <OverviewDashboard
-        summary={summary}
-      />
-    );
+export default async function Home() {
+  let summary = null;
+  let errorMessage: string | null = null;
+
+  try {
+    summary =
+      await getLatestCompletedVisibilitySummary();
   } catch (error) {
-    const message =
+    errorMessage =
       error instanceof Error
         ? error.message
         : "Unknown dashboard error.";
+  }
 
+  if (!summary) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-slate-950 p-6">
         <div className="max-w-lg rounded-2xl border border-red-500/20 bg-slate-900 p-8">
@@ -33,7 +35,7 @@ export default async function Home() {
           </h1>
 
           <p className="mt-3 text-sm leading-6 text-slate-400">
-            {message}
+            {errorMessage}
           </p>
 
           <p className="mt-5 text-xs text-slate-500">
@@ -44,4 +46,10 @@ export default async function Home() {
       </main>
     );
   }
+
+  return (
+    <OverviewDashboard
+      summary={summary}
+    />
+  );
 }

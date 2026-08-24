@@ -17,7 +17,6 @@ import {
   Radar,
   Search,
   ShieldCheck,
-  Sparkles,
 } from "lucide-react";
 
 import {
@@ -40,37 +39,7 @@ type Props = {
   summary: VisibilitySummary;
 };
 
-const navigation = [
-  {
-    label: "Overview",
-    icon: LayoutDashboard,
-    active: true,
-  },
-  {
-    label: "Technical SEO",
-    icon: Search,
-  },
-  {
-    label: "AI Visibility",
-    icon: Bot,
-  },
-  {
-    label: "Prompt Gaps",
-    icon: Radar,
-  },
-  {
-    label: "Experiments",
-    icon: FlaskConical,
-  },
-  {
-    label: "Entities",
-    icon: Database,
-  },
-  {
-    label: "Action Plan",
-    icon: ListChecks,
-  },
-];
+
 
 function formatPercent(
   value: number | null,

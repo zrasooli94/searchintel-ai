@@ -2,7 +2,6 @@
 
 import {
   AlertTriangle,
-  BarChart3,
   CircleCheck,
   Crosshair,
   Gauge,
