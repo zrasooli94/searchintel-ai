@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic import BaseModel, Field
 
 
@@ -54,20 +56,33 @@ class EntityCandidateRead(BaseModel):
 class ResolveEntityItem(BaseModel):
     rule_id: int
 
-    # create = create a SearchEntity
-    # merge = point this candidate to an
-    # already-existing SearchEntity
-    action: str
+    action: Literal[
+        "create",
+        "merge",
+    ]
 
-    entity_type: str | None = None
+    entity_type: Literal[
+        "brand",
+        "company",
+        "product",
+        "software_project",
+        "organization",
+        "service",
+    ] | None = None
 
     canonical_entity_id: int | None = None
 
     parent_entity_id: int | None = None
-    relationship_type: str | None = None
 
-    # Only true commercial competitors should
-    # become Brand + ProjectBrand records.
+    relationship_type: Literal[
+        "product_of",
+        "owned_by",
+        "operated_by",
+        "service_of",
+        "related_to",
+        "brand_of",
+    ] | None = None
+
     create_competitor_brand: bool = False
 
 

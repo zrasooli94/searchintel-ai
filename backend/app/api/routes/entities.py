@@ -6,9 +6,14 @@ from app.schemas.entity import (
     EntityCandidateRead,
     EntityClassificationRequest,
     EntityClassificationResult,
+    ResolveEntitiesRequest,
+    ResolveEntitiesResult,
 )
 from app.services.entity_classification_service import (
     EntityClassificationService,
+)
+from app.services.entity_resolution_service import (
+    EntityResolutionService,
 )
 
 
@@ -48,4 +53,21 @@ def list_entity_candidates(
             db,
             project_id,
         )
+    )
+
+
+
+@router.post(
+    "/projects/{project_id}/entities/resolve",
+    response_model=ResolveEntitiesResult,
+)
+def resolve_entities(
+    project_id: int,
+    data: ResolveEntitiesRequest,
+    db: Session = Depends(get_db),
+):
+    return EntityResolutionService.resolve(
+        db=db,
+        project_id=project_id,
+        items=data.items,
     )

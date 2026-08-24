@@ -9,6 +9,16 @@ from app.models.entity_resolution_rule import (
 class EntityResolutionRuleRepository:
 
     @staticmethod
+    def get_by_id(
+        db: Session,
+        rule_id: int,
+    ) -> EntityResolutionRule | None:
+        return db.get(
+            EntityResolutionRule,
+            rule_id,
+        )
+
+    @staticmethod
     def get(
         db: Session,
         project_id: int,
