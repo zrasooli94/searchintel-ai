@@ -19,6 +19,9 @@ from app.schemas.geo_experiment import (
 from app.schemas.visibility_metrics import (
     AIVisibilityMetrics,
 )
+from app.schemas.visibility_summary import (
+    VisibilitySummary,
+)
 from app.services.experiment_comparison_service import (
     ExperimentComparisonService,
 )
@@ -27,6 +30,9 @@ from app.services.geo_experiment_service import (
 )
 from app.services.visibility_metrics_service import (
     VisibilityMetricsService,
+)
+from app.services.visibility_summary_service import (
+    VisibilitySummaryService,
 )
 
 
@@ -110,6 +116,20 @@ def experiment_metrics(
         experiment_id=experiment_id,
     )
 
+
+
+@router.get(
+    "/geo-experiments/{experiment_id}/visibility-summary",
+    response_model=VisibilitySummary,
+)
+def experiment_visibility_summary(
+    experiment_id: int,
+    db: Session = Depends(get_db),
+):
+    return VisibilitySummaryService.build(
+        db=db,
+        experiment_id=experiment_id,
+    )
 
 
 @router.get(
