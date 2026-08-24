@@ -1,19 +1,29 @@
-import SectionPage from "@/components/dashboard/section-page";
+import ActionPlanDashboard from "@/components/dashboard/action-plan-dashboard";
+
 import {
+  getActionPlanSummary,
   getLatestCompletedVisibilitySummary,
 } from "@/lib/api";
 
+
 export const dynamic = "force-dynamic";
 
+
 export default async function Page() {
-  const summary =
-    await getLatestCompletedVisibilitySummary();
+  const [
+    visibilitySummary,
+    plan,
+  ] = await Promise.all([
+    getLatestCompletedVisibilitySummary(),
+    getActionPlanSummary(),
+  ]);
 
   return (
-    <SectionPage
-      summary={summary}
-      title='Action Plan'
-      description='Turn technical, content, prompt, and visibility evidence into prioritized optimization actions.'
+    <ActionPlanDashboard
+      visibilitySummary={
+        visibilitySummary
+      }
+      plan={plan}
     />
   );
 }

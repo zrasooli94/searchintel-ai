@@ -1,4 +1,5 @@
 import type {
+  ActionPlanSummary,
   AIVisibilityMetrics,
   EntitiesSummary,
   ExperimentComparison,
@@ -167,5 +168,12 @@ export async function getExperimentComparison(
 export async function getEntitiesSummary(): Promise<EntitiesSummary> {
   return fetchJson<EntitiesSummary>(
     `${apiBaseUrl()}/projects/${projectId()}/entities-summary`,
+  );
+}
+
+
+export async function getActionPlanSummary(): Promise<ActionPlanSummary> {
+  return fetchJson<ActionPlanSummary>(
+    `${apiBaseUrl()}/projects/${projectId()}/action-plan-summary`,
   );
 }

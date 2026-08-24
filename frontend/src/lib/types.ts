@@ -561,3 +561,72 @@ export type EntitiesSummary = {
   candidates:
     EntityCandidateSummary[];
 };
+
+export type ActionPlanItem = {
+  id: number;
+  sort_order: number;
+
+  priority: string;
+  action_type: string;
+
+  title: string;
+  rationale: string;
+
+  target_page: string | null;
+
+  impacted_prompt_ids: number[];
+  impacted_opportunity_ids: number[];
+
+  implementation_steps: string[];
+  evidence: string[];
+  success_metrics: string[];
+  dependencies: string[];
+
+  effort: string;
+  status: string;
+};
+
+export type ActionPlanSummary = {
+  project_id: number;
+
+  plan_id: number;
+
+  experiment_id: number;
+  experiment_name: string;
+  experiment_phase: string;
+  experiment_status: string;
+  benchmark_mode: string;
+
+  target_brand_id: number;
+  target_brand: string;
+
+  plan_status: string;
+  created_at: string;
+
+  strategy_summary: string;
+
+  baseline_metrics: Record<
+    string,
+    number | string | null
+  >;
+
+  recommended_sequence: string[];
+  risks_and_limits: string[];
+
+  total_actions: number;
+  open_actions: number;
+  completed_actions: number;
+
+  high_priority_actions: number;
+  medium_priority_actions: number;
+  low_priority_actions: number;
+
+  action_type_counts: Record<
+    string,
+    number
+  >;
+
+  provenance_note: string;
+
+  actions: ActionPlanItem[];
+};

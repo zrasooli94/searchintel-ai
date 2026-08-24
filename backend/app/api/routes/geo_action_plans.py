@@ -2,10 +2,18 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.db.deps import get_db
+from app.schemas.action_plan_summary import (
+    ActionPlanSummary,
+)
+
 from app.schemas.geo_action_plan import (
     GeoActionPlanRead,
     GeoActionPlanRequest,
 )
+from app.services.action_plan_summary_service import (
+    ActionPlanSummaryService,
+)
+
 from app.services.geo_action_plan_service import (
     GeoActionPlanService,
 )
@@ -14,6 +22,20 @@ from app.services.geo_action_plan_service import (
 router = APIRouter(
     tags=["GEO Strategy"],
 )
+
+
+@router.get(
+    "/projects/{project_id}/action-plan-summary",
+    response_model=ActionPlanSummary,
+)
+def project_action_plan_summary(
+    project_id: int,
+    db: Session = Depends(get_db),
+):
+    return ActionPlanSummaryService.build(
+        db=db,
+        project_id=project_id,
+    )
 
 
 @router.post(

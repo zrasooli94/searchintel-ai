@@ -59,6 +59,27 @@ class GeoActionPlanRepository:
         return db.scalar(statement)
 
     @staticmethod
+    def latest_by_project(
+        db: Session,
+        project_id: int,
+    ) -> GeoActionPlan | None:
+
+        statement = (
+            select(GeoActionPlan)
+            .where(
+                GeoActionPlan.project_id
+                == project_id
+            )
+            .order_by(
+                GeoActionPlan.created_at.desc(),
+                GeoActionPlan.id.desc(),
+            )
+            .limit(1)
+        )
+
+        return db.scalar(statement)
+
+    @staticmethod
     def list_items(
         db: Session,
         action_plan_id: int,
