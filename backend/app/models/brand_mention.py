@@ -31,6 +31,15 @@ class BrandMention(Base):
         index=True,
     )
 
+    entity_id: Mapped[int | None] = mapped_column(
+        ForeignKey(
+            "search_entities.id",
+            ondelete="SET NULL",
+        ),
+        nullable=True,
+        index=True,
+    )
+
     mention_text: Mapped[str] = mapped_column(
         String(255),
         nullable=False,

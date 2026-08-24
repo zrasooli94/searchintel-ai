@@ -5,6 +5,7 @@ class BrandMentionRead(BaseModel):
     id: int
     response_id: int
     brand_id: int | None
+    entity_id: int | None
     mention_text: str
     normalized_name: str
     position: int
@@ -22,6 +23,7 @@ class CitationRead(BaseModel):
     id: int
     response_id: int
     brand_id: int | None
+    entity_id: int | None
     url: str
     domain: str | None
     title: str | None
@@ -36,6 +38,7 @@ class WebSearchSourceRead(BaseModel):
     id: int
     response_id: int
     brand_id: int | None
+    entity_id: int | None
     search_call_index: int
     source_position: int
     search_query: str | None

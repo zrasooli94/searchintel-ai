@@ -30,6 +30,15 @@ class Citation(Base):
         index=True,
     )
 
+    entity_id: Mapped[int | None] = mapped_column(
+        ForeignKey(
+            "search_entities.id",
+            ondelete="SET NULL",
+        ),
+        nullable=True,
+        index=True,
+    )
+
     url: Mapped[str] = mapped_column(
         Text,
         nullable=False,

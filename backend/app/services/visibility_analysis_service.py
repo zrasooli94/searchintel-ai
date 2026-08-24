@@ -18,6 +18,9 @@ from app.repositories.brand_alias_repository import (
 from app.repositories.entity_resolution_rule_repository import (
     EntityResolutionRuleRepository,
 )
+from app.repositories.search_entity_repository import (
+    SearchEntityRepository,
+)
 from app.repositories.ai_run_repository import (
     AIRunRepository,
 )
@@ -562,6 +565,22 @@ class VisibilityAnalysisService:
             if role == "target"
         }
 
+        brand_entity_ids: dict[int, int] = {}
+
+        for brand, _role in project_brand_rows:
+            entity = (
+                SearchEntityRepository
+                .get_brand_entity_by_brand_id(
+                    db,
+                    brand.id,
+                )
+            )
+
+            if entity is not None:
+                brand_entity_ids[
+                    brand.id
+                ] = entity.id
+
         known_normalized: set[str] = set()
 
         detected: list[dict] = []
@@ -633,6 +652,10 @@ class VisibilityAnalysisService:
                 detected.append(
                     {
                         "brand_id": brand.id,
+                        "entity_id":
+                            brand_entity_ids.get(
+                                brand.id
+                            ),
                         "mention_text": best_alias,
                         "normalized_name":
                             cls.normalize_name(
@@ -677,6 +700,7 @@ class VisibilityAnalysisService:
             )
 
             brand_id = None
+            entity_id = None
             resolution_status = "unresolved"
             confidence = 0.70
             is_target = False
@@ -684,11 +708,28 @@ class VisibilityAnalysisService:
             if rule is not None:
                 resolution_status = rule.status
                 brand_id = rule.brand_id
+                entity_id = rule.entity_id
                 confidence = rule.confidence
 
+                # Backward compatibility for any
+                # older resolved brand-only rule.
+                if (
+                    entity_id is None
+                    and brand_id is not None
+                ):
+                    entity_id = (
+                        brand_entity_ids.get(
+                            brand_id
+                        )
+                    )
+
+                # A resolved rule must now point to
+                # an exact SearchEntity. brand_id
+                # may legitimately be null for an
+                # entity with no brand roll-up.
                 if (
                     resolution_status == "resolved"
-                    and brand_id is None
+                    and entity_id is None
                 ):
                     resolution_status = "unresolved"
                     confidence = 0.70
@@ -702,6 +743,7 @@ class VisibilityAnalysisService:
             detected.append(
                 {
                     "brand_id": brand_id,
+                    "entity_id": entity_id,
                     "mention_text": candidate,
                     "normalized_name":
                         normalized,
@@ -743,6 +785,9 @@ class VisibilityAnalysisService:
                 db=db,
                 response_id=response.id,
                 brand_id=item["brand_id"],
+                entity_id=item.get(
+                    "entity_id"
+                ),
                 mention_text=item[
                     "mention_text"
                 ],
@@ -793,10 +838,19 @@ class VisibilityAnalysisService:
                 )
             )
 
+            entity_id = (
+                brand_entity_ids.get(
+                    brand_id
+                )
+                if brand_id is not None
+                else None
+            )
+
             VisibilityRepository.create_citation(
                 db=db,
                 response_id=response.id,
                 brand_id=brand_id,
+                entity_id=entity_id,
                 url=url,
                 domain=hostname or None,
                 title=citation.get(
@@ -839,6 +893,14 @@ class VisibilityAnalysisService:
                 )
             )
 
+            entity_id = (
+                brand_entity_ids.get(
+                    brand_id
+                )
+                if brand_id is not None
+                else None
+            )
+
             normalized_url = (
                 cls.normalize_url_for_match(
                     url
@@ -849,6 +911,7 @@ class VisibilityAnalysisService:
                 db=db,
                 response_id=response.id,
                 brand_id=brand_id,
+                entity_id=entity_id,
                 search_call_index=source[
                     "search_call_index"
                 ],

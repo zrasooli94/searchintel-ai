@@ -17,6 +17,9 @@ from app.repositories.project_brand_repository import (
 from app.repositories.project_repository import (
     ProjectRepository,
 )
+from app.repositories.search_entity_repository import (
+    SearchEntityRepository,
+)
 from app.services.brand_service import BrandService
 
 
@@ -180,6 +183,30 @@ class CompetitorResolutionService:
                     ),
                 )
 
+            entity = (
+                SearchEntityRepository
+                .get_brand_entity_by_brand_id(
+                    db,
+                    brand.id,
+                )
+            )
+
+            if entity is None:
+                entity = (
+                    SearchEntityRepository.create(
+                        db=db,
+                        name=brand.name,
+                        normalized_name=(
+                            brand.normalized_name
+                        ),
+                        entity_type="brand",
+                        rollup_brand_id=brand.id,
+                        description=(
+                            brand.description
+                        ),
+                    )
+                )
+
             link = ProjectBrandRepository.get_link(
                 db,
                 project_id,
@@ -196,6 +223,7 @@ class CompetitorResolutionService:
 
             for mention in mentions:
                 mention.brand_id = brand.id
+                mention.entity_id = entity.id
                 mention.resolution_status = "resolved"
                 mention.confidence = 1.0
 
@@ -206,6 +234,8 @@ class CompetitorResolutionService:
                 display_name=display_name,
                 status="resolved",
                 brand_id=brand.id,
+                entity_id=entity.id,
+                entity_type="brand",
                 confidence=1.0,
                 source="manual_resolution",
             )

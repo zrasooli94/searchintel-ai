@@ -49,6 +49,15 @@ class WebSearchSource(Base):
         index=True,
     )
 
+    entity_id: Mapped[int | None] = mapped_column(
+        ForeignKey(
+            "search_entities.id",
+            ondelete="SET NULL",
+        ),
+        nullable=True,
+        index=True,
+    )
+
     search_call_index: Mapped[int] = mapped_column(
         Integer,
         nullable=False,

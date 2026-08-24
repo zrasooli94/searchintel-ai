@@ -63,6 +63,21 @@ class EntityResolutionRule(Base):
         index=True,
     )
 
+    entity_id: Mapped[int | None] = mapped_column(
+        ForeignKey(
+            "search_entities.id",
+            ondelete="SET NULL",
+        ),
+        nullable=True,
+        index=True,
+    )
+
+    entity_type: Mapped[str | None] = mapped_column(
+        String(40),
+        nullable=True,
+        index=True,
+    )
+
     confidence: Mapped[float] = mapped_column(
         Float,
         nullable=False,

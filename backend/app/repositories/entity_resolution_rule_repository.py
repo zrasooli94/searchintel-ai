@@ -14,6 +14,7 @@ class EntityResolutionRuleRepository:
         project_id: int,
         normalized_name: str,
     ) -> EntityResolutionRule | None:
+
         statement = select(
             EntityResolutionRule
         ).where(
@@ -34,6 +35,8 @@ class EntityResolutionRuleRepository:
         display_name: str | None,
         status: str,
         brand_id: int | None = None,
+        entity_id: int | None = None,
+        entity_type: str | None = None,
         confidence: float = 1.0,
         source: str = "system",
     ) -> EntityResolutionRule:
@@ -51,6 +54,8 @@ class EntityResolutionRuleRepository:
                 display_name=display_name,
                 status=status,
                 brand_id=brand_id,
+                entity_id=entity_id,
+                entity_type=entity_type,
                 confidence=confidence,
                 source=source,
             )
@@ -61,6 +66,8 @@ class EntityResolutionRuleRepository:
             rule.display_name = display_name
             rule.status = status
             rule.brand_id = brand_id
+            rule.entity_id = entity_id
+            rule.entity_type = entity_type
             rule.confidence = confidence
             rule.source = source
 

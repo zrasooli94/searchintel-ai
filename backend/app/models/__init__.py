@@ -1,3 +1,6 @@
+from app.models.search_entity import SearchEntity
+from app.models.entity_alias import EntityAlias
+from app.models.entity_relationship import EntityRelationship
 from app.models.web_search_source import WebSearchSource
 from app.models.geo_action_item import GeoActionItem
 from app.models.geo_action_plan import GeoActionPlan
@@ -26,6 +29,9 @@ from app.models.technical_recommendation import TechnicalRecommendation
 from app.models.website import Website
 
 __all__ = [
+    "SearchEntity",
+    "EntityAlias",
+    "EntityRelationship",
     "WebSearchSource",
     "GeoActionItem",
     "GeoActionPlan",
