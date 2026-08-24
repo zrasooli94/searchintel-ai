@@ -3,19 +3,12 @@
 import {
   Activity,
   BarChart3,
-  Bot,
   ChevronRight,
   CircleAlert,
   CircleCheck,
-  Database,
   FileSearch,
-  FlaskConical,
   Gauge,
   Globe2,
-  LayoutDashboard,
-  ListChecks,
-  Radar,
-  Search,
   ShieldCheck,
 } from "lucide-react";
 
