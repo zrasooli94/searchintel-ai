@@ -7,15 +7,39 @@ from app.schemas.prompt_bulk import (
     PromptBulkCreate,
     PromptBulkResult,
 )
+from app.schemas.starter_prompt_generation import (
+    StarterPromptGenerateRequest,
+    StarterPromptGenerationResult,
+)
 from app.services.prompt_service import PromptService
 from app.services.prompt_bulk_service import (
     PromptBulkService,
+)
+from app.services.starter_prompt_generation_service import (
+    StarterPromptGenerationService,
 )
 
 
 router = APIRouter(
     tags=["GEO Prompts"],
 )
+
+
+@router.post(
+    "/projects/{project_id}/prompts/starter-generate",
+    response_model=StarterPromptGenerationResult,
+)
+def generate_starter_prompts(
+    project_id: int,
+    data: StarterPromptGenerateRequest,
+    db: Session = Depends(get_db),
+):
+    return StarterPromptGenerationService.generate(
+        db=db,
+        project_id=project_id,
+        count=data.count,
+        model_id=data.model_id,
+    )
 
 
 @router.post(
