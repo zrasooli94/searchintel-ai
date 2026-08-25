@@ -163,7 +163,7 @@ export default function OverviewDashboard({
               </p>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
               <StatCard
                 title="Web Visibility"
                 value={
@@ -182,6 +182,15 @@ export default function OverviewDashboard({
                 )}
                 detail="Responses mentioning target"
                 icon={Activity}
+              />
+
+              <StatCard
+                title="Verified Coverage"
+                value={formatPercent(
+                  target.entity_verified_response_coverage,
+                )}
+                detail="Alias + registered-brand evidence"
+                icon={CircleCheck}
               />
 
               <StatCard
@@ -211,8 +220,8 @@ export default function OverviewDashboard({
               </h2>
 
               <p className="mt-1 text-sm text-slate-500">
-                From brand appearance to retrieved and
-                cited first-party evidence.
+                From raw brand appearance to verified identity,
+                retrieval and citation evidence.
               </p>
             </div>
 
@@ -222,6 +231,15 @@ export default function OverviewDashboard({
                 count={funnel.mentioned_responses}
                 total={funnel.total_responses}
                 icon={Activity}
+              />
+
+              <ChevronRight className="mx-auto h-5 w-5 rotate-90 text-slate-700 md:rotate-0" />
+
+              <FunnelStage
+                label="Verified"
+                count={funnel.entity_verified_responses}
+                total={funnel.total_responses}
+                icon={CircleCheck}
               />
 
               <ChevronRight className="mx-auto h-5 w-5 rotate-90 text-slate-700 md:rotate-0" />

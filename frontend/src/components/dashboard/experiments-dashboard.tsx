@@ -336,6 +336,19 @@ export default function ExperimentsDashboard({
 
                           <div className="flex justify-between">
                             <span className="text-slate-500">
+                              Verified coverage
+                            </span>
+
+                            <span className="text-slate-200">
+                              {percent(
+                                experiment
+                                  .entity_verified_target_mention_rate,
+                              )}
+                            </span>
+                          </div>
+
+                          <div className="flex justify-between">
+                            <span className="text-slate-500">
                               Retrieved coverage
                             </span>
 
@@ -444,13 +457,29 @@ export default function ExperimentsDashboard({
             </div>
 
             <ComparisonRow
-              label="Mention Rate"
+              label="Raw Mention Rate"
               metric={comparison.mention_rate}
             />
 
             <ComparisonRow
-              label="Prompt Coverage"
+              label="Raw Prompt Coverage"
               metric={comparison.prompt_coverage}
+            />
+
+            <ComparisonRow
+              label="Verified Mention Rate"
+              metric={
+                comparison
+                  .entity_verified_target_mention_rate
+              }
+            />
+
+            <ComparisonRow
+              label="Verified Prompt Coverage"
+              metric={
+                comparison
+                  .entity_verified_target_prompt_coverage
+              }
             />
 
             <ComparisonRow
@@ -459,10 +488,18 @@ export default function ExperimentsDashboard({
             />
 
             <ComparisonRow
-              label="Share of Voice"
+              label="Raw Mention SOV"
               metric={
                 comparison
                   .target_share_of_voice
+              }
+            />
+
+            <ComparisonRow
+              label="Verified Mention SOV"
+              metric={
+                comparison
+                  .entity_verified_target_share_of_voice
               }
             />
 
@@ -571,6 +608,32 @@ export default function ExperimentsDashboard({
                           {metricValue(
                             item
                               .web_visibility_score_v1,
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="rounded-xl border border-slate-800 bg-slate-950/50 p-4">
+                        <div className="text-xs text-slate-500">
+                          Raw coverage
+                        </div>
+
+                        <div className="mt-2 text-xl font-semibold text-white">
+                          {percent(
+                            item
+                              .target_response_coverage,
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="rounded-xl border border-slate-800 bg-slate-950/50 p-4">
+                        <div className="text-xs text-slate-500">
+                          Verified coverage
+                        </div>
+
+                        <div className="mt-2 text-xl font-semibold text-white">
+                          {percent(
+                            item
+                              .entity_verified_target_mention_rate,
                           )}
                         </div>
                       </div>

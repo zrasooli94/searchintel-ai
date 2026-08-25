@@ -8,6 +8,7 @@ import {
   Activity,
   Bot,
   CircleAlert,
+  CircleCheck,
   Database,
   FileCheck2,
   Gauge,
@@ -249,7 +250,7 @@ export default function AIVisibilityDashboard({
             </p>
           </div>
 
-          <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
             <MetricCard
               label="Web Visibility"
               value={
@@ -267,6 +268,16 @@ export default function AIVisibilityDashboard({
               )}
               detail="Responses mentioning target"
               icon={Activity}
+            />
+
+            <MetricCard
+              label="Verified Coverage"
+              value={formatPercent(
+                metrics
+                  .entity_verified_target_mention_rate,
+              )}
+              detail="Alias + registered-brand evidence"
+              icon={CircleCheck}
             />
 
             <MetricCard
@@ -298,17 +309,27 @@ export default function AIVisibilityDashboard({
             </h2>
 
             <p className="mt-1 text-sm text-slate-500">
-              Separates raw brand appearance from
-              retrieved and cited first-party evidence.
+              Separates raw appearance from verified identity,
+              retrieved evidence and citations.
             </p>
           </div>
 
-          <div className="mt-6 grid gap-4 md:grid-cols-3">
+          <div className="mt-6 grid gap-4 md:grid-cols-4">
             <FunnelStage
               label="Mentioned"
               count={targetMentioned}
               total={total}
               icon={Activity}
+            />
+
+            <FunnelStage
+              label="Verified"
+              count={
+                summary.funnel
+                  .entity_verified_responses
+              }
+              total={total}
+              icon={CircleCheck}
             />
 
             <FunnelStage

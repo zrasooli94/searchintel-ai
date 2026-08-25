@@ -34,6 +34,8 @@ export type VisibilitySummary = {
     web_visibility_score: number | null;
 
     raw_response_coverage: number;
+    entity_verified_response_coverage: number | null;
+    entity_verified_share_of_voice: number | null;
     source_presence_rate: number | null;
     retrieval_associated_response_coverage: number | null;
     cited_response_coverage: number | null;
@@ -52,6 +54,7 @@ export type VisibilitySummary = {
   funnel: {
     total_responses: number;
     mentioned_responses: number;
+    entity_verified_responses: number;
     retrieval_associated_responses: number;
     cited_responses: number;
   };
@@ -228,6 +231,10 @@ export type AIVisibilityMetrics = {
   web_search_analyzed_runs: number;
 
   target_mention_count: number;
+  entity_verified_target_mention_count: number;
+  entity_verified_target_mention_rate: number | null;
+  entity_verified_target_prompt_coverage: number | null;
+  entity_verified_target_share_of_voice: number | null;
 
   mention_rate: number;
   prompt_coverage: number;
@@ -394,6 +401,9 @@ export type ExperimentSummaryItem = {
 
   mention_rate: number;
   prompt_coverage: number;
+  entity_verified_target_mention_rate: number | null;
+  entity_verified_target_prompt_coverage: number | null;
+  entity_verified_target_share_of_voice: number | null;
   citation_rate: number;
 
   visibility_score_v1: number;
@@ -451,6 +461,9 @@ export type ExperimentComparison = {
 
   mention_rate: ExperimentMetricValue;
   prompt_coverage: ExperimentMetricValue;
+  entity_verified_target_mention_rate: ExperimentMetricValue;
+  entity_verified_target_prompt_coverage: ExperimentMetricValue;
+  entity_verified_target_share_of_voice: ExperimentMetricValue;
   citation_rate: ExperimentMetricValue;
   target_share_of_voice: ExperimentMetricValue;
   visibility_score_v1: ExperimentMetricValue;
