@@ -124,10 +124,12 @@ function ComparisonRow({
   label,
   metric,
   percentValues = true,
+  neutralDelta = false,
 }: {
   label: string;
   metric: ExperimentMetricValue;
   percentValues?: boolean;
+  neutralDelta?: boolean;
 }) {
   const render = (
     value: number | null,
@@ -153,9 +155,11 @@ function ComparisonRow({
       <div
         className={[
           "text-sm font-medium",
-          deltaClass(
-            metric.delta,
-          ),
+          neutralDelta
+            ? "text-slate-400"
+            : deltaClass(
+                metric.delta,
+              ),
         ].join(" ")}
       >
         {deltaText(metric.delta)}
@@ -493,6 +497,7 @@ export default function ExperimentsDashboard({
                 comparison
                   .target_share_of_voice
               }
+              neutralDelta
             />
 
             <ComparisonRow
@@ -571,11 +576,11 @@ export default function ExperimentsDashboard({
             <div className="flex items-start justify-between">
               <div>
                 <h2 className="font-semibold text-white">
-                  Web Baseline
+                  Web Experiments
                 </h2>
 
                 <p className="mt-1 text-sm text-slate-500">
-                  Current standalone live-web baseline.
+                  Stored live-web measurement sets.
                 </p>
               </div>
 
@@ -679,10 +684,9 @@ export default function ExperimentsDashboard({
                     </div>
 
                     <p className="mt-5 text-xs leading-5 text-slate-500">
-                      This baseline should only be
-                      directly compared with a future
-                      web_search experiment using
-                      compatible prompts and measurement
+                      Compare this web_search experiment
+                      only with compatible measurement sets
+                      using the same prompt and measurement
                       configuration.
                     </p>
                   </div>

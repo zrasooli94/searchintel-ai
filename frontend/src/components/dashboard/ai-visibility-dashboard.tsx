@@ -9,6 +9,7 @@ import {
   Bot,
   CircleAlert,
   CircleCheck,
+  ChevronRight,
   Database,
   FileCheck2,
   Gauge,
@@ -262,7 +263,7 @@ export default function AIVisibilityDashboard({
             />
 
             <MetricCard
-              label="Response Coverage"
+              label="Raw Coverage"
               value={formatPercent(
                 metrics.target_response_coverage,
               )}
@@ -314,13 +315,15 @@ export default function AIVisibilityDashboard({
             </p>
           </div>
 
-          <div className="mt-6 grid gap-4 md:grid-cols-4">
+          <div className="mt-6 flex flex-col items-stretch gap-3 lg:flex-row lg:items-center">
             <FunnelStage
               label="Mentioned"
               count={targetMentioned}
               total={total}
               icon={Activity}
             />
+
+            <ChevronRight className="mx-auto h-5 w-5 rotate-90 shrink-0 text-slate-700 lg:rotate-0" />
 
             <FunnelStage
               label="Verified"
@@ -332,12 +335,16 @@ export default function AIVisibilityDashboard({
               icon={CircleCheck}
             />
 
+            <ChevronRight className="mx-auto h-5 w-5 rotate-90 shrink-0 text-slate-700 lg:rotate-0" />
+
             <FunnelStage
               label="Retrieved"
               count={targetRetrieved}
               total={total}
               icon={Search}
             />
+
+            <ChevronRight className="mx-auto h-5 w-5 rotate-90 shrink-0 text-slate-700 lg:rotate-0" />
 
             <FunnelStage
               label="Cited"
