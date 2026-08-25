@@ -53,6 +53,7 @@ export default async function Page({
 
   return (
     <ExperimentsDashboard
+      projectId={projectId}
       visibilitySummary={
         visibilitySummary
       }

@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 
 import DashboardShell from "@/components/dashboard/dashboard-shell";
+import RetrievalMonitoringPanel from "@/components/dashboard/retrieval-monitoring-panel";
 
 import type {
   ExperimentComparison,
@@ -23,6 +24,7 @@ import type {
 
 
 type Props = {
+  projectId: number;
   visibilitySummary: VisibilitySummary;
   experiments: ExperimentsSummary;
   comparison: ExperimentComparison | null;
@@ -170,6 +172,7 @@ function ComparisonRow({
 
 
 export default function ExperimentsDashboard({
+  projectId,
   visibilitySummary,
   experiments,
   comparison,
@@ -412,6 +415,11 @@ export default function ExperimentsDashboard({
             )}
           </div>
         </section>
+
+        <RetrievalMonitoringPanel
+          projectId={projectId}
+          experiments={experiments}
+        />
 
         {comparison && (
           <section className="rounded-2xl border border-slate-800 bg-slate-900/60">
