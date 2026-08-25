@@ -4,6 +4,7 @@ import {
   CheckCircle2,
   FileText,
   Loader2,
+  Pencil,
   Upload,
   TriangleAlert,
 } from "lucide-react";
@@ -12,6 +13,9 @@ import {
   FormEvent,
   useState,
 } from "react";
+
+import SetupPromptGenerator from "@/components/dashboard/setup-prompt-generator";
+import PromptEditModal from "@/components/dashboard/prompt-edit-modal";
 
 import {
   useRouter,
@@ -71,6 +75,14 @@ export default function SetupPromptsStep({
   ] = useState(
     initialPrompts,
   );
+
+  const [
+    editingPrompt,
+    setEditingPrompt,
+  ] = useState<ProjectPrompt | null>(
+    null,
+  );
+
 
   const [
     text,
@@ -317,6 +329,13 @@ export default function SetupPromptsStep({
         </div>
       </div>
 
+      <div className="p-6 pb-0">
+        <SetupPromptGenerator
+          projectId={projectId}
+        />
+
+      </div>
+
       <div className="grid gap-6 p-6 xl:grid-cols-[1fr_1fr]">
         <form
           onSubmit={submit}
@@ -450,7 +469,7 @@ brand | what is ${targetBrand}`}
                       <div className="flex items-start gap-3">
                         <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />
 
-                        <div>
+                        <div className="min-w-0 flex-1">
                           <div className="text-sm leading-6 text-slate-200">
                             {prompt.text}
                           </div>
@@ -464,6 +483,19 @@ brand | what is ${targetBrand}`}
                             {prompt.id}
                           </div>
                         </div>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setEditingPrompt(
+                              prompt
+                            )
+                          }
+                          className="shrink-0 rounded-lg border border-slate-800 p-2 text-slate-500 transition hover:border-cyan-500/30 hover:bg-cyan-500/10 hover:text-cyan-300"
+                          title="Edit prompt"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
                       </div>
                     </div>
                   ),
@@ -473,6 +505,17 @@ brand | what is ${targetBrand}`}
           )}
         </div>
       </div>
+      {editingPrompt && (
+        <PromptEditModal
+          projectId={projectId}
+          prompt={editingPrompt}
+          onClose={() =>
+            setEditingPrompt(
+              null
+            )
+          }
+        />
+      )}
     </section>
   );
 }

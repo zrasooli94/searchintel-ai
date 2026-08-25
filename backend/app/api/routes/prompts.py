@@ -3,6 +3,13 @@ from sqlalchemy.orm import Session
 
 from app.db.deps import get_db
 from app.schemas.prompt import PromptCreate, PromptRead
+from app.schemas.prompt_update import (
+    PromptUpdateRequest,
+)
+from app.schemas.prompt_active_set import (
+    PromptActiveSetResult,
+    PromptActiveSetUpdate,
+)
 from app.schemas.prompt_bulk import (
     PromptBulkCreate,
     PromptBulkResult,
@@ -12,6 +19,12 @@ from app.schemas.starter_prompt_generation import (
     StarterPromptGenerationResult,
 )
 from app.services.prompt_service import PromptService
+from app.services.prompt_update_service import (
+    PromptUpdateService,
+)
+from app.services.prompt_active_set_service import (
+    PromptActiveSetService,
+)
 from app.services.prompt_bulk_service import (
     PromptBulkService,
 )
@@ -23,6 +36,22 @@ from app.services.starter_prompt_generation_service import (
 router = APIRouter(
     tags=["GEO Prompts"],
 )
+
+
+@router.put(
+    "/projects/{project_id}/prompts/active-set",
+    response_model=PromptActiveSetResult,
+)
+def update_prompt_active_set(
+    project_id: int,
+    data: PromptActiveSetUpdate,
+    db: Session = Depends(get_db),
+):
+    return PromptActiveSetService.update(
+        db=db,
+        project_id=project_id,
+        prompt_ids=data.prompt_ids,
+    )
 
 
 @router.post(
@@ -87,4 +116,22 @@ def list_prompts(
     return PromptService.list_by_project(
         db,
         project_id,
+    )
+
+
+@router.put(
+    "/projects/{project_id}/prompts/{prompt_id}",
+    response_model=PromptRead,
+)
+def update_project_prompt(
+    project_id: int,
+    prompt_id: int,
+    data: PromptUpdateRequest,
+    db: Session = Depends(get_db),
+):
+    return PromptUpdateService.update(
+        db=db,
+        project_id=project_id,
+        prompt_id=prompt_id,
+        data=data,
     )

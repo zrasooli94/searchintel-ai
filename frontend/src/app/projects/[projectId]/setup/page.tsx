@@ -177,6 +177,14 @@ export default async function Page({
         />
 
         <SetupPromptsStep
+          key={
+            prompts
+              .map(
+                (prompt) =>
+                  `${prompt.id}:${prompt.updated_at}:${prompt.is_active ? 1 : 0}`
+              )
+              .join("-")
+          }
           projectId={projectId}
           targetBrand={
             workspace.target_brand
