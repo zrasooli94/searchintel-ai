@@ -9,6 +9,8 @@ import {
   Users,
 } from "lucide-react";
 
+import NewProjectButton from "@/components/dashboard/new-project-button";
+
 import {
   getProjectWorkspaces,
 } from "@/lib/api";
@@ -40,20 +42,24 @@ export default async function Home() {
           </div>
         </div>
 
-        <div className="mt-14">
-          <div className="text-sm text-slate-500">
-            Workspaces
+        <div className="mt-14 flex flex-col justify-between gap-5 md:flex-row md:items-end">
+          <div>
+            <div className="text-sm text-slate-500">
+              Workspaces
+            </div>
+
+            <h2 className="mt-2 text-3xl font-semibold tracking-tight text-white">
+              Choose a project
+            </h2>
+
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-400">
+              Each project contains its own target brand,
+              website, competitors, experiments, entity
+              knowledge and optimization plan.
+            </p>
           </div>
 
-          <h2 className="mt-2 text-3xl font-semibold tracking-tight text-white">
-            Choose a project
-          </h2>
-
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-400">
-            Each project contains its own target brand,
-            website, competitors, experiments, entity
-            knowledge and optimization plan.
-          </p>
+          <NewProjectButton />
         </div>
 
         {workspaces.length === 0 ? (
@@ -74,7 +80,11 @@ export default async function Home() {
               (workspace) => (
                 <Link
                   key={workspace.id}
-                  href={`/projects/${workspace.id}`}
+                  href={
+                    workspace.completed_experiment_count > 0
+                      ? `/projects/${workspace.id}`
+                      : `/projects/${workspace.id}/setup`
+                  }
                   className="group rounded-2xl border border-slate-800 bg-slate-900/60 p-6 transition hover:border-cyan-500/30 hover:bg-slate-900"
                 >
                   <div className="flex items-start justify-between gap-6">

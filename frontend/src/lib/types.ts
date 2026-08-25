@@ -656,3 +656,21 @@ export type ProjectWorkspace = {
     | string
     | null;
 };
+
+export type ProjectOnboardResponse = {
+  project_id: number;
+  project_name: string;
+
+  target_brand_id: number;
+  target_brand: string;
+
+  website_id: number;
+  domain: string;
+  base_url: string;
+
+  brand_created: boolean;
+  website_created: boolean;
+  canonical_entity_created: boolean;
+
+  setup_status: string;
+};

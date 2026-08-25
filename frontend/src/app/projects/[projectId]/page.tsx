@@ -1,11 +1,17 @@
+import {
+  redirect,
+} from "next/navigation";
+
 import OverviewDashboard from "@/components/dashboard/overview-dashboard";
 
 import {
   getLatestCompletedVisibilitySummary,
+  getProjectWorkspace,
 } from "@/lib/api";
 
 
-export const dynamic = "force-dynamic";
+export const dynamic =
+  "force-dynamic";
 
 
 type Props = {
@@ -22,13 +28,27 @@ export default async function Page({
     projectId: rawProjectId,
   } = await params;
 
-  const projectId = Number(
-    rawProjectId,
-  );
+  const projectId =
+    Number(rawProjectId);
+
+  const workspace =
+    await getProjectWorkspace(
+      projectId
+    );
+
+  if (
+    workspace
+      .completed_experiment_count
+    === 0
+  ) {
+    redirect(
+      `/projects/${projectId}/setup`
+    );
+  }
 
   const summary =
     await getLatestCompletedVisibilitySummary(
-      projectId,
+      projectId
     );
 
   return (

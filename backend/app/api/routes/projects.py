@@ -3,6 +3,10 @@ from sqlalchemy.orm import Session
 
 from app.db.deps import get_db
 from app.schemas.project import ProjectCreate, ProjectRead
+from app.schemas.project_onboarding import (
+    ProjectOnboardRequest,
+    ProjectOnboardResponse,
+)
 from app.schemas.project_workspace import (
     ProjectWorkspaceRead,
 )
@@ -12,6 +16,9 @@ from app.schemas.project_brand import (
 )
 from app.services.project_brand_service import ProjectBrandService
 from app.services.project_service import ProjectService
+from app.services.project_onboarding_service import (
+    ProjectOnboardingService,
+)
 from app.services.project_workspace_service import (
     ProjectWorkspaceService,
 )
@@ -46,6 +53,21 @@ def list_projects(
     db: Session = Depends(get_db),
 ):
     return ProjectService.list_all(db)
+
+
+@router.post(
+    "/onboard",
+    response_model=ProjectOnboardResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def onboard_project(
+    data: ProjectOnboardRequest,
+    db: Session = Depends(get_db),
+):
+    return ProjectOnboardingService.onboard(
+        db=db,
+        data=data,
+    )
 
 
 @router.get(
