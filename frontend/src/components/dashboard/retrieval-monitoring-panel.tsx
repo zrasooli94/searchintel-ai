@@ -818,7 +818,7 @@ export default function RetrievalMonitoringPanel({
               || running
               || baselineJob === null
             }
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-cyan-500 px-4 py-2.5 text-sm font-medium text-slate-950 transition hover:bg-cyan-400 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex min-w-[190px] items-center justify-center gap-2 rounded-xl border border-cyan-400 bg-cyan-400 px-5 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-cyan-500/20 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:border-slate-700 disabled:bg-slate-800 disabled:text-slate-500 disabled:shadow-none"
           >
             {starting || running ? (
               <Loader2 className="h-4 w-4 animate-spin" />
