@@ -719,3 +719,27 @@ export type ProjectCompetitorCreateResult = {
   website_created: boolean;
   canonical_entity_created: boolean;
 };
+
+export type ProjectPrompt = {
+  id: number;
+  project_id: number;
+
+  text: string;
+  category: string;
+  intent: string | null;
+
+  is_active: boolean;
+
+  created_at: string;
+  updated_at: string;
+};
+
+export type PromptBulkResult = {
+  project_id: number;
+
+  requested: number;
+  created: number;
+  skipped_duplicates: number;
+
+  created_prompt_ids: number[];
+};

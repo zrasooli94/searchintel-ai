@@ -7,6 +7,7 @@ import type {
   GeoExperiment,
   GeoOpportunitySummary,
   ProjectCompetitor,
+  ProjectPrompt,
   ProjectWorkspace,
   TechnicalAuditSetupState,
   TechnicalSEOSummary,
@@ -244,5 +245,14 @@ export async function getProjectCompetitors(
 ): Promise<ProjectCompetitor[]> {
   return fetchJson<ProjectCompetitor[]>(
     `${apiBaseUrl()}/projects/${projectId}/competitors`,
+  );
+}
+
+
+export async function getProjectPrompts(
+  projectId: number,
+): Promise<ProjectPrompt[]> {
+  return fetchJson<ProjectPrompt[]>(
+    `${apiBaseUrl()}/projects/${projectId}/prompts`,
   );
 }

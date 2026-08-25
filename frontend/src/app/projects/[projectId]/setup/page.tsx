@@ -11,10 +11,12 @@ import {
 } from "lucide-react";
 
 import SetupCompetitorsStep from "@/components/dashboard/setup-competitors-step";
+import SetupPromptsStep from "@/components/dashboard/setup-prompts-step";
 import SetupTechnicalStep from "@/components/dashboard/setup-technical-step";
 
 import {
   getProjectCompetitors,
+  getProjectPrompts,
   getProjectWorkspace,
   getWebsiteSetupState,
 } from "@/lib/api";
@@ -58,11 +60,15 @@ export default async function Page({
   const [
     setupState,
     competitors,
+    prompts,
   ] = await Promise.all([
     getWebsiteSetupState(
       workspace.website_id
     ),
     getProjectCompetitors(
+      projectId
+    ),
+    getProjectPrompts(
       projectId
     ),
   ]);
@@ -167,6 +173,17 @@ export default async function Page({
           projectId={projectId}
           initialCompetitors={
             competitors
+          }
+        />
+
+        <SetupPromptsStep
+          projectId={projectId}
+          targetBrand={
+            workspace.target_brand
+            ?? "Target brand"
+          }
+          initialPrompts={
+            prompts
           }
         />
 
