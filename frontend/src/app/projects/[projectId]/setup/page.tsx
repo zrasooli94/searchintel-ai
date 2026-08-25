@@ -10,6 +10,7 @@ import {
   Users,
 } from "lucide-react";
 
+import SetupBaselineStep from "@/components/dashboard/setup-baseline-step";
 import SetupCompetitorsStep from "@/components/dashboard/setup-competitors-step";
 import SetupPromptsStep from "@/components/dashboard/setup-prompts-step";
 import SetupTechnicalStep from "@/components/dashboard/setup-technical-step";
@@ -192,6 +193,16 @@ export default async function Page({
           }
           initialPrompts={
             prompts
+          }
+        />
+
+        <SetupBaselineStep
+          projectId={projectId}
+          activePromptCount={
+            prompts.filter(
+              (prompt) =>
+                prompt.is_active
+            ).length
           }
         />
 

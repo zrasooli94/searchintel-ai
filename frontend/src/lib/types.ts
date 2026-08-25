@@ -778,3 +778,50 @@ export type PromptActiveSetResult = {
 
   active_prompt_ids: number[];
 };
+
+export type SetupExperiment = {
+  id: number;
+  project_id: number;
+
+  name: string;
+  phase: string;
+  status: string;
+
+  description: string | null;
+
+  started_at: string | null;
+  completed_at: string | null;
+  created_at: string;
+};
+
+export type BenchmarkJob = {
+  id: number;
+  project_id: number;
+  model_id: number;
+
+  experiment_id: number | null;
+
+  benchmark_mode:
+    | "memory"
+    | "web_search";
+
+  config_snapshot: Record<
+    string,
+    unknown
+  >;
+
+  status: string;
+
+  total_prompts: number;
+  completed_runs: number;
+  failed_runs: number;
+
+  progress_percentage: number;
+
+  started_at: string | null;
+  completed_at: string | null;
+
+  error_message: string | null;
+
+  created_at: string;
+};
