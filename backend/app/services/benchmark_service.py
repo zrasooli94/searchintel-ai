@@ -83,9 +83,10 @@ class BenchmarkService:
         cls,
         db: Session,
         project_id: int,
-        model_id: int,
+        model_id: int | None,
         experiment_id: int | None = None,
         benchmark_mode: str = "memory",
+        source_benchmark_job_id: int | None = None,
     ) -> dict:
         project = ProjectRepository.get_by_id(
             db,
@@ -96,23 +97,6 @@ class BenchmarkService:
             raise HTTPException(
                 status_code=404,
                 detail="Project not found.",
-            )
-
-        model = AIModelRepository.get_by_id(
-            db,
-            model_id,
-        )
-
-        if model is None:
-            raise HTTPException(
-                status_code=404,
-                detail="AI model not found.",
-            )
-
-        if not model.is_active:
-            raise HTTPException(
-                status_code=400,
-                detail="AI model is inactive.",
             )
 
         if benchmark_mode not in {
@@ -150,19 +134,162 @@ class BenchmarkService:
                     ),
                 )
 
-        prompts = (
-            PromptRepository.list_active_by_project(
+        source_job = None
+        source_items = None
+
+        if source_benchmark_job_id is not None:
+            source_job = BenchmarkRepository.get_job(
                 db,
-                project_id,
+                source_benchmark_job_id,
             )
+
+            if source_job is None:
+                raise HTTPException(
+                    status_code=404,
+                    detail=(
+                        "Source benchmark job "
+                        "not found."
+                    ),
+                )
+
+            if source_job.project_id != project_id:
+                raise HTTPException(
+                    status_code=400,
+                    detail=(
+                        "Source benchmark job does "
+                        "not belong to this project."
+                    ),
+                )
+
+            if source_job.status != "completed":
+                raise HTTPException(
+                    status_code=400,
+                    detail=(
+                        "Source benchmark job must "
+                        "be completed."
+                    ),
+                )
+
+            if (
+                source_job.benchmark_mode
+                != benchmark_mode
+            ):
+                raise HTTPException(
+                    status_code=400,
+                    detail=(
+                        "Optimization benchmark mode "
+                        "must match the source "
+                        "benchmark mode."
+                    ),
+                )
+
+            if (
+                model_id is not None
+                and model_id
+                != source_job.model_id
+            ):
+                raise HTTPException(
+                    status_code=400,
+                    detail=(
+                        "Optimization model must "
+                        "match the source benchmark "
+                        "model."
+                    ),
+                )
+
+            model_id = source_job.model_id
+
+            source_items = (
+                BenchmarkRepository.list_items(
+                    db,
+                    source_job.id,
+                )
+            )
+
+            if not source_items:
+                raise HTTPException(
+                    status_code=400,
+                    detail=(
+                        "Source benchmark has no "
+                        "prompt snapshots."
+                    ),
+                )
+
+            if any(
+                item.prompt_text_snapshot is None
+                for item in source_items
+            ):
+                raise HTTPException(
+                    status_code=400,
+                    detail=(
+                        "Source benchmark contains "
+                        "missing prompt snapshots."
+                    ),
+                )
+
+            prompt_snapshots = [
+                {
+                    "prompt_id":
+                        item.prompt_id,
+                    "prompt_text_snapshot":
+                        item.prompt_text_snapshot,
+                }
+                for item in source_items
+            ]
+
+        else:
+            if model_id is None:
+                raise HTTPException(
+                    status_code=400,
+                    detail=(
+                        "model_id is required when "
+                        "no source benchmark job is "
+                        "provided."
+                    ),
+                )
+
+            prompts = (
+                PromptRepository
+                .list_active_by_project(
+                    db,
+                    project_id,
+                )
+            )
+
+            if not prompts:
+                raise HTTPException(
+                    status_code=400,
+                    detail=(
+                        "Project has no active "
+                        "prompts."
+                    ),
+                )
+
+            prompt_snapshots = [
+                {
+                    "prompt_id":
+                        prompt.id,
+                    "prompt_text_snapshot":
+                        prompt.text,
+                }
+                for prompt in prompts
+            ]
+
+        model = AIModelRepository.get_by_id(
+            db,
+            model_id,
         )
 
-        if not prompts:
+        if model is None:
+            raise HTTPException(
+                status_code=404,
+                detail="AI model not found.",
+            )
+
+        if not model.is_active:
             raise HTTPException(
                 status_code=400,
-                detail=(
-                    "Project has no active prompts."
-                ),
+                detail="AI model is inactive.",
             )
 
         config_snapshot = {
@@ -188,14 +315,34 @@ class BenchmarkService:
                 == "web_search",
 
             "prompt_count":
-                len(prompts),
+                len(prompt_snapshots),
+
+            "prompt_source": (
+                "benchmark_snapshot"
+                if source_job is not None
+                else "active_prompts"
+            ),
+
+            "source_benchmark_job_id": (
+                source_job.id
+                if source_job is not None
+                else None
+            ),
+
+            "source_experiment_id": (
+                source_job.experiment_id
+                if source_job is not None
+                else None
+            ),
         }
 
         job = BenchmarkRepository.create_job(
             db=db,
             project_id=project_id,
             model_id=model_id,
-            total_prompts=len(prompts),
+            total_prompts=len(
+                prompt_snapshots
+            ),
             experiment_id=experiment_id,
             benchmark_mode=benchmark_mode,
             config_snapshot=config_snapshot,
@@ -204,21 +351,44 @@ class BenchmarkService:
         BenchmarkRepository.create_items(
             db=db,
             benchmark_job_id=job.id,
-            prompt_snapshots=[
-                {
-                    "prompt_id":
-                        prompt.id,
-                    "prompt_text_snapshot":
-                        prompt.text,
-                }
-                for prompt in prompts
-            ],
+            prompt_snapshots=
+                prompt_snapshots,
         )
 
         db.commit()
         db.refresh(job)
 
         return cls.serialize_job(job)
+
+    @classmethod
+    def list_for_project(
+        cls,
+        db: Session,
+        project_id: int,
+    ) -> list[dict]:
+        project = ProjectRepository.get_by_id(
+            db,
+            project_id,
+        )
+
+        if project is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Project not found.",
+            )
+
+        jobs = (
+            BenchmarkRepository
+            .list_jobs_by_project(
+                db,
+                project_id,
+            )
+        )
+
+        return [
+            cls.serialize_job(job)
+            for job in jobs
+        ]
 
     @classmethod
     def status(

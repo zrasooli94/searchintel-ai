@@ -56,6 +56,26 @@ class BenchmarkRepository:
         db.flush()
 
     @staticmethod
+    def list_jobs_by_project(
+        db: Session,
+        project_id: int,
+    ) -> list[BenchmarkJob]:
+        statement = (
+            select(BenchmarkJob)
+            .where(
+                BenchmarkJob.project_id
+                == project_id
+            )
+            .order_by(
+                BenchmarkJob.id.desc()
+            )
+        )
+
+        return list(
+            db.scalars(statement).all()
+        )
+
+    @staticmethod
     def get_job(
         db: Session,
         job_id: int,

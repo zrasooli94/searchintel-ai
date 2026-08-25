@@ -22,6 +22,20 @@ router = APIRouter(
 )
 
 
+@router.get(
+    "/projects/{project_id}/benchmark-jobs",
+    response_model=list[BenchmarkJobRead],
+)
+def list_benchmark_jobs(
+    project_id: int,
+    db: Session = Depends(get_db),
+):
+    return BenchmarkService.list_for_project(
+        db,
+        project_id,
+    )
+
+
 @router.post(
     "/projects/{project_id}/benchmark-jobs",
     response_model=BenchmarkJobRead,
@@ -39,6 +53,9 @@ def start_benchmark(
         model_id=data.model_id,
         experiment_id=data.experiment_id,
         benchmark_mode=data.benchmark_mode,
+        source_benchmark_job_id=(
+            data.source_benchmark_job_id
+        ),
     )
 
     background_tasks.add_task(
