@@ -83,6 +83,11 @@ export default function SetupBaselineStep({
   ] = useState(false);
 
   const [
+    loadingExisting,
+    setLoadingExisting,
+  ] = useState(true);
+
+  const [
     job,
     setJob,
   ] = useState<
@@ -299,17 +304,151 @@ export default function SetupBaselineStep({
 
   useEffect(
     () => {
+      let cancelled = false;
+
+      const initialLoad =
+        window.setTimeout(
+          () => {
+            void (
+              async () => {
+                setLoadingExisting(true);
+
+                try {
+                  const [
+                    experimentResponse,
+                    jobResponse,
+                  ] = await Promise.all([
+                    fetch(
+                      `/api/projects/${projectId}/experiments`,
+                      {
+                        cache: "no-store",
+                      },
+                    ),
+                    fetch(
+                      `/api/projects/${projectId}/benchmark-jobs`,
+                      {
+                        cache: "no-store",
+                      },
+                    ),
+                  ]);
+
+                  const experimentData =
+                    await experimentResponse.json();
+
+                  const jobData =
+                    await jobResponse.json();
+
+                  if (
+                    !experimentResponse.ok
+                    || !jobResponse.ok
+                  ) {
+                    return;
+                  }
+
+                  const experiments =
+                    experimentData as SetupExperiment[];
+
+                  const jobs =
+                    jobData as BenchmarkJob[];
+
+                  const experimentById =
+                    new Map(
+                      experiments.map(
+                        (experiment) => [
+                          experiment.id,
+                          experiment,
+                        ],
+                      ),
+                    );
+
+                  const matchingJobs =
+                    jobs
+                      .filter(
+                        (candidate) => {
+                          if (
+                            candidate.experiment_id
+                            === null
+                            || candidate.benchmark_mode
+                            !== mode
+                          ) {
+                            return false;
+                          }
+
+                          const experiment =
+                            experimentById.get(
+                              candidate.experiment_id
+                            );
+
+                          return (
+                            experiment?.phase
+                            === "baseline"
+                          );
+                        },
+                      )
+                      .sort(
+                        (
+                          left,
+                          right,
+                        ) =>
+                          right.id
+                          - left.id,
+                      );
+
+                  const existing =
+                    matchingJobs[0]
+                    ?? null;
+
+                  if (cancelled) {
+                    return;
+                  }
+
+                  setJob(
+                    existing
+                  );
+
+                } catch (loadError) {
+                  if (!cancelled) {
+                    setError(
+                      loadError
+                        instanceof Error
+                        ? loadError.message
+                        : "Could not restore baseline state.",
+                    );
+                  }
+
+                } finally {
+                  if (!cancelled) {
+                    setLoadingExisting(false);
+                  }
+                }
+              }
+            )();
+          },
+          0,
+        );
+
       return () => {
+        cancelled = true;
+
+        window.clearTimeout(
+          initialLoad
+        );
+
         if (
           timer.current !== null
         ) {
           clearInterval(
             timer.current
           );
+
+          timer.current = null;
         }
       };
     },
-    [],
+    [
+      projectId,
+      mode,
+    ],
   );
 
 
@@ -511,7 +650,7 @@ export default function SetupBaselineStep({
           </div>
         )}
 
-        {!job && (
+        {!job && !loadingExisting && (
           <button
             type="button"
             disabled={

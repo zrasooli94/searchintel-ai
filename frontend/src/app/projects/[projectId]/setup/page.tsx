@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 
 import SetupBaselineStep from "@/components/dashboard/setup-baseline-step";
+import SetupOptimizationStep from "@/components/dashboard/setup-optimization-step";
 import SetupCompetitorsStep from "@/components/dashboard/setup-competitors-step";
 import SetupPromptsStep from "@/components/dashboard/setup-prompts-step";
 import SetupTechnicalStep from "@/components/dashboard/setup-technical-step";
@@ -204,6 +205,10 @@ export default async function Page({
                 prompt.is_active
             ).length
           }
+        />
+
+        <SetupOptimizationStep
+          projectId={projectId}
         />
 
         <div className="mt-8 rounded-2xl border border-cyan-500/15 bg-cyan-500/5 p-6">
