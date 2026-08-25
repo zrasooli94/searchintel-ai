@@ -84,6 +84,24 @@ function percent(
 }
 
 
+function sourceBenchmarkId(
+  job: BenchmarkJob | null,
+) {
+  if (!job) {
+    return null;
+  }
+
+  const value =
+    job.config_snapshot[
+      "source_benchmark_job_id"
+    ];
+
+  return typeof value === "number"
+    ? value
+    : null;
+}
+
+
 function providerModel(
   job: BenchmarkJob | null,
 ) {
@@ -431,25 +449,6 @@ export default function RetrievalMonitoringPanel({
               right.id - left.id,
           );
 
-          const baseline =
-            baselines[0]
-            ?? null;
-
-          setBaselineJob(
-            baseline,
-          );
-
-          setBaselineExperiment(
-            baseline?.experiment_id
-              ? (
-                  experimentById.get(
-                    baseline.experiment_id,
-                  )
-                  ?? null
-                )
-              : null,
-          );
-
           const monitoringJobs =
             jobs.filter(
               (job) => {
@@ -485,6 +484,83 @@ export default function RetrievalMonitoringPanel({
           const latest =
             monitoringJobs[0]
             ?? null;
+
+          const optimizationJobs =
+            jobs.filter(
+              (job) => {
+                if (
+                  job.status
+                    !== "completed"
+                  || job.benchmark_mode
+                    !== "web_search"
+                  || job.experiment_id
+                    === null
+                ) {
+                  return false;
+                }
+
+                const experiment =
+                  experimentById.get(
+                    job.experiment_id,
+                  );
+
+                return (
+                  experiment?.phase
+                  === "optimization"
+                );
+              },
+            )
+            .sort(
+              (
+                left,
+                right,
+              ) =>
+                right.id - left.id,
+            );
+
+          const monitoringSourceId =
+            sourceBenchmarkId(
+              latest,
+            );
+
+          const optimizationSourceId =
+            sourceBenchmarkId(
+              optimizationJobs[0]
+              ?? null,
+            );
+
+          const preferredSourceId =
+            monitoringSourceId
+            ?? optimizationSourceId;
+
+          const pinnedBaseline =
+            (
+              preferredSourceId !== null
+                ? baselines.find(
+                    (job) =>
+                      job.id
+                      === preferredSourceId,
+                  )
+                : null
+            )
+            ?? baselines[0]
+            ?? null;
+
+          setBaselineJob(
+            pinnedBaseline,
+          );
+
+          setBaselineExperiment(
+            pinnedBaseline?.experiment_id
+              ? (
+                  experimentById.get(
+                    pinnedBaseline
+                      .experiment_id,
+                  )
+                  ?? null
+                )
+              : null,
+          );
 
           setMonitoringJob(
             latest,
