@@ -151,6 +151,22 @@ class ExperimentComparisonService:
                     "prompt_coverage"
                 ),
 
+            "entity_verified_target_mention_rate":
+                compare_metric(
+                    "entity_verified_target_mention_rate"
+                ),
+
+            "entity_verified_target_prompt_coverage":
+                compare_metric(
+                    "entity_verified_target_prompt_coverage"
+                ),
+
+            "entity_verified_target_share_of_voice":
+                compare_metric(
+                    "entity_verified_target_share_of_voice"
+                ),
+
+
             "citation_rate":
                 compare_metric(
                     "citation_rate"

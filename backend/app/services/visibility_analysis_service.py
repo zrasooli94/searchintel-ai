@@ -668,8 +668,19 @@ class VisibilityAnalysisService:
                         "is_target":
                             role == "target",
                         "resolution_status":
-                            "resolved",
-                        "confidence": 1.0,
+                            (
+                                "lexical_match"
+                                if run.benchmark_mode
+                                == "web_search"
+                                else "resolved"
+                            ),
+                        "confidence":
+                            (
+                                0.75
+                                if run.benchmark_mode
+                                == "web_search"
+                                else 1.0
+                            ),
                     }
                 )
 
@@ -929,6 +940,72 @@ class VisibilityAnalysisService:
                     in stored_citation_urls
                 ),
             )
+
+        # -------------------------------------------------
+        # Entity Verification V1
+        #
+        # A known brand alias in a web-search response is
+        # initially only a lexical match. Promote it to
+        # resolved only when retrieved/cited evidence from
+        # that same registered project brand is present in
+        # the response.
+        # -------------------------------------------------
+
+        if run.benchmark_mode == "web_search":
+            verification_mentions = (
+                VisibilityRepository.list_mentions(
+                    db,
+                    response.id,
+                )
+            )
+
+            verification_citations = (
+                VisibilityRepository.list_citations(
+                    db,
+                    response.id,
+                )
+            )
+
+            verification_sources = (
+                VisibilityRepository
+                .list_web_search_sources(
+                    db,
+                    response.id,
+                )
+            )
+
+            evidence_brand_ids = {
+                source.brand_id
+                for source in verification_sources
+                if source.brand_id is not None
+            }
+
+            evidence_brand_ids.update(
+                citation.brand_id
+                for citation
+                in verification_citations
+                if citation.brand_id is not None
+            )
+
+            for mention in verification_mentions:
+                if (
+                    mention.resolution_status
+                    != "lexical_match"
+                ):
+                    continue
+
+                if mention.brand_id is None:
+                    continue
+
+                if (
+                    mention.brand_id
+                    in evidence_brand_ids
+                ):
+                    mention.resolution_status = (
+                        "resolved"
+                    )
+
+                    mention.confidence = 1.0
 
         response.visibility_analyzed_at = datetime.now(
             timezone.utc

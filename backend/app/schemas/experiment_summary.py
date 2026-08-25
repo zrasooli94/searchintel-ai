@@ -16,6 +16,9 @@ class ExperimentSummaryItem(BaseModel):
 
     mention_rate: float
     prompt_coverage: float
+    entity_verified_target_mention_rate: float | None
+    entity_verified_target_prompt_coverage: float | None
+    entity_verified_target_share_of_voice: float | None
     citation_rate: float
 
     visibility_score_v1: float

@@ -288,6 +288,21 @@ class VisibilitySummaryService:
             else metrics["analyzed_runs"]
         )
 
+        entity_verified_rate = metrics.get(
+            "entity_verified_target_mention_rate"
+        )
+
+        entity_verified_responses = (
+            round(
+                total_responses
+                * entity_verified_rate
+                / 100.0
+            )
+            if entity_verified_rate is not None
+            else 0
+        )
+
+
         return {
             "project_id":
                 experiment.project_id,
@@ -329,6 +344,17 @@ class VisibilitySummaryService:
                     metrics[
                         "target_response_coverage"
                     ],
+
+                "entity_verified_response_coverage":
+                    metrics.get(
+                        "entity_verified_target_mention_rate"
+                    ),
+
+                "entity_verified_share_of_voice":
+                    metrics.get(
+                        "entity_verified_target_share_of_voice"
+                    ),
+
 
                 "source_presence_rate":
                     metrics.get(
@@ -382,6 +408,10 @@ class VisibilitySummaryService:
 
                 "mentioned_responses":
                     mentioned_responses,
+
+                "entity_verified_responses":
+                    entity_verified_responses,
+
 
                 "retrieval_associated_responses":
                     retrieval_associated_responses,

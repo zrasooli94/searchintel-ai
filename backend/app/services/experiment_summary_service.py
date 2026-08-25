@@ -129,6 +129,22 @@ class ExperimentSummaryService:
                             "prompt_coverage"
                         ],
 
+                    "entity_verified_target_mention_rate":
+                        metrics.get(
+                            "entity_verified_target_mention_rate"
+                        ),
+
+                    "entity_verified_target_prompt_coverage":
+                        metrics.get(
+                            "entity_verified_target_prompt_coverage"
+                        ),
+
+                    "entity_verified_target_share_of_voice":
+                        metrics.get(
+                            "entity_verified_target_share_of_voice"
+                        ),
+
+
                     "citation_rate":
                         metrics[
                             "citation_rate"

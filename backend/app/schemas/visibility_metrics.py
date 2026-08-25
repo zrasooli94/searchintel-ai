@@ -76,6 +76,12 @@ class AIVisibilityMetrics(BaseModel):
 
     target_mention_count: int
 
+    # Web-search entity verification.
+    entity_verified_target_mention_count: int
+    entity_verified_target_mention_rate: float | None
+    entity_verified_target_prompt_coverage: float | None
+    entity_verified_target_share_of_voice: float | None
+
     mention_rate: float
     prompt_coverage: float
     citation_rate: float

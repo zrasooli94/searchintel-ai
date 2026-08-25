@@ -196,6 +196,55 @@ class VisibilityMetricsService:
             ).all()
         )
 
+        entity_verified_target_mentions = [
+            mention
+            for mention in target_mentions
+            if mention.resolution_status
+            == "resolved"
+        ]
+
+        entity_verified_target_response_ids = {
+            mention.response_id
+            for mention
+            in entity_verified_target_mentions
+        }
+
+        entity_verified_target_prompt_ids = {
+            response_to_prompt[
+                response_id
+            ]
+            for response_id
+            in entity_verified_target_response_ids
+        }
+
+        entity_verified_target_mention_count = sum(
+            mention.mention_count
+            for mention
+            in entity_verified_target_mentions
+        )
+
+        entity_verified_target_mention_rate = (
+            cls.percent(
+                len(
+                    entity_verified_target_response_ids
+                ),
+                analyzed_runs,
+            )
+            if benchmark_mode == "web_search"
+            else None
+        )
+
+        entity_verified_target_prompt_coverage = (
+            cls.percent(
+                len(
+                    entity_verified_target_prompt_ids
+                ),
+                len(analyzed_prompt_ids),
+            )
+            if benchmark_mode == "web_search"
+            else None
+        )
+
         target_response_ids = {
             mention.response_id
             for mention in target_mentions
@@ -302,7 +351,12 @@ class VisibilityMetricsService:
                         response_ids
                     ),
                     BrandMention.resolution_status
-                    == "resolved",
+                    .in_(
+                        (
+                            "resolved",
+                            "lexical_match",
+                        )
+                    ),
                     BrandMention.brand_id
                     .is_not(None),
                 )
@@ -375,6 +429,37 @@ class VisibilityMetricsService:
                     "share_of_voice"
                 ]
                 break
+
+        entity_verified_target_share_of_voice = None
+
+        if benchmark_mode == "web_search":
+            verified_total_mentions = sum(
+                mention.mention_count
+                for mention, _brand_name
+                in all_mentions
+                if mention.resolution_status
+                == "resolved"
+            )
+
+            verified_target_mentions = sum(
+                mention.mention_count
+                for mention, _brand_name
+                in all_mentions
+                if (
+                    mention.resolution_status
+                    == "resolved"
+                    and mention.brand_id
+                    == target_brand.id
+                )
+            )
+
+            if verified_total_mentions:
+                entity_verified_target_share_of_voice = (
+                    cls.percent(
+                        verified_target_mentions,
+                        verified_total_mentions,
+                    )
+                )
 
         # -------------------------------------------------
         # Brand response-exposure metrics
@@ -1451,6 +1536,15 @@ class VisibilityMetricsService:
         if web_search_analyzed_runs:
             metrics.update(
                 {
+                    "entity_verified_target_mention_rate":
+                        entity_verified_target_mention_rate,
+
+                    "entity_verified_target_prompt_coverage":
+                        entity_verified_target_prompt_coverage,
+
+                    "entity_verified_target_share_of_voice":
+                        entity_verified_target_share_of_voice,
+
                     "target_source_presence_rate":
                         target_source_presence_rate,
 
@@ -1538,6 +1632,9 @@ class VisibilityMetricsService:
                     sample_size=(
                         web_search_analyzed_runs
                         if metric_name in {
+                            "entity_verified_target_mention_rate",
+                            "entity_verified_target_prompt_coverage",
+                            "entity_verified_target_share_of_voice",
                             "target_source_presence_rate",
                             "target_source_prompt_coverage",
                             "grounded_target_mention_rate",
@@ -1586,6 +1683,18 @@ class VisibilityMetricsService:
 
             "target_mention_count":
                 target_mention_count,
+
+            "entity_verified_target_mention_count":
+                entity_verified_target_mention_count,
+
+            "entity_verified_target_mention_rate":
+                entity_verified_target_mention_rate,
+
+            "entity_verified_target_prompt_coverage":
+                entity_verified_target_prompt_coverage,
+
+            "entity_verified_target_share_of_voice":
+                entity_verified_target_share_of_voice,
 
             "mention_rate":
                 mention_rate,

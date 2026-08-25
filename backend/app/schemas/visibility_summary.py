@@ -10,6 +10,9 @@ class VisibilitySummaryTarget(BaseModel):
     web_visibility_score: float | None
 
     raw_response_coverage: float
+
+    entity_verified_response_coverage: float | None
+    entity_verified_share_of_voice: float | None
     source_presence_rate: float | None
 
     retrieval_associated_response_coverage: float | None
@@ -29,6 +32,7 @@ class VisibilitySummaryFunnel(BaseModel):
     total_responses: int
 
     mentioned_responses: int
+    entity_verified_responses: int
     retrieval_associated_responses: int
     cited_responses: int
 

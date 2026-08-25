@@ -47,6 +47,9 @@ class ExperimentComparison(BaseModel):
 
     mention_rate: ExperimentMetricValue
     prompt_coverage: ExperimentMetricValue
+    entity_verified_target_mention_rate: ExperimentMetricValue
+    entity_verified_target_prompt_coverage: ExperimentMetricValue
+    entity_verified_target_share_of_voice: ExperimentMetricValue
     citation_rate: ExperimentMetricValue
     target_share_of_voice: ExperimentMetricValue
     visibility_score_v1: ExperimentMetricValue
