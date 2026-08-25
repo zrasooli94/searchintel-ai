@@ -674,3 +674,24 @@ export type ProjectOnboardResponse = {
 
   setup_status: string;
 };
+
+export type CrawlResult = {
+  website_id: number;
+  pages_crawled: number;
+  pages_discovered: number;
+  pages_failed: number;
+};
+
+export type TechnicalAuditSetupState = {
+  id: number;
+  website_id: number;
+  score: number;
+  pages_checked: number;
+  issue_count: number;
+  created_at: string;
+};
+
+export type WebsiteSetupState = {
+  page_count: number;
+  latest_audit: TechnicalAuditSetupState | null;
+};

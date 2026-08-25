@@ -7,8 +7,10 @@ import type {
   GeoExperiment,
   GeoOpportunitySummary,
   ProjectWorkspace,
+  TechnicalAuditSetupState,
   TechnicalSEOSummary,
   VisibilitySummary,
+  WebsiteSetupState,
 } from "@/lib/types";
 
 
@@ -185,4 +187,52 @@ export async function getActionPlanSummary(
   return fetchJson<ActionPlanSummary>(
     `${apiBaseUrl()}/projects/${projectId}/action-plan-summary`,
   );
+}
+
+
+export async function getWebsiteSetupState(
+  websiteId: number,
+): Promise<WebsiteSetupState> {
+  const pagesResponse = await fetch(
+    `${apiBaseUrl()}/websites/${websiteId}/pages`,
+    {
+      cache: "no-store",
+    },
+  );
+
+  if (!pagesResponse.ok) {
+    throw new Error(
+      `Could not read website pages: ${pagesResponse.status}.`,
+    );
+  }
+
+  const pages = await pagesResponse.json() as unknown[];
+
+  const auditResponse = await fetch(
+    `${apiBaseUrl()}/websites/${websiteId}/technical-audits/latest`,
+    {
+      cache: "no-store",
+    },
+  );
+
+  let latestAudit:
+    | TechnicalAuditSetupState
+    | null = null;
+
+  if (auditResponse.ok) {
+    latestAudit =
+      await auditResponse.json() as TechnicalAuditSetupState;
+
+  } else if (
+    auditResponse.status !== 404
+  ) {
+    throw new Error(
+      `Could not read technical audit: ${auditResponse.status}.`,
+    );
+  }
+
+  return {
+    page_count: pages.length,
+    latest_audit: latestAudit,
+  };
 }

@@ -10,8 +10,11 @@ import {
   Users,
 } from "lucide-react";
 
+import SetupTechnicalStep from "@/components/dashboard/setup-technical-step";
+
 import {
   getProjectWorkspace,
+  getWebsiteSetupState,
 } from "@/lib/api";
 
 
@@ -39,6 +42,20 @@ export default async function Page({
   const workspace =
     await getProjectWorkspace(
       projectId
+    );
+
+  if (
+    workspace.website_id
+    === null
+  ) {
+    throw new Error(
+      "Project does not have a primary website."
+    );
+  }
+
+  const setupState =
+    await getWebsiteSetupState(
+      workspace.website_id
     );
 
   return (
@@ -124,6 +141,18 @@ export default async function Page({
             </div>
           </div>
         </div>
+
+        <SetupTechnicalStep
+          websiteId={
+            workspace.website_id
+          }
+          initialPageCount={
+            setupState.page_count
+          }
+          initialAudit={
+            setupState.latest_audit
+          }
+        />
 
         <div className="mt-8 rounded-2xl border border-cyan-500/15 bg-cyan-500/5 p-6">
           <div className="flex gap-4">
