@@ -281,6 +281,21 @@ class BenchmarkService:
             )
             job.error_message = None
 
+            if job.experiment_id is not None:
+                experiment = (
+                    GeoExperimentRepository.get(
+                        db,
+                        job.experiment_id,
+                    )
+                )
+
+                if experiment is not None:
+                    experiment.status = "running"
+                    experiment.started_at = (
+                        job.started_at
+                    )
+                    experiment.completed_at = None
+
             db.commit()
 
             items = BenchmarkRepository.list_items(
@@ -424,6 +439,31 @@ class BenchmarkService:
             else:
                 job.status = "completed"
 
+            if job.experiment_id is not None:
+                experiment = (
+                    GeoExperimentRepository.get(
+                        db,
+                        job.experiment_id,
+                    )
+                )
+
+                if experiment is not None:
+                    experiment.status = (
+                        job.status
+                    )
+
+                    experiment.completed_at = (
+                        job.completed_at
+                    )
+
+                    if (
+                        experiment.started_at
+                        is None
+                    ):
+                        experiment.started_at = (
+                            job.started_at
+                        )
+
             db.commit()
 
         except Exception as exc:
@@ -442,6 +482,31 @@ class BenchmarkService:
                 job.error_message = str(
                     exc
                 )[:2000]
+
+                if (
+                    job.experiment_id
+                    is not None
+                ):
+                    experiment = (
+                        GeoExperimentRepository.get(
+                            db,
+                            job.experiment_id,
+                        )
+                    )
+
+                    if experiment is not None:
+                        experiment.status = "failed"
+                        experiment.completed_at = (
+                            job.completed_at
+                        )
+
+                        if (
+                            experiment.started_at
+                            is None
+                        ):
+                            experiment.started_at = (
+                                job.started_at
+                            )
 
                 db.commit()
 
