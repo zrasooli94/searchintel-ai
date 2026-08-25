@@ -135,6 +135,31 @@ class CompetitorResolutionService:
                 requested_name
             )
 
+            identity_match = (
+                ProjectBrandRepository
+                .find_identity_match(
+                    db=db,
+                    project_id=project_id,
+                    normalized_name=normalized,
+                )
+            )
+
+            if identity_match is not None:
+                matched_brand, role = identity_match
+
+                raise HTTPException(
+                    status_code=422,
+                    detail=(
+                        f"{requested_name} matches a "
+                        "registered project identity "
+                        f"({matched_brand.name}, "
+                        f"role={role}) and cannot be "
+                        "resolved through the competitor "
+                        "candidate workflow."
+                    ),
+                )
+
+
             statement = (
                 select(BrandMention)
                 .join(
@@ -151,6 +176,13 @@ class CompetitorResolutionService:
                     AIRun.project_id == project_id,
                     BrandMention.normalized_name
                     == normalized,
+                    BrandMention.resolution_status.in_(
+                        (
+                            "unresolved",
+                            "candidate",
+                        )
+                    ),
+                    BrandMention.is_target.is_(False),
                 )
             )
 

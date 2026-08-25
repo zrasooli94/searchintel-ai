@@ -143,6 +143,13 @@ class EntityClassificationService:
                     == project_id,
                     BrandMention.normalized_name
                     == normalized_name,
+                    BrandMention.resolution_status.in_(
+                        (
+                            "unresolved",
+                            "candidate",
+                        )
+                    ),
+                    BrandMention.is_target.is_(False),
                 )
                 .order_by(
                     AIResponse.id.desc()

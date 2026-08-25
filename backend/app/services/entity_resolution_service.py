@@ -375,6 +375,34 @@ class EntityResolutionService:
                         ),
                     )
 
+                identity_match = (
+                    ProjectBrandRepository
+                    .find_identity_match(
+                        db=db,
+                        project_id=project_id,
+                        normalized_name=(
+                            rule.normalized_name
+                        ),
+                    )
+                )
+
+                if identity_match is not None:
+                    matched_brand, role = (
+                        identity_match
+                    )
+
+                    raise HTTPException(
+                        status_code=422,
+                        detail=(
+                            f"rule_id={rule.id}: "
+                            "registered project identity "
+                            "cannot be resolved through "
+                            "the candidate entity workflow "
+                            f"({matched_brand.name}, "
+                            f"role={role})."
+                        ),
+                    )
+
                 if rule.status not in {
                     "candidate",
                     "resolved",
@@ -435,6 +463,39 @@ class EntityResolutionService:
                 )
 
                 for mention in mentions:
+                    if mention.is_target:
+                        continue
+
+                    if (
+                        mention.resolution_status
+                        == "lexical_match"
+                    ):
+                        continue
+
+                    if rule.status == "candidate":
+                        if (
+                            mention.resolution_status
+                            not in {
+                                "unresolved",
+                                "candidate",
+                            }
+                        ):
+                            continue
+
+                    elif rule.status == "resolved":
+                        if (
+                            mention.resolution_status
+                            != "resolved"
+                        ):
+                            continue
+
+                        if (
+                            rule.entity_id is not None
+                            and mention.entity_id
+                            != rule.entity_id
+                        ):
+                            continue
+
                     mention.entity_id = entity.id
                     mention.brand_id = brand_id
                     mention.resolution_status = (

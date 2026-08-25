@@ -1,7 +1,8 @@
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from app.models.brand import Brand
+from app.models.brand_alias import BrandAlias
 from app.models.project_brand import ProjectBrand
 
 
@@ -38,6 +39,44 @@ class ProjectBrandRepository:
         )
 
         return db.scalar(statement)
+
+    @staticmethod
+    def find_identity_match(
+        db: Session,
+        project_id: int,
+        normalized_name: str,
+    ):
+        statement = (
+            select(
+                Brand,
+                ProjectBrand.role,
+            )
+            .join(
+                ProjectBrand,
+                ProjectBrand.brand_id
+                == Brand.id,
+            )
+            .outerjoin(
+                BrandAlias,
+                BrandAlias.brand_id
+                == Brand.id,
+            )
+            .where(
+                ProjectBrand.project_id
+                == project_id,
+                or_(
+                    Brand.normalized_name
+                    == normalized_name,
+                    BrandAlias.normalized_alias
+                    == normalized_name,
+                ),
+            )
+            .limit(1)
+        )
+
+        return db.execute(
+            statement
+        ).first()
 
     @staticmethod
     def list_by_project(
