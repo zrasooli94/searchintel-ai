@@ -743,3 +743,38 @@ export type PromptBulkResult = {
 
   created_prompt_ids: number[];
 };
+
+export type StarterPromptSuggestion = {
+  text: string;
+  category: string;
+  rationale: string | null;
+};
+
+export type StarterPromptGenerationResult = {
+  project_id: number;
+
+  model_id: number;
+  model_name: string;
+  provider_model_id: string;
+
+  target_brand: string;
+
+  website_pages_used: number;
+  competitors_used: string[];
+  existing_prompts_considered: number;
+
+  requested_count: number;
+  generated_count: number;
+
+  prompts: StarterPromptSuggestion[];
+};
+
+export type PromptActiveSetResult = {
+  project_id: number;
+
+  total_prompts: number;
+  active_prompts: number;
+  inactive_prompts: number;
+
+  active_prompt_ids: number[];
+};

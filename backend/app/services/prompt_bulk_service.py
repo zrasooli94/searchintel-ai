@@ -66,6 +66,45 @@ class PromptBulkService:
         created_ids = []
         skipped = 0
 
+        new_unique_count = 0
+
+        for item in data.prompts:
+            normalized = (
+                cls.normalize_text(
+                    item.text
+                )
+            )
+
+            if (
+                normalized
+                not in existing_texts
+                and normalized
+                not in request_seen
+            ):
+                request_seen.add(
+                    normalized
+                )
+
+                new_unique_count += 1
+
+        if (
+            len(existing)
+            + new_unique_count
+            > 20
+        ):
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "A project may contain a maximum "
+                    "of 20 prompts. "
+                    f"Current: {len(existing)}, "
+                    f"new unique prompts: "
+                    f"{new_unique_count}."
+                ),
+            )
+
+        request_seen = set()
+
         try:
             for item in data.prompts:
 
