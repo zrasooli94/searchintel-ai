@@ -10,11 +10,25 @@ from app.schemas.project_onboarding import (
 from app.schemas.project_workspace import (
     ProjectWorkspaceRead,
 )
+from app.schemas.project_competitor import (
+    ProjectCompetitorCreate,
+    ProjectCompetitorRead,
+)
+from app.schemas.project_competitor_summary import (
+    ProjectCompetitorSummary,
+)
+
 from app.schemas.project_brand import (
     ProjectBrandCreate,
     ProjectBrandRead,
 )
 from app.services.project_brand_service import ProjectBrandService
+from app.services.project_competitor_service import (
+    ProjectCompetitorService,
+)
+from app.services.project_competitor_summary_service import (
+    ProjectCompetitorSummaryService,
+)
 from app.services.project_service import ProjectService
 from app.services.project_onboarding_service import (
     ProjectOnboardingService,
@@ -93,6 +107,37 @@ def get_project(
     return ProjectService.get(
         db,
         project_id,
+    )
+
+
+@router.get(
+    "/{project_id}/competitors",
+    response_model=list[ProjectCompetitorSummary],
+)
+def list_project_competitors(
+    project_id: int,
+    db: Session = Depends(get_db),
+):
+    return ProjectCompetitorSummaryService.list(
+        db=db,
+        project_id=project_id,
+    )
+
+
+@router.post(
+    "/{project_id}/competitors",
+    response_model=ProjectCompetitorRead,
+    status_code=status.HTTP_201_CREATED,
+)
+def add_project_competitor(
+    project_id: int,
+    data: ProjectCompetitorCreate,
+    db: Session = Depends(get_db),
+):
+    return ProjectCompetitorService.add(
+        db=db,
+        project_id=project_id,
+        data=data,
     )
 
 

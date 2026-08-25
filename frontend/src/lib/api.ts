@@ -6,6 +6,7 @@ import type {
   ExperimentsSummary,
   GeoExperiment,
   GeoOpportunitySummary,
+  ProjectCompetitor,
   ProjectWorkspace,
   TechnicalAuditSetupState,
   TechnicalSEOSummary,
@@ -235,4 +236,13 @@ export async function getWebsiteSetupState(
     page_count: pages.length,
     latest_audit: latestAudit,
   };
+}
+
+
+export async function getProjectCompetitors(
+  projectId: number,
+): Promise<ProjectCompetitor[]> {
+  return fetchJson<ProjectCompetitor[]>(
+    `${apiBaseUrl()}/projects/${projectId}/competitors`,
+  );
 }

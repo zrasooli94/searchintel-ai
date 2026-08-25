@@ -695,3 +695,27 @@ export type WebsiteSetupState = {
   page_count: number;
   latest_audit: TechnicalAuditSetupState | null;
 };
+
+export type ProjectCompetitor = {
+  brand_id: number;
+  name: string;
+
+  website_id: number | null;
+  domain: string | null;
+  base_url: string | null;
+};
+
+export type ProjectCompetitorCreateResult = {
+  brand_id: number;
+  name: string;
+
+  role: string;
+
+  website_id: number | null;
+  domain: string | null;
+  base_url: string | null;
+
+  brand_created: boolean;
+  website_created: boolean;
+  canonical_entity_created: boolean;
+};

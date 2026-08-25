@@ -10,9 +10,11 @@ import {
   Users,
 } from "lucide-react";
 
+import SetupCompetitorsStep from "@/components/dashboard/setup-competitors-step";
 import SetupTechnicalStep from "@/components/dashboard/setup-technical-step";
 
 import {
+  getProjectCompetitors,
   getProjectWorkspace,
   getWebsiteSetupState,
 } from "@/lib/api";
@@ -53,10 +55,17 @@ export default async function Page({
     );
   }
 
-  const setupState =
-    await getWebsiteSetupState(
+  const [
+    setupState,
+    competitors,
+  ] = await Promise.all([
+    getWebsiteSetupState(
       workspace.website_id
-    );
+    ),
+    getProjectCompetitors(
+      projectId
+    ),
+  ]);
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
@@ -151,6 +160,13 @@ export default async function Page({
           }
           initialAudit={
             setupState.latest_audit
+          }
+        />
+
+        <SetupCompetitorsStep
+          projectId={projectId}
+          initialCompetitors={
+            competitors
           }
         />
 
