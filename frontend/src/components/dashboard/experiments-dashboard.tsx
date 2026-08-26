@@ -10,6 +10,7 @@ import {
   Gauge,
   Globe2,
   Layers3,
+  TriangleAlert,
 } from "lucide-react";
 
 import DashboardShell from "@/components/dashboard/dashboard-shell";
@@ -177,6 +178,31 @@ export default function ExperimentsDashboard({
   experiments,
   comparison,
 }: Props) {
+  const comparisonBaseline =
+    comparison
+      ? experiments.experiments.find(
+          (item) =>
+            item.id
+            === comparison.baseline_experiment_id
+        )
+      : null;
+
+  const comparisonExperiment =
+    comparison
+      ? experiments.experiments.find(
+          (item) =>
+            item.id
+            === comparison.comparison_experiment_id
+        )
+      : null;
+
+  const comparisonAnalysisCurrent =
+    comparison !== null
+    && comparisonBaseline?.analysis_is_current
+    === true
+    && comparisonExperiment?.analysis_is_current
+    === true;
+
   return (
     <DashboardShell
       summary={visibilitySummary}
@@ -311,6 +337,25 @@ export default function ExperimentsDashboard({
                         </div>
                       </div>
                     </div>
+
+                    {!experiment.analysis_is_current && (
+                      <div className="mt-5 flex gap-2 rounded-xl border border-amber-500/20 bg-amber-500/10 p-3 text-xs leading-5 text-amber-200">
+                        <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />
+
+                        <div>
+                          <div className="font-medium">
+                            Analysis update recommended
+                          </div>
+
+                          <div className="mt-1 text-amber-200/70">
+                            {experiment.analysis_stale_responses}
+                            {" of "}
+                            {experiment.analysis_total_responses}
+                            {" analyzed responses use legacy or unknown analysis."}
+                          </div>
+                        </div>
+                      </div>
+                    )}
 
                     <div className="mt-5 space-y-3 text-sm">
                       <div className="flex justify-between">
@@ -449,6 +494,22 @@ export default function ExperimentsDashboard({
                 </div>
               </div>
             </div>
+
+            {!comparisonAnalysisCurrent && (
+              <div className="mx-5 mt-5 flex gap-2 rounded-xl border border-amber-500/20 bg-amber-500/10 p-3 text-sm text-amber-200 lg:mx-6">
+                <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />
+
+                <div>
+                  <div className="font-medium">
+                    Analysis generations differ or are stale
+                  </div>
+
+                  <div className="mt-1 text-xs leading-5 text-amber-200/70">
+                    Re-analyze legacy responses before treating this comparison as analysis-generation consistent.
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="grid grid-cols-[1.4fr_1fr_1fr_0.8fr] gap-4 border-b border-slate-800 px-5 py-3 text-xs uppercase tracking-wider text-slate-500">
               <div>
@@ -689,6 +750,25 @@ export default function ExperimentsDashboard({
                           )}
                         </div>
                       </div>
+                    </div>
+
+                    <div className="mt-5 flex items-center justify-between rounded-xl border border-slate-800 bg-slate-950/40 px-4 py-3 text-xs">
+                      <span className="text-slate-500">
+                        Analysis freshness
+                      </span>
+
+                      <span
+                        className={
+                          item.analysis_is_current
+                            ? "text-emerald-300"
+                            : "text-amber-300"
+                        }
+                      >
+                        {item.analysis_current_responses}
+                        {" / "}
+                        {item.analysis_total_responses}
+                        {" current"}
+                      </span>
                     </div>
 
                     <p className="mt-5 text-xs leading-5 text-slate-500">

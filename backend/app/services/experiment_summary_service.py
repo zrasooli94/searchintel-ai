@@ -4,6 +4,10 @@ from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.core.analysis_versions import (
+    VISIBILITY_ANALYSIS_VERSION,
+)
+from app.models.ai_response import AIResponse
 from app.models.ai_run import AIRun
 from app.repositories.geo_experiment_repository import (
     GeoExperimentRepository,
@@ -73,9 +77,68 @@ class ExperimentSummaryService:
                 row.prompt_id
             )
 
+        analysis_rows = list(
+            db.execute(
+                select(
+                    AIRun.experiment_id,
+                    AIResponse.visibility_analysis_version,
+                )
+                .join(
+                    AIResponse,
+                    AIResponse.run_id == AIRun.id,
+                )
+                .where(
+                    AIRun.experiment_id.in_(
+                        experiment_ids
+                    ),
+                    AIRun.include_in_metrics.is_(True),
+                    AIResponse.visibility_analyzed_at
+                    .is_not(None),
+                )
+            ).all()
+        )
+
+        analysis_total_by_experiment = defaultdict(int)
+        analysis_current_by_experiment = defaultdict(int)
+
+        for row in analysis_rows:
+            analysis_total_by_experiment[
+                row.experiment_id
+            ] += 1
+
+            if (
+                row.visibility_analysis_version
+                == VISIBILITY_ANALYSIS_VERSION
+            ):
+                analysis_current_by_experiment[
+                    row.experiment_id
+                ] += 1
+
         items = []
 
         for experiment in experiments:
+
+            analysis_total = (
+                analysis_total_by_experiment[
+                    experiment.id
+                ]
+            )
+
+            analysis_current = (
+                analysis_current_by_experiment[
+                    experiment.id
+                ]
+            )
+
+            analysis_stale = (
+                analysis_total
+                - analysis_current
+            )
+
+            analysis_is_current = (
+                analysis_total > 0
+                and analysis_stale == 0
+            )
 
             metrics = (
                 VisibilityMetricsService.calculate(
@@ -118,6 +181,21 @@ class ExperimentSummaryService:
                                 experiment.id
                             ]
                         ),
+
+                    "analysis_version":
+                        VISIBILITY_ANALYSIS_VERSION,
+
+                    "analysis_total_responses":
+                        analysis_total,
+
+                    "analysis_current_responses":
+                        analysis_current,
+
+                    "analysis_stale_responses":
+                        analysis_stale,
+
+                    "analysis_is_current":
+                        analysis_is_current,
 
                     "mention_rate":
                         metrics[

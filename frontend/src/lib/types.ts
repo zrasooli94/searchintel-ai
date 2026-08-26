@@ -399,6 +399,12 @@ export type ExperimentSummaryItem = {
   runs: number;
   prompts: number;
 
+  analysis_version: string;
+  analysis_total_responses: number;
+  analysis_current_responses: number;
+  analysis_stale_responses: number;
+  analysis_is_current: boolean;
+
   mention_rate: number;
   prompt_coverage: number;
   entity_verified_target_mention_rate: number | null;

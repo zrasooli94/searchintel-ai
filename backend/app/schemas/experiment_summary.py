@@ -14,6 +14,12 @@ class ExperimentSummaryItem(BaseModel):
     runs: int
     prompts: int
 
+    analysis_version: str
+    analysis_total_responses: int
+    analysis_current_responses: int
+    analysis_stale_responses: int
+    analysis_is_current: bool
+
     mention_rate: float
     prompt_coverage: float
     entity_verified_target_mention_rate: float | None

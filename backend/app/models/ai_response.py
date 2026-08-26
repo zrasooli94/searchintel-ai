@@ -4,6 +4,7 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     JSON,
+    String,
     Text,
     func,
 )
@@ -36,6 +37,11 @@ class AIResponse(Base):
 
     visibility_analyzed_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
+        nullable=True,
+    )
+
+    visibility_analysis_version: Mapped[str | None] = mapped_column(
+        String(80),
         nullable=True,
     )
 

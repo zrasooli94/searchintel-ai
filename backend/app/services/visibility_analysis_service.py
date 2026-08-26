@@ -12,6 +12,10 @@ from urllib.parse import (
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
+from app.core.analysis_versions import (
+    VISIBILITY_ANALYSIS_VERSION,
+)
+
 from app.repositories.brand_alias_repository import (
     BrandAliasRepository,
 )
@@ -1009,6 +1013,10 @@ class VisibilityAnalysisService:
 
         response.visibility_analyzed_at = datetime.now(
             timezone.utc
+        )
+
+        response.visibility_analysis_version = (
+            VISIBILITY_ANALYSIS_VERSION
         )
 
         db.commit()
