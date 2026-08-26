@@ -56,22 +56,22 @@ function StatCard({
   icon: typeof Gauge;
 }) {
   return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5 shadow-sm">
-      <div className="mb-5 flex items-center justify-between">
-        <span className="text-sm font-medium text-slate-400">
+    <div className="crystal-card rounded-[20px] p-5">
+      <div className="mb-5 flex items-start justify-between gap-4">
+        <span className="crystal-eyebrow">
           {title}
         </span>
 
-        <div className="rounded-xl bg-slate-800 p-2.5">
-          <Icon className="h-4 w-4 text-cyan-400" />
+        <div className="crystal-icon h-10 w-10">
+          <Icon className="h-[18px] w-[18px] text-[#5f75ff]" />
         </div>
       </div>
 
-      <div className="text-3xl font-semibold tracking-tight text-white">
+      <div className="crystal-value text-3xl font-medium">
         {value}
       </div>
 
-      <div className="mt-2 text-xs text-slate-500">
+      <div className="mt-3 text-xs leading-5 text-slate-500">
         {detail}
       </div>
     </div>
@@ -95,27 +95,27 @@ function FunnelStage({
       : 0;
 
   return (
-    <div className="min-w-0 flex-1 rounded-2xl border border-slate-800 bg-slate-950/50 p-5">
+    <div className="crystal-subcard min-w-0 flex-1 rounded-[18px] p-5">
       <div className="mb-4 flex items-center gap-3">
-        <div className="rounded-xl bg-slate-800 p-2.5">
-          <Icon className="h-4 w-4 text-cyan-400" />
+        <div className="crystal-icon h-10 w-10">
+          <Icon className="h-4 w-4 text-[#5f75ff]" />
         </div>
 
-        <span className="text-sm font-medium text-slate-300">
+        <span className="text-sm font-medium text-slate-700">
           {label}
         </span>
       </div>
 
-      <div className="text-2xl font-semibold text-white">
+      <div className="crystal-value text-2xl font-medium">
         {count}
         <span className="ml-1 text-base font-normal text-slate-500">
           / {total}
         </span>
       </div>
 
-      <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-slate-800">
+      <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-slate-100">
         <div
-          className="h-full rounded-full bg-cyan-400"
+          className="crystal-accent h-full rounded-full"
           style={{
             width: `${Math.min(
               percentage,
@@ -149,14 +149,18 @@ export default function OverviewDashboard({
       summary={summary}
       title="Overview"
     >
-        <div className="mx-auto max-w-7xl space-y-6 p-5 lg:p-8">
+        <div className="crystal-page mx-auto max-w-[1450px] space-y-7 p-5 lg:p-8 xl:px-10">
           <section>
-            <div className="mb-4">
-              <h2 className="text-lg font-semibold text-white">
+            <div className="mb-5">
+              <div className="crystal-eyebrow">
+                Current measurement
+              </div>
+
+              <h2 className="mt-2 text-2xl font-medium tracking-[-0.035em] text-slate-950">
                 {target.brand}
               </h2>
 
-              <p className="mt-1 text-sm text-slate-500">
+              <p className="mt-1.5 text-sm text-slate-500">
                 {summary.analyzed_prompts} prompts ·{" "}
                 {summary.analyzed_runs} analyzed runs ·{" "}
                 {summary.benchmark_mode}
@@ -213,9 +217,9 @@ export default function OverviewDashboard({
             </div>
           </section>
 
-          <section className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5 lg:p-6">
+          <section className="crystal-panel rounded-[22px] p-5 lg:p-6">
             <div className="mb-5">
-              <h2 className="font-semibold text-white">
+              <h2 className="font-semibold text-slate-950">
                 Visibility Funnel
               </h2>
 
@@ -233,7 +237,7 @@ export default function OverviewDashboard({
                 icon={Activity}
               />
 
-              <ChevronRight className="mx-auto h-5 w-5 rotate-90 text-slate-700 md:rotate-0" />
+              <ChevronRight className="mx-auto h-5 w-5 rotate-90 text-slate-300 md:rotate-0" />
 
               <FunnelStage
                 label="Verified"
@@ -242,7 +246,7 @@ export default function OverviewDashboard({
                 icon={CircleCheck}
               />
 
-              <ChevronRight className="mx-auto h-5 w-5 rotate-90 text-slate-700 md:rotate-0" />
+              <ChevronRight className="mx-auto h-5 w-5 rotate-90 text-slate-300 md:rotate-0" />
 
               <FunnelStage
                 label="Retrieved"
@@ -253,7 +257,7 @@ export default function OverviewDashboard({
                 icon={Globe2}
               />
 
-              <ChevronRight className="mx-auto h-5 w-5 rotate-90 text-slate-700 md:rotate-0" />
+              <ChevronRight className="mx-auto h-5 w-5 rotate-90 text-slate-300 md:rotate-0" />
 
               <FunnelStage
                 label="Cited"
@@ -265,14 +269,14 @@ export default function OverviewDashboard({
           </section>
 
           <section className="grid gap-6 xl:grid-cols-[0.9fr_1.6fr]">
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
+            <div className="crystal-panel rounded-[22px] p-6">
               <div className="mb-5 flex items-start justify-between">
                 <div>
-                  <div className="text-sm text-slate-500">
+                  <div className="crystal-eyebrow">
                     Primary bottleneck
                   </div>
 
-                  <div className="mt-2 text-2xl font-semibold capitalize text-white">
+                  <div className="mt-2 text-2xl font-semibold capitalize text-slate-950">
                     {bottleneck.replaceAll(
                       "_",
                       " ",
@@ -289,16 +293,16 @@ export default function OverviewDashboard({
                 </div>
               </div>
 
-              <p className="text-sm leading-6 text-slate-400">
+              <p className="text-sm leading-7 text-slate-600">
                 {summary.diagnosis.message}
               </p>
 
-              <div className="mt-6 rounded-xl border border-slate-800 bg-slate-950/50 p-4">
+              <div className="crystal-subcard mt-6 rounded-2xl p-4">
                 <div className="text-xs uppercase tracking-wider text-slate-500">
                   Diagnostic rule
                 </div>
 
-                <div className="mt-2 text-sm text-slate-300">
+                <div className="mt-2 text-sm text-slate-700">
                   {summary.diagnosis.rule_version}
                 </div>
 
@@ -313,9 +317,9 @@ export default function OverviewDashboard({
               </div>
             </div>
 
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
+            <div className="crystal-panel rounded-[22px] p-6">
               <div className="mb-5">
-                <h2 className="font-semibold text-white">
+                <h2 className="font-semibold text-slate-950">
                   Competitor Response Visibility
                 </h2>
 
@@ -343,7 +347,7 @@ export default function OverviewDashboard({
                     <CartesianGrid
                       strokeDasharray="3 3"
                       horizontal={false}
-                      stroke="#1e293b"
+                      stroke="#e2e8f0"
                     />
 
                     <XAxis
@@ -362,7 +366,7 @@ export default function OverviewDashboard({
                       dataKey="name"
                       width={110}
                       tick={{
-                        fill: "#cbd5e1",
+                        fill: "#64748b",
                         fontSize: 12,
                       }}
                       axisLine={false}
@@ -371,21 +375,32 @@ export default function OverviewDashboard({
 
                     <Tooltip
                       cursor={{
-                        fill: "#0f172a",
+                        fill: "rgba(241,245,249,0.72)",
                       }}
                       contentStyle={{
-                        background: "#020617",
-                        border: "1px solid #1e293b",
-                        borderRadius: "12px",
+                        background:
+                          "rgba(255,255,255,0.98)",
+                        border:
+                          "1px solid #e2e8f0",
+                        borderRadius: "14px",
+                        padding: "12px 14px",
+                        boxShadow:
+                          "0 14px 40px rgba(51,65,85,0.12)",
                       }}
                       labelStyle={{
-                        color: "#f8fafc",
+                        color: "#0f172a",
+                        fontWeight: 600,
+                        marginBottom: "6px",
+                      }}
+                      itemStyle={{
+                        fontSize: "13px",
+                        padding: "2px 0",
                       }}
                     />
 
                     <Bar
                       dataKey="coverage"
-                      fill="#22d3ee"
+                      fill="#5f75ff"
                       radius={[0, 6, 6, 0]}
                       name="Coverage %"
                     />

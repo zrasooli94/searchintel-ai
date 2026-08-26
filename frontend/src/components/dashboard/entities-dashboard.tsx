@@ -67,25 +67,25 @@ function EntityTypeBadge({
     string
   > = {
     brand:
-      "bg-cyan-500/10 text-cyan-300",
+      "border border-blue-200 bg-blue-50 text-blue-700",
     company:
-      "bg-violet-500/10 text-violet-300",
+      "border border-violet-200 bg-violet-50 text-violet-700",
     product:
-      "bg-emerald-500/10 text-emerald-300",
+      "border border-emerald-200 bg-emerald-50 text-emerald-700",
     software_project:
-      "bg-amber-500/10 text-amber-300",
+      "border border-amber-200 bg-amber-50 text-amber-700",
     organization:
-      "bg-blue-500/10 text-blue-300",
+      "border border-indigo-200 bg-indigo-50 text-indigo-700",
     service:
-      "bg-pink-500/10 text-pink-300",
+      "border border-rose-200 bg-rose-50 text-rose-700",
   };
 
   return (
     <span
       className={[
-        "rounded-lg px-2.5 py-1 text-xs font-medium",
+        "rounded-full px-2.5 py-1 text-[11px] font-medium",
         classes[type] ??
-          "bg-slate-800 text-slate-300",
+          "bg-slate-100 text-slate-700",
       ].join(" ")}
     >
       {pretty(type)}
@@ -177,23 +177,29 @@ export default function EntitiesDashboard({
           .length > 0,
     );
 
+  const targetEntity =
+    entities.entities.find(
+      (entity) =>
+        entity.project_role === "target",
+    ) ?? null;
+
   return (
     <DashboardShell
       summary={visibilitySummary}
       title="Entities"
     >
-      <div className="mx-auto max-w-7xl space-y-6 p-5 lg:p-8">
+      <div className="crystal-page mx-auto max-w-[1450px] space-y-7 p-5 lg:p-8 xl:px-10">
         <section>
           <div>
-            <div className="text-sm text-slate-500">
+            <div className="crystal-eyebrow">
               Entity knowledge graph
             </div>
 
-            <h2 className="mt-1 text-xl font-semibold text-white">
+            <h2 className="mt-2 text-2xl font-medium tracking-[-0.035em] text-slate-950">
               Canonical Entity Registry
             </h2>
 
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1.5 text-sm text-slate-500">
               Exact entities remain separate while
               products can roll up to commercial
               brands for visibility metrics.
@@ -244,19 +250,19 @@ export default function EntitiesDashboard({
               }) => (
                 <div
                   key={label}
-                  className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5"
+                  className="crystal-card rounded-[20px] p-5"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-slate-400">
+                    <span className="crystal-eyebrow">
                       {label}
                     </span>
 
-                    <div className="rounded-xl bg-slate-800 p-2.5">
-                      <Icon className="h-4 w-4 text-cyan-400" />
+                    <div className="crystal-icon h-10 w-10">
+                      <Icon className="h-[18px] w-[18px] text-[#5f75ff]" />
                     </div>
                   </div>
 
-                  <div className="mt-5 text-3xl font-semibold text-white">
+                  <div className="crystal-value mt-5 text-3xl font-medium">
                     {value}
                   </div>
                 </div>
@@ -265,10 +271,71 @@ export default function EntitiesDashboard({
           </div>
         </section>
 
-        <section className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
+        {targetEntity && (
+          <section className="crystal-panel rounded-[22px] p-6">
+            <div className="grid gap-6 lg:grid-cols-[1.3fr_1fr] lg:items-center">
+              <div>
+                <div className="crystal-eyebrow">
+                  Target identity
+                </div>
+
+                <h2 className="mt-2 text-2xl font-medium tracking-[-0.035em] text-slate-950">
+                  {targetEntity.name}
+                </h2>
+
+                <p className="mt-2 max-w-xl text-sm leading-7 text-slate-600">
+                  Canonical project target used for
+                  entity-aware visibility and identity
+                  resolution.
+                </p>
+
+                <div className="mt-5 flex flex-wrap gap-2">
+                  <EntityTypeBadge
+                    type={targetEntity.entity_type}
+                  />
+
+                  <span className="rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-xs font-medium text-violet-700">
+                    Target
+                  </span>
+
+                  <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-500">
+                    ID #{targetEntity.id}
+                  </span>
+                </div>
+              </div>
+
+              <div className="crystal-subcard rounded-[18px] p-5">
+                <div className="crystal-eyebrow">
+                  Known aliases
+                </div>
+
+                {targetEntity.aliases.length > 0 ? (
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {targetEntity.aliases.map(
+                      (alias) => (
+                        <span
+                          key={alias}
+                          className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-700"
+                        >
+                          {alias}
+                        </span>
+                      ),
+                    )}
+                  </div>
+                ) : (
+                  <p className="mt-3 text-sm text-slate-500">
+                    No canonical aliases registered.
+                  </p>
+                )}
+              </div>
+            </div>
+          </section>
+        )}
+
+        <section className="crystal-panel rounded-[22px] p-6">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="font-semibold text-white">
+              <h2 className="font-semibold text-slate-950">
                 Typed Relationships
               </h2>
 
@@ -278,7 +345,7 @@ export default function EntitiesDashboard({
               </p>
             </div>
 
-            <GitBranch className="h-5 w-5 text-slate-600" />
+            <GitBranch className="h-5 w-5 text-slate-400" />
           </div>
 
           {hierarchyRoots.length === 0 ? (
@@ -291,11 +358,11 @@ export default function EntitiesDashboard({
                 (root) => (
                   <div
                     key={root.id}
-                    className="rounded-xl border border-slate-800 bg-slate-950/50 p-4"
+                    className="crystal-subcard rounded-[18px] p-4"
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div>
-                        <div className="font-medium text-white">
+                        <div className="font-medium text-slate-950">
                           {root.name}
                         </div>
 
@@ -324,10 +391,10 @@ export default function EntitiesDashboard({
                             key={
                               child.id
                             }
-                            className="rounded-lg border border-slate-800 px-3 py-2.5"
+                            className="rounded-xl border border-slate-200/70 bg-white/75 px-3 py-2.5 transition hover:bg-white"
                           >
                             <div className="flex items-center justify-between gap-3">
-                              <span className="text-sm text-slate-300">
+                              <span className="text-sm text-slate-700">
                                 {
                                   child.name
                                 }
@@ -340,7 +407,7 @@ export default function EntitiesDashboard({
                               />
                             </div>
 
-                            <div className="mt-1 text-xs text-slate-600">
+                            <div className="mt-1 text-xs text-slate-400">
                               {pretty(
                                 child.relationship,
                               )}
@@ -356,11 +423,11 @@ export default function EntitiesDashboard({
           )}
         </section>
 
-        <section className="rounded-2xl border border-slate-800 bg-slate-900/60">
-          <div className="border-b border-slate-800 p-5 lg:p-6">
+        <section className="crystal-panel rounded-[22px]">
+          <div className="p-5 pb-4 lg:p-6 lg:pb-4">
             <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
               <div>
-                <h2 className="font-semibold text-white">
+                <h2 className="font-semibold text-slate-950">
                   Entity Registry
                 </h2>
 
@@ -372,7 +439,7 @@ export default function EntitiesDashboard({
 
               <div className="flex flex-col gap-3 sm:flex-row">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-600" />
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
 
                   <input
                     value={query}
@@ -384,7 +451,7 @@ export default function EntitiesDashboard({
                       )
                     }
                     placeholder="Search entities..."
-                    className="w-64 rounded-xl border border-slate-800 bg-slate-950 py-2.5 pl-9 pr-3 text-sm text-slate-200 outline-none placeholder:text-slate-600 focus:border-cyan-500/50"
+                    className="crystal-field w-64 py-2.5 pl-9 pr-3 text-sm"
                   />
                 </div>
 
@@ -397,7 +464,7 @@ export default function EntitiesDashboard({
                       event.target.value,
                     )
                   }
-                  className="rounded-xl border border-slate-800 bg-slate-950 px-3 py-2.5 text-sm text-slate-300 outline-none"
+                  className="crystal-field w-auto px-3 py-2.5 text-sm"
                 >
                   <option value="all">
                     All types
@@ -434,28 +501,28 @@ export default function EntitiesDashboard({
           <div className="overflow-x-auto">
             <table className="w-full min-w-[1000px] text-left">
               <thead>
-                <tr className="border-b border-slate-800 text-xs uppercase tracking-wider text-slate-500">
-                  <th className="px-6 py-4">
+                <tr className="border-y border-slate-200/70 bg-slate-50/55 text-[11px] uppercase tracking-[0.1em] text-slate-500">
+                  <th className="px-6 py-3.5">
                     Entity
                   </th>
 
-                  <th className="px-4 py-4">
+                  <th className="px-4 py-3.5">
                     Type
                   </th>
 
-                  <th className="px-4 py-4">
+                  <th className="px-4 py-3.5">
                     Project role
                   </th>
 
-                  <th className="px-4 py-4">
+                  <th className="px-4 py-3.5">
                     Metric roll-up
                   </th>
 
-                  <th className="px-4 py-4">
+                  <th className="px-4 py-3.5">
                     Parent
                   </th>
 
-                  <th className="px-4 py-4">
+                  <th className="px-4 py-3.5">
                     Aliases
                   </th>
                 </tr>
@@ -473,21 +540,21 @@ export default function EntitiesDashboard({
                     return (
                       <tr
                         key={entity.id}
-                        className="border-b border-slate-800/70 last:border-0"
+                        className="border-b border-slate-200/65 transition hover:bg-slate-50/55 last:border-0"
                       >
-                        <td className="px-6 py-4">
-                          <div className="font-medium text-slate-200">
+                        <td className="px-6 py-3.5">
+                          <div className="font-medium text-slate-900">
                             {
                               entity.name
                             }
                           </div>
 
-                          <div className="mt-1 text-xs text-slate-600">
+                          <div className="mt-1 text-xs text-slate-400">
                             ID #{entity.id}
                           </div>
                         </td>
 
-                        <td className="px-4 py-4">
+                        <td className="px-4 py-3.5">
                           <EntityTypeBadge
                             type={
                               entity.entity_type
@@ -500,34 +567,34 @@ export default function EntitiesDashboard({
                             "—"}
                         </td>
 
-                        <td className="px-4 py-4 text-sm text-slate-300">
+                        <td className="px-4 py-4 text-sm text-slate-700">
                           {entity.rollup_brand ??
                             "Entity-only"}
                         </td>
 
-                        <td className="px-4 py-4">
+                        <td className="px-4 py-3.5">
                           {parent ? (
                             <div>
-                              <div className="text-sm text-slate-300">
+                              <div className="text-sm text-slate-700">
                                 {
                                   parent.object_name
                                 }
                               </div>
 
-                              <div className="mt-1 text-xs text-slate-600">
+                              <div className="mt-1 text-xs text-slate-400">
                                 {pretty(
                                   parent.relationship_type,
                                 )}
                               </div>
                             </div>
                           ) : (
-                            <span className="text-sm text-slate-600">
+                            <span className="text-sm text-slate-400">
                               —
                             </span>
                           )}
                         </td>
 
-                        <td className="px-4 py-4">
+                        <td className="px-4 py-3.5">
                           {entity.aliases.length >
                           0 ? (
                             <div className="flex flex-wrap gap-1.5">
@@ -539,7 +606,7 @@ export default function EntitiesDashboard({
                                     key={
                                       alias
                                     }
-                                    className="rounded-md bg-slate-800 px-2 py-1 text-xs text-slate-300"
+                                    className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] text-slate-600"
                                   >
                                     {
                                       alias
@@ -549,7 +616,7 @@ export default function EntitiesDashboard({
                               )}
                             </div>
                           ) : (
-                            <span className="text-sm text-slate-600">
+                            <span className="text-sm text-slate-400">
                               —
                             </span>
                           )}
@@ -563,11 +630,11 @@ export default function EntitiesDashboard({
           </div>
         </section>
 
-        <section className="rounded-2xl border border-slate-800 bg-slate-900/60">
-          <div className="border-b border-slate-800 p-5 lg:p-6">
+        <section className="crystal-panel rounded-[22px]">
+          <div className="p-5 pb-4 lg:p-6 lg:pb-4">
             <div className="flex items-start justify-between">
               <div>
-                <h2 className="font-semibold text-white">
+                <h2 className="font-semibold text-slate-950">
                   Candidate Review Queue
                 </h2>
 
@@ -579,16 +646,16 @@ export default function EntitiesDashboard({
                 </p>
               </div>
 
-              <TriangleAlert className="h-5 w-5 text-amber-400" />
+              <TriangleAlert className="h-5 w-5 text-amber-600" />
             </div>
           </div>
 
           {entities.candidates.length ===
           0 ? (
             <div className="p-8">
-              <CheckCircle2 className="h-5 w-5 text-emerald-400" />
+              <CheckCircle2 className="h-5 w-5 text-emerald-600" />
 
-              <div className="mt-3 text-sm text-slate-300">
+              <div className="mt-3 text-sm text-slate-700">
                 No unresolved candidates.
               </div>
             </div>
@@ -596,24 +663,24 @@ export default function EntitiesDashboard({
             <div className="overflow-x-auto">
               <table className="w-full min-w-[950px] text-left">
                 <thead>
-                  <tr className="border-b border-slate-800 text-xs uppercase tracking-wider text-slate-500">
-                    <th className="px-6 py-4">
+                  <tr className="border-y border-slate-200/70 bg-slate-50/55 text-[11px] uppercase tracking-[0.1em] text-slate-500">
+                    <th className="px-6 py-3.5">
                       Candidate
                     </th>
 
-                    <th className="px-4 py-4">
+                    <th className="px-4 py-3.5">
                       Suggested type
                     </th>
 
-                    <th className="px-4 py-4">
+                    <th className="px-4 py-3.5">
                       Suggested parent
                     </th>
 
-                    <th className="px-4 py-4">
+                    <th className="px-4 py-3.5">
                       Relationship
                     </th>
 
-                    <th className="px-4 py-4">
+                    <th className="px-4 py-3.5">
                       Confidence
                     </th>
                   </tr>
@@ -626,16 +693,16 @@ export default function EntitiesDashboard({
                         key={
                           candidate.rule_id
                         }
-                        className="border-b border-slate-800/70 last:border-0"
+                        className="border-b border-slate-200/65 transition hover:bg-slate-50/55 last:border-0"
                       >
-                        <td className="px-6 py-4">
-                          <div className="font-medium text-slate-200">
+                        <td className="px-6 py-3.5">
+                          <div className="font-medium text-slate-900">
                             {
                               candidate.name
                             }
                           </div>
 
-                          <div className="mt-1 text-xs text-slate-600">
+                          <div className="mt-1 text-xs text-slate-400">
                             Rule #
                             {
                               candidate.rule_id
@@ -643,7 +710,7 @@ export default function EntitiesDashboard({
                           </div>
                         </td>
 
-                        <td className="px-4 py-4">
+                        <td className="px-4 py-3.5">
                           {candidate.entity_type ? (
                             <EntityTypeBadge
                               type={
@@ -651,13 +718,13 @@ export default function EntitiesDashboard({
                               }
                             />
                           ) : (
-                            <span className="text-sm text-slate-600">
+                            <span className="text-sm text-slate-400">
                               Unclassified
                             </span>
                           )}
                         </td>
 
-                        <td className="px-4 py-4 text-sm text-slate-300">
+                        <td className="px-4 py-4 text-sm text-slate-700">
                           {
                             candidate
                               .proposed_parent_name ??
@@ -675,8 +742,8 @@ export default function EntitiesDashboard({
                             : "—"}
                         </td>
 
-                        <td className="px-4 py-4">
-                          <span className="text-sm font-medium text-slate-300">
+                        <td className="px-4 py-3.5">
+                          <span className="text-sm font-medium text-slate-700">
                             {confidence(
                               candidate
                                 .classification_confidence,
@@ -693,10 +760,12 @@ export default function EntitiesDashboard({
         </section>
 
         <section className="grid gap-4 md:grid-cols-3">
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
-            <Tags className="h-5 w-5 text-cyan-400" />
+          <div className="crystal-card rounded-[20px] p-5">
+            <div className="crystal-icon h-10 w-10">
+              <Tags className="h-5 w-5 text-[#5f75ff]" />
+            </div>
 
-            <div className="mt-4 text-2xl font-semibold text-white">
+            <div className="crystal-value mt-4 text-2xl font-medium">
               {entities.stats.aliases}
             </div>
 
@@ -705,10 +774,12 @@ export default function EntitiesDashboard({
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
-            <GitBranch className="h-5 w-5 text-cyan-400" />
+          <div className="crystal-card rounded-[20px] p-5">
+            <div className="crystal-icon h-10 w-10">
+              <GitBranch className="h-5 w-5 text-[#5f75ff]" />
+            </div>
 
-            <div className="mt-4 text-2xl font-semibold text-white">
+            <div className="crystal-value mt-4 text-2xl font-medium">
               {
                 entities.stats
                   .relationships
@@ -720,10 +791,10 @@ export default function EntitiesDashboard({
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
-            <CheckCircle2 className="h-5 w-5 text-emerald-400" />
+          <div className="crystal-card rounded-[20px] p-5">
+            <CheckCircle2 className="h-5 w-5 text-emerald-600" />
 
-            <div className="mt-4 text-2xl font-semibold text-white">
+            <div className="crystal-value mt-4 text-2xl font-medium">
               {
                 entities.stats
                   .resolved_rules

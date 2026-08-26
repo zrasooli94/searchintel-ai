@@ -464,15 +464,15 @@ export default function SetupBaselineStep({
 
 
   return (
-    <section className="mt-8 rounded-2xl border border-slate-800 bg-slate-900/60">
-      <div className="border-b border-slate-800 p-6">
+    <section className="mt-8 crystal-panel rounded-[22px]">
+      <div className="border-b border-slate-200/80 p-6">
         <div className="flex gap-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-400/10 text-cyan-400">
+          <div className="crystal-step-badge">
             5
           </div>
 
           <div>
-            <h2 className="font-semibold text-white">
+            <h2 className="font-semibold text-slate-950">
               Baseline Experiment
             </h2>
 
@@ -501,13 +501,13 @@ export default function SetupBaselineStep({
             className={[
               "rounded-xl border p-5 text-left transition",
               mode === "web_search"
-                ? "border-cyan-500/40 bg-cyan-500/10"
-                : "border-slate-800 bg-slate-950/50",
+                ? "border-violet-300 bg-violet-50"
+                : "border-slate-200/80 bg-[#fbfcff]",
             ].join(" ")}
           >
-            <Globe2 className="h-5 w-5 text-cyan-400" />
+            <Globe2 className="h-5 w-5 text-[#5f75ff]" />
 
-            <div className="mt-4 font-medium text-white">
+            <div className="mt-4 font-medium text-slate-950">
               Web Search
             </div>
 
@@ -518,7 +518,7 @@ export default function SetupBaselineStep({
               visibility.
             </p>
 
-            <div className="mt-3 text-xs font-medium text-cyan-300">
+            <div className="mt-3 text-xs font-medium text-violet-600">
               Recommended first baseline
             </div>
           </button>
@@ -538,12 +538,12 @@ export default function SetupBaselineStep({
               "rounded-xl border p-5 text-left transition",
               mode === "memory"
                 ? "border-violet-500/40 bg-violet-500/10"
-                : "border-slate-800 bg-slate-950/50",
+                : "border-slate-200/80 bg-[#fbfcff]",
             ].join(" ")}
           >
             <Bot className="h-5 w-5 text-violet-300" />
 
-            <div className="mt-4 font-medium text-white">
+            <div className="mt-4 font-medium text-slate-950">
               Memory
             </div>
 
@@ -553,19 +553,19 @@ export default function SetupBaselineStep({
               retrieval.
             </p>
 
-            <div className="mt-3 text-xs text-slate-600">
+            <div className="mt-3 text-xs text-slate-400">
               Kept separate from Web Search
             </div>
           </button>
         </div>
 
-        <div className="mt-5 rounded-xl border border-slate-800 bg-slate-950/50 p-5">
+        <div className="mt-5 rounded-xl border border-slate-200/80 bg-[#fbfcff] p-5">
           <div className="flex items-center justify-between">
             <span className="text-sm text-slate-400">
               Active prompts
             </span>
 
-            <span className="font-semibold text-white">
+            <span className="font-semibold text-slate-950">
               {activePromptCount}
             </span>
           </div>
@@ -575,7 +575,7 @@ export default function SetupBaselineStep({
               Model
             </span>
 
-            <span className="text-sm text-slate-300">
+            <span className="text-sm text-slate-700">
               {job
                 && typeof (
                   job.config_snapshot
@@ -589,10 +589,10 @@ export default function SetupBaselineStep({
         </div>
 
         {job && (
-          <div className="mt-5 rounded-xl border border-slate-800 bg-slate-950/50 p-5">
+          <div className="mt-5 rounded-xl border border-slate-200/80 bg-[#fbfcff] p-5">
             <div className="flex items-center justify-between gap-5">
               <div>
-                <div className="text-sm font-medium text-white">
+                <div className="text-sm font-medium text-slate-950">
                   Benchmark #{job.id}
                 </div>
 
@@ -601,7 +601,7 @@ export default function SetupBaselineStep({
                 </div>
               </div>
 
-              <div className="text-lg font-semibold text-cyan-300">
+              <div className="text-lg font-semibold text-violet-600">
                 {Math.round(
                   job.progress_percentage
                 )}
@@ -609,9 +609,9 @@ export default function SetupBaselineStep({
               </div>
             </div>
 
-            <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-800">
+            <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-100">
               <div
-                className="h-full rounded-full bg-cyan-400 transition-all"
+                className="crystal-accent h-full rounded-full transition-all"
                 style={{
                   width:
                     `${job.progress_percentage}%`,
@@ -634,7 +634,7 @@ export default function SetupBaselineStep({
             </div>
 
             {job.status === "completed" && (
-              <div className="mt-4 flex items-center gap-2 text-sm text-emerald-300">
+              <div className="mt-4 flex items-center gap-2 text-sm text-emerald-700">
                 <CheckCircle2 className="h-4 w-4" />
                 Baseline completed.
               </div>
@@ -642,7 +642,7 @@ export default function SetupBaselineStep({
 
             {job.status ===
               "completed_with_errors" && (
-              <div className="mt-4 flex items-center gap-2 text-sm text-amber-300">
+              <div className="mt-4 flex items-center gap-2 text-sm text-amber-700">
                 <TriangleAlert className="h-4 w-4" />
                 Completed with failed runs.
               </div>
@@ -651,7 +651,7 @@ export default function SetupBaselineStep({
         )}
 
         {error && (
-          <div className="mt-5 flex gap-2 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-300">
+          <div className="mt-5 flex gap-2 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-700">
             <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />
             {error}
           </div>
@@ -665,7 +665,7 @@ export default function SetupBaselineStep({
               || activePromptCount === 0
             }
             onClick={start}
-            className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-cyan-400 px-4 py-3 text-sm font-medium text-slate-950 disabled:opacity-50"
+            className="crystal-primary-button mt-5 w-full px-4 py-3 text-sm"
           >
             {starting ? (
               <>

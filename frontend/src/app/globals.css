@@ -1,20 +1,348 @@
 @import "tailwindcss";
 
 :root {
-  color-scheme: dark;
+  --background: #f8faff;
+  --foreground: #111827;
+}
+
+* {
+  box-sizing: border-box;
 }
 
 html {
-  background: #020617;
+  background: var(--background);
 }
 
 body {
   margin: 0;
   min-height: 100vh;
-  background: #020617;
-  font-family: Arial, Helvetica, sans-serif;
+  color: var(--foreground);
+  font-family:
+    Arial,
+    Helvetica,
+    sans-serif;
+  overflow-x: hidden;
+
+  background:
+    radial-gradient(
+      circle at 72% 2%,
+      rgba(128, 104, 255, 0.10),
+      transparent 30rem
+    ),
+    radial-gradient(
+      circle at 42% 34%,
+      rgba(74, 163, 255, 0.065),
+      transparent 34rem
+    ),
+    linear-gradient(
+      180deg,
+      #ffffff 0%,
+      #f8faff 48%,
+      #f5f8ff 100%
+    );
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
 }
 
 button {
   font: inherit;
+}
+
+::selection {
+  background: #6c63ff;
+  color: white;
+}
+
+::-webkit-scrollbar {
+  width: 7px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f5f7fb;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #ccd4e2;
+  border-radius: 999px;
+}
+
+.app-panel {
+  border: 1px solid rgba(218, 224, 234, 0.88);
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+
+  box-shadow:
+    0 18px 55px rgba(69, 83, 116, 0.055),
+    inset 0 1px 0 rgba(255, 255, 255, 0.92);
+}
+
+.soft-grid {
+  background-image:
+    linear-gradient(
+      rgba(87, 113, 170, 0.045) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      rgba(87, 113, 170, 0.045) 1px,
+      transparent 1px
+    );
+
+  background-size: 54px 54px;
+}
+
+.gradient-text {
+  background:
+    linear-gradient(
+      90deg,
+      #7b5cff,
+      #5c85ff 48%,
+      #53b4ff
+    );
+
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+.editorial-number {
+  font-feature-settings: "tnum";
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+
+/* -------------------------------------------------
+   SearchIntel Crystal UI
+   ------------------------------------------------- */
+
+.crystal-panel {
+  border: 1px solid rgba(214, 222, 235, 0.88);
+  background: rgba(255, 255, 255, 0.86);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow:
+    0 18px 55px rgba(73, 88, 125, 0.055),
+    0 2px 8px rgba(73, 88, 125, 0.025),
+    inset 0 1px 0 rgba(255, 255, 255, 0.96);
+}
+
+.crystal-card {
+  border: 1px solid rgba(218, 225, 237, 0.9);
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow:
+    0 10px 35px rgba(69, 83, 116, 0.045),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+}
+
+.crystal-subcard {
+  border: 1px solid rgba(218, 225, 237, 0.82);
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.94),
+      rgba(249, 251, 255, 0.9)
+    );
+}
+
+.crystal-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.75rem;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(238, 244, 255, 0.95),
+      rgba(245, 241, 255, 0.95)
+    );
+}
+
+.crystal-eyebrow {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.crystal-value {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.045em;
+  color: #0f172a;
+}
+
+.crystal-muted {
+  color: #64748b;
+}
+
+.crystal-divider {
+  border-color: rgba(226, 232, 240, 0.82);
+}
+
+.crystal-accent {
+  background:
+    linear-gradient(
+      90deg,
+      #7357ff,
+      #5f75ff 50%,
+      #42a5ff
+    );
+}
+
+.crystal-page {
+  position: relative;
+}
+
+.crystal-page::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      circle at 78% 8%,
+      rgba(116, 87, 255, 0.055),
+      transparent 25rem
+    ),
+    radial-gradient(
+      circle at 40% 42%,
+      rgba(66, 165, 255, 0.035),
+      transparent 30rem
+    );
+}
+
+/* -------------------------------------------------
+   SearchIntel Crystal Controls
+   ------------------------------------------------- */
+
+.crystal-step-badge {
+  display: flex;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(196, 181, 253, 0.65);
+  border-radius: 0.8rem;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(245, 243, 255, 0.98),
+      rgba(239, 246, 255, 0.98)
+    );
+  color: #635bdb;
+  font-size: 0.75rem;
+  font-weight: 650;
+}
+
+.crystal-primary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 0;
+  border-radius: 0.85rem;
+  background: #111827;
+  color: #ffffff;
+  font-weight: 500;
+  box-shadow:
+    0 10px 24px rgba(17, 24, 39, 0.10);
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    opacity 180ms ease;
+}
+
+.crystal-primary-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow:
+    0 14px 30px rgba(17, 24, 39, 0.15);
+}
+
+.crystal-primary-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.crystal-secondary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 1px solid rgba(203, 213, 225, 0.9);
+  border-radius: 0.85rem;
+  background: rgba(255, 255, 255, 0.9);
+  color: #475569;
+  font-weight: 500;
+  box-shadow:
+    0 3px 10px rgba(71, 85, 105, 0.035);
+  transition:
+    border-color 180ms ease,
+    color 180ms ease,
+    transform 180ms ease;
+}
+
+.crystal-secondary-button:hover:not(:disabled) {
+  border-color: #c4b5fd;
+  color: #5b4fd8;
+  transform: translateY(-1px);
+}
+
+.crystal-secondary-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.crystal-field {
+  width: 100%;
+  border: 1px solid rgba(203, 213, 225, 0.85);
+  border-radius: 0.85rem;
+  background: rgba(255, 255, 255, 0.92);
+  color: #0f172a;
+  outline: none;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.crystal-field::placeholder {
+  color: #94a3b8;
+}
+
+.crystal-field:focus {
+  border-color: #a5b4fc;
+  box-shadow:
+    0 0 0 3px rgba(129, 140, 248, 0.10);
+}
+
+.crystal-list {
+  overflow: hidden;
+  border: 1px solid rgba(218, 225, 237, 0.85);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.74);
+}
+
+.crystal-list-row {
+  transition: background 160ms ease;
+}
+
+.crystal-list-row:hover {
+  background: rgba(248, 250, 252, 0.78);
 }

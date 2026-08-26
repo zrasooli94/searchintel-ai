@@ -6,7 +6,6 @@ import {
   FlaskConical,
   Globe2,
   Search,
-  Sparkles,
   Users,
 } from "lucide-react";
 
@@ -47,7 +46,7 @@ export default async function Page({
 
   const workspace =
     await getProjectWorkspace(
-      projectId
+      projectId,
     );
 
   if (
@@ -55,7 +54,7 @@ export default async function Page({
     === null
   ) {
     throw new Error(
-      "Project does not have a primary website."
+      "Project does not have a primary website.",
     );
   }
 
@@ -65,170 +64,201 @@ export default async function Page({
     prompts,
   ] = await Promise.all([
     getWebsiteSetupState(
-      workspace.website_id
+      workspace.website_id,
     ),
     getProjectCompetitors(
-      projectId
+      projectId,
     ),
     getProjectPrompts(
-      projectId
+      projectId,
     ),
   ]);
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-100">
-      <div className="mx-auto max-w-5xl px-6 py-12">
+    <main className="crystal-page min-h-screen">
+      <div className="mx-auto max-w-[1180px] px-6 pb-20 pt-10 lg:px-10">
         <Link
           href="/"
-          className="inline-flex items-center gap-2 text-sm text-slate-500 transition hover:text-white"
+          className="inline-flex items-center gap-2 text-sm text-slate-500 transition hover:text-violet-700"
         >
           <ArrowLeft className="h-4 w-4" />
           Workspaces
         </Link>
 
-        <div className="mt-10 flex items-start gap-4">
-          <div className="rounded-2xl bg-cyan-400/10 p-3">
-            <Sparkles className="h-6 w-6 text-cyan-400" />
+        <section className="mt-10">
+          <div className="crystal-eyebrow">
+            Project setup
           </div>
 
-          <div>
-            <div className="text-sm text-slate-500">
-              Project setup
+          <h1 className="mt-3 text-4xl font-medium tracking-[-0.055em] text-slate-950">
+            {workspace.name}
+          </h1>
+
+          <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-600">
+            Configure the measurement foundation for this
+            workspace before using the visibility dashboards.
+          </p>
+        </section>
+
+        <section className="mt-9 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="crystal-card rounded-[20px] p-5">
+            <div className="flex items-center justify-between">
+              <div className="crystal-eyebrow">
+                Target brand
+              </div>
+
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50">
+                <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+              </div>
             </div>
 
-            <h1 className="mt-1 text-3xl font-semibold text-white">
-              {workspace.name}
-            </h1>
-
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-400">
-              The workspace and canonical target
-              identity are ready. Complete the
-              measurement setup before opening the
-              visibility dashboard.
-            </p>
-          </div>
-        </div>
-
-        <div className="mt-10 grid gap-4 md:grid-cols-2">
-          <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-6">
-            <CheckCircle2 className="h-5 w-5 text-emerald-400" />
-
-            <div className="mt-5 text-sm text-slate-500">
-              Target brand
-            </div>
-
-            <div className="mt-1 text-lg font-medium text-white">
+            <div className="mt-5 text-lg font-medium text-slate-950">
               {workspace.target_brand}
             </div>
+
+            <div className="mt-1 text-xs text-slate-400">
+              Canonical identity
+            </div>
           </div>
 
-          <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-6">
-            <Globe2 className="h-5 w-5 text-emerald-400" />
+          <div className="crystal-card rounded-[20px] p-5">
+            <div className="flex items-center justify-between">
+              <div className="crystal-eyebrow">
+                Primary website
+              </div>
 
-            <div className="mt-5 text-sm text-slate-500">
-              Primary website
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50">
+                <Globe2 className="h-4 w-4 text-blue-500" />
+              </div>
             </div>
 
-            <div className="mt-1 text-lg font-medium text-white">
+            <div className="mt-5 truncate text-lg font-medium text-slate-950">
               {workspace.domain}
             </div>
+
+            <div className="mt-1 text-xs text-slate-400">
+              Registered first-party domain
+            </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
-            <Users className="h-5 w-5 text-slate-500" />
+          <div className="crystal-card rounded-[20px] p-5">
+            <div className="flex items-center justify-between">
+              <div className="crystal-eyebrow">
+                Competitors
+              </div>
 
-            <div className="mt-5 text-2xl font-semibold text-white">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-50">
+                <Users className="h-4 w-4 text-violet-500" />
+              </div>
+            </div>
+
+            <div className="crystal-value mt-5 text-3xl font-medium">
               {workspace.competitor_count}
             </div>
 
-            <div className="mt-1 text-sm text-slate-500">
-              Competitors configured
+            <div className="mt-1 text-xs text-slate-400">
+              Configured brands
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
-            <FlaskConical className="h-5 w-5 text-slate-500" />
+          <div className="crystal-card rounded-[20px] p-5">
+            <div className="flex items-center justify-between">
+              <div className="crystal-eyebrow">
+                Experiments
+              </div>
 
-            <div className="mt-5 text-2xl font-semibold text-white">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-fuchsia-50">
+                <FlaskConical className="h-4 w-4 text-fuchsia-500" />
+              </div>
+            </div>
+
+            <div className="crystal-value mt-5 text-3xl font-medium">
               {workspace.experiment_count}
             </div>
 
-            <div className="mt-1 text-sm text-slate-500">
-              Experiments created
+            <div className="mt-1 text-xs text-slate-400">
+              Stored measurement sets
             </div>
           </div>
+        </section>
+
+        <div className="mt-10 space-y-6">
+          <SetupTechnicalStep
+            websiteId={
+              workspace.website_id
+            }
+            initialPageCount={
+              setupState.page_count
+            }
+            initialAudit={
+              setupState.latest_audit
+            }
+          />
+
+          <SetupCompetitorsStep
+            projectId={projectId}
+            initialCompetitors={
+              competitors
+            }
+          />
+
+          <SetupPromptsStep
+            key={
+              prompts
+                .map(
+                  (prompt) =>
+                    `${prompt.id}:${prompt.updated_at}:${prompt.is_active ? 1 : 0}`,
+                )
+                .join("-")
+            }
+            projectId={projectId}
+            targetBrand={
+              workspace.target_brand
+              ?? "Target brand"
+            }
+            initialPrompts={
+              prompts
+            }
+          />
+
+          <SetupBaselineStep
+            projectId={projectId}
+            activePromptCount={
+              prompts.filter(
+                (prompt) =>
+                  prompt.is_active,
+              ).length
+            }
+          />
+
+          <SetupOptimizationStep
+            projectId={projectId}
+          />
         </div>
 
-        <SetupTechnicalStep
-          websiteId={
-            workspace.website_id
-          }
-          initialPageCount={
-            setupState.page_count
-          }
-          initialAudit={
-            setupState.latest_audit
-          }
-        />
-
-        <SetupCompetitorsStep
-          projectId={projectId}
-          initialCompetitors={
-            competitors
-          }
-        />
-
-        <SetupPromptsStep
-          key={
-            prompts
-              .map(
-                (prompt) =>
-                  `${prompt.id}:${prompt.updated_at}:${prompt.is_active ? 1 : 0}`
-              )
-              .join("-")
-          }
-          projectId={projectId}
-          targetBrand={
-            workspace.target_brand
-            ?? "Target brand"
-          }
-          initialPrompts={
-            prompts
-          }
-        />
-
-        <SetupBaselineStep
-          projectId={projectId}
-          activePromptCount={
-            prompts.filter(
-              (prompt) =>
-                prompt.is_active
-            ).length
-          }
-        />
-
-        <SetupOptimizationStep
-          projectId={projectId}
-        />
-
-        <div className="mt-8 rounded-2xl border border-cyan-500/15 bg-cyan-500/5 p-6">
+        <section className="mt-8 rounded-[22px] border border-blue-200/70 bg-blue-50/65 p-6">
           <div className="flex gap-4">
-            <Search className="mt-1 h-5 w-5 shrink-0 text-cyan-400" />
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white">
+              <Search className="h-4 w-4 text-blue-500" />
+            </div>
 
             <div>
-              <h2 className="font-medium text-white">
-                Next: establish the first baseline
+              <div className="crystal-eyebrow">
+                Measurement workflow
+              </div>
+
+              <h2 className="mt-2 font-medium text-slate-950">
+                Establish and refine the controlled baseline
               </h2>
 
-              <p className="mt-2 text-sm leading-6 text-slate-400">
-                We will crawl the website, configure
-                competitors and prompts, then create
-                the first controlled SearchIntel
-                experiment.
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                Crawl the website, register competitors and
+                prompts, create the baseline, then reuse the
+                frozen measurement set for optimization.
               </p>
             </div>
           </div>
-        </div>
+        </section>
       </div>
     </main>
   );

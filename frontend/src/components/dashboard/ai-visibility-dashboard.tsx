@@ -67,22 +67,22 @@ function MetricCard({
   icon: LucideIcon;
 }) {
   return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
-      <div className="flex items-center justify-between">
-        <span className="text-sm text-slate-400">
+    <div className="crystal-card rounded-[20px] p-5">
+      <div className="flex items-start justify-between gap-4">
+        <span className="crystal-eyebrow">
           {label}
         </span>
 
-        <div className="rounded-xl bg-slate-800 p-2.5">
-          <Icon className="h-4 w-4 text-cyan-400" />
+        <div className="crystal-icon h-10 w-10">
+          <Icon className="h-[18px] w-[18px] text-[#5f75ff]" />
         </div>
       </div>
 
-      <div className="mt-5 text-3xl font-semibold text-white">
+      <div className="crystal-value mt-5 text-3xl font-medium">
         {value}
       </div>
 
-      <div className="mt-2 text-xs text-slate-500">
+      <div className="mt-3 text-xs leading-5 text-slate-500">
         {detail}
       </div>
     </div>
@@ -107,27 +107,27 @@ function FunnelStage({
       : 0;
 
   return (
-    <div className="flex-1 rounded-2xl border border-slate-800 bg-slate-950/50 p-5">
+    <div className="crystal-subcard min-w-0 flex-1 rounded-[18px] p-5">
       <div className="flex items-center gap-3">
-        <div className="rounded-xl bg-slate-800 p-2.5">
-          <Icon className="h-4 w-4 text-cyan-400" />
+        <div className="crystal-icon h-10 w-10">
+          <Icon className="h-4 w-4 text-[#5f75ff]" />
         </div>
 
-        <div className="text-sm font-medium text-slate-300">
+        <div className="text-sm font-medium text-slate-700">
           {label}
         </div>
       </div>
 
-      <div className="mt-5 text-2xl font-semibold text-white">
+      <div className="crystal-value mt-5 text-2xl font-medium">
         {count}
         <span className="ml-1 text-sm font-normal text-slate-500">
           / {total}
         </span>
       </div>
 
-      <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-slate-800">
+      <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-slate-100">
         <div
-          className="h-full rounded-full bg-cyan-400"
+          className="crystal-accent h-full rounded-full"
           style={{
             width: `${Math.min(
               coverage,
@@ -233,18 +233,18 @@ export default function AIVisibilityDashboard({
       summary={summary}
       title="AI Visibility"
     >
-      <div className="mx-auto max-w-7xl space-y-6 p-5 lg:p-8">
+      <div className="crystal-page mx-auto max-w-[1450px] space-y-7 p-5 lg:p-8 xl:px-10">
         <section>
           <div>
-            <div className="text-sm text-slate-500">
+            <div className="crystal-eyebrow">
               AI search visibility
             </div>
 
-            <h2 className="mt-1 text-xl font-semibold text-white">
+            <h2 className="mt-2 text-2xl font-medium tracking-[-0.035em] text-slate-950">
               {metrics.target_brand}
             </h2>
 
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1.5 text-sm text-slate-500">
               {metrics.analyzed_prompts} prompts ·{" "}
               {metrics.analyzed_runs} analyzed runs ·{" "}
               {metrics.benchmark_mode}
@@ -303,9 +303,9 @@ export default function AIVisibilityDashboard({
           </div>
         </section>
 
-        <section className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
+        <section className="crystal-panel rounded-[22px] p-6">
           <div>
-            <h2 className="font-semibold text-white">
+            <h2 className="font-semibold text-slate-950">
               Target Visibility Funnel
             </h2>
 
@@ -323,7 +323,7 @@ export default function AIVisibilityDashboard({
               icon={Activity}
             />
 
-            <ChevronRight className="mx-auto h-5 w-5 rotate-90 shrink-0 text-slate-700 lg:rotate-0" />
+            <ChevronRight className="mx-auto h-5 w-5 rotate-90 shrink-0 text-slate-300 lg:rotate-0" />
 
             <FunnelStage
               label="Verified"
@@ -335,7 +335,7 @@ export default function AIVisibilityDashboard({
               icon={CircleCheck}
             />
 
-            <ChevronRight className="mx-auto h-5 w-5 rotate-90 shrink-0 text-slate-700 lg:rotate-0" />
+            <ChevronRight className="mx-auto h-5 w-5 rotate-90 shrink-0 text-slate-300 lg:rotate-0" />
 
             <FunnelStage
               label="Retrieved"
@@ -344,7 +344,7 @@ export default function AIVisibilityDashboard({
               icon={Search}
             />
 
-            <ChevronRight className="mx-auto h-5 w-5 rotate-90 shrink-0 text-slate-700 lg:rotate-0" />
+            <ChevronRight className="mx-auto h-5 w-5 rotate-90 shrink-0 text-slate-300 lg:rotate-0" />
 
             <FunnelStage
               label="Cited"
@@ -356,8 +356,8 @@ export default function AIVisibilityDashboard({
         </section>
 
         <section className="grid gap-6 xl:grid-cols-[1.55fr_0.85fr]">
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
-            <h2 className="font-semibold text-white">
+          <div className="crystal-panel rounded-[22px] p-6">
+            <h2 className="font-semibold text-slate-950">
               Competitor Visibility by Stage
             </h2>
 
@@ -384,7 +384,7 @@ export default function AIVisibilityDashboard({
                   <CartesianGrid
                     strokeDasharray="3 3"
                     horizontal={false}
-                    stroke="#1e293b"
+                    stroke="#e2e8f0"
                   />
 
                   <XAxis
@@ -403,7 +403,7 @@ export default function AIVisibilityDashboard({
                     dataKey="name"
                     width={110}
                     tick={{
-                      fill: "#cbd5e1",
+                      fill: "#64748b",
                       fontSize: 12,
                     }}
                     axisLine={false}
@@ -411,11 +411,27 @@ export default function AIVisibilityDashboard({
                   />
 
                   <Tooltip
+                    cursor={{
+                      fill: "rgba(241,245,249,0.72)",
+                    }}
                     contentStyle={{
-                      background: "#020617",
+                      background:
+                        "rgba(255,255,255,0.98)",
                       border:
-                        "1px solid #1e293b",
-                      borderRadius: "12px",
+                        "1px solid #e2e8f0",
+                      borderRadius: "14px",
+                      padding: "12px 14px",
+                      boxShadow:
+                        "0 14px 40px rgba(51,65,85,0.12)",
+                    }}
+                    labelStyle={{
+                      color: "#0f172a",
+                      fontWeight: 600,
+                      marginBottom: "6px",
+                    }}
+                    itemStyle={{
+                      fontSize: "13px",
+                      padding: "2px 0",
                     }}
                   />
 
@@ -423,34 +439,34 @@ export default function AIVisibilityDashboard({
 
                   <Bar
                     dataKey="Mentioned"
-                    fill="#22d3ee"
-                    radius={[0, 4, 4, 0]}
+                    fill="#5f75ff"
+                    radius={[0, 6, 6, 0]}
                   />
 
                   <Bar
                     dataKey="Retrieved"
-                    fill="#818cf8"
-                    radius={[0, 4, 4, 0]}
+                    fill="#8b7cff"
+                    radius={[0, 6, 6, 0]}
                   />
 
                   <Bar
                     dataKey="Cited"
-                    fill="#34d399"
-                    radius={[0, 4, 4, 0]}
+                    fill="#34c98f"
+                    radius={[0, 6, 6, 0]}
                   />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
+          <div className="crystal-panel rounded-[22px] p-6">
             <div className="flex items-start justify-between">
               <div>
-                <div className="text-sm text-slate-500">
+                <div className="crystal-eyebrow">
                   Primary bottleneck
                 </div>
 
-                <div className="mt-2 text-2xl font-semibold capitalize text-white">
+                <div className="mt-2 text-2xl font-semibold capitalize text-slate-950">
                   {
                     summary.diagnosis
                       .primary_bottleneck
@@ -463,17 +479,17 @@ export default function AIVisibilityDashboard({
               </div>
             </div>
 
-            <p className="mt-5 text-sm leading-6 text-slate-400">
+            <p className="mt-5 text-sm leading-7 text-slate-600">
               {summary.diagnosis.message}
             </p>
 
             <div className="mt-6 space-y-3">
-              <div className="rounded-xl border border-slate-800 bg-slate-950/50 p-4">
+              <div className="crystal-subcard rounded-2xl p-4">
                 <div className="text-xs text-slate-500">
                   Source presence
                 </div>
 
-                <div className="mt-2 text-lg font-medium text-white">
+                <div className="mt-2 text-lg font-medium text-slate-950">
                   {formatPercent(
                     metrics
                       .target_source_presence_rate,
@@ -481,12 +497,12 @@ export default function AIVisibilityDashboard({
                 </div>
               </div>
 
-              <div className="rounded-xl border border-slate-800 bg-slate-950/50 p-4">
+              <div className="crystal-subcard rounded-2xl p-4">
                 <div className="text-xs text-slate-500">
                   Source exposure SOV
                 </div>
 
-                <div className="mt-2 text-lg font-medium text-white">
+                <div className="mt-2 text-lg font-medium text-slate-950">
                   {formatPercent(
                     metrics
                       .target_source_exposure_share_of_voice,
@@ -494,12 +510,12 @@ export default function AIVisibilityDashboard({
                 </div>
               </div>
 
-              <div className="rounded-xl border border-slate-800 bg-slate-950/50 p-4">
+              <div className="crystal-subcard rounded-2xl p-4">
                 <div className="text-xs text-slate-500">
                   Citation conversion
                 </div>
 
-                <div className="mt-2 text-lg font-medium text-white">
+                <div className="mt-2 text-lg font-medium text-slate-950">
                   {formatPercent(
                     metrics
                       .target_citation_exposure_conversion,
@@ -511,9 +527,9 @@ export default function AIVisibilityDashboard({
         </section>
 
         <section className="grid gap-6 xl:grid-cols-2">
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60">
-            <div className="border-b border-slate-800 p-5">
-              <h2 className="font-semibold text-white">
+          <div className="crystal-panel rounded-[22px]">
+            <div className="p-5 pb-3">
+              <h2 className="font-semibold text-slate-950">
                 First-Party Source Exposure
               </h2>
 
@@ -523,7 +539,7 @@ export default function AIVisibilityDashboard({
               </p>
             </div>
 
-            <div className="divide-y divide-slate-800">
+            <div className="divide-y divide-slate-200/70">
               {metrics
                 .source_exposure_share_of_voice
                 .slice(0, 8)
@@ -533,12 +549,12 @@ export default function AIVisibilityDashboard({
                       key={item.brand_id}
                       className="flex items-center gap-4 px-5 py-4"
                     >
-                      <div className="w-6 text-xs text-slate-600">
+                      <div className="w-6 text-xs text-slate-400">
                         {index + 1}
                       </div>
 
                       <div className="min-w-0 flex-1">
-                        <div className="truncate text-sm font-medium text-slate-200">
+                        <div className="truncate text-sm font-medium text-slate-800">
                           {item.name}
                         </div>
 
@@ -550,7 +566,7 @@ export default function AIVisibilityDashboard({
                         </div>
                       </div>
 
-                      <div className="text-sm font-medium text-cyan-300">
+                      <div className="text-sm font-semibold text-violet-600">
                         {formatPercent(
                           item
                             .source_exposure_share_of_voice,
@@ -562,9 +578,9 @@ export default function AIVisibilityDashboard({
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60">
-            <div className="border-b border-slate-800 p-5">
-              <h2 className="font-semibold text-white">
+          <div className="crystal-panel rounded-[22px]">
+            <div className="p-5 pb-3">
+              <h2 className="font-semibold text-slate-950">
                 Source → Citation Conversion
               </h2>
 
@@ -574,7 +590,7 @@ export default function AIVisibilityDashboard({
               </p>
             </div>
 
-            <div className="divide-y divide-slate-800">
+            <div className="divide-y divide-slate-200/70">
               {metrics.brand_citation_conversion
                 .slice(0, 8)
                 .map(
@@ -585,13 +601,13 @@ export default function AIVisibilityDashboard({
                     >
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
-                          <span className="truncate text-sm font-medium text-slate-200">
+                          <span className="truncate text-sm font-medium text-slate-800">
                             {item.name}
                           </span>
 
                           {item.source_exposures <
                             5 && (
-                            <span className="rounded-md bg-amber-500/10 px-2 py-0.5 text-[10px] text-amber-300">
+                            <span className="rounded-md bg-amber-500/10 px-2 py-0.5 text-[10px] text-amber-700">
                               small sample
                             </span>
                           )}
@@ -609,7 +625,7 @@ export default function AIVisibilityDashboard({
                         </div>
                       </div>
 
-                      <div className="text-sm font-medium text-emerald-300">
+                      <div className="text-sm font-semibold text-emerald-600">
                         {formatPercent(
                           item
                             .citation_exposure_conversion,

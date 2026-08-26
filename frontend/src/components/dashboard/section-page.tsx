@@ -26,12 +26,12 @@ export default function SectionPage({
       title={title}
     >
       <div className="mx-auto max-w-7xl p-5 lg:p-8">
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-8">
+        <div className="crystal-panel rounded-[22px] p-8">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-cyan-400/10">
             <Construction className="h-5 w-5 text-cyan-400" />
           </div>
 
-          <h2 className="mt-6 text-2xl font-semibold text-white">
+          <h2 className="mt-6 text-2xl font-semibold text-slate-950">
             {title}
           </h2>
 

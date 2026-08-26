@@ -155,16 +155,16 @@ export default function SetupCompetitorsStep({
   }
 
   return (
-    <section className="mt-8 rounded-2xl border border-slate-800 bg-slate-900/60">
-      <div className="border-b border-slate-800 p-6">
+    <section className="mt-8 crystal-panel rounded-[22px]">
+      <div className="border-b border-slate-200/80 p-6">
         <div className="flex items-start justify-between gap-5">
           <div className="flex gap-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-400/10 text-cyan-400">
+            <div className="crystal-step-badge">
               3
             </div>
 
             <div>
-              <h2 className="font-semibold text-white">
+              <h2 className="font-semibold text-slate-950">
                 Competitors
               </h2>
 
@@ -176,7 +176,7 @@ export default function SetupCompetitorsStep({
             </div>
           </div>
 
-          <div className="rounded-xl bg-slate-800 px-3 py-2 text-sm font-medium text-slate-300">
+          <div className="rounded-xl bg-slate-100 px-3 py-2 text-sm font-medium text-slate-700">
             {competitors.length} configured
           </div>
         </div>
@@ -185,10 +185,10 @@ export default function SetupCompetitorsStep({
       <div className="grid gap-6 p-6 lg:grid-cols-[0.9fr_1.1fr]">
         <form
           onSubmit={submit}
-          className="rounded-xl border border-slate-800 bg-slate-950/50 p-5"
+          className="crystal-subcard rounded-[18px] p-5"
         >
-          <div className="flex items-center gap-2 font-medium text-white">
-            <Plus className="h-4 w-4 text-cyan-400" />
+          <div className="flex items-center gap-2 font-medium text-slate-950">
+            <Plus className="h-4 w-4 text-[#5f75ff]" />
             Add Competitor
           </div>
 
@@ -202,7 +202,7 @@ export default function SetupCompetitorsStep({
               minLength={2}
               name="name"
               placeholder="Example competitor"
-              className="mt-2 w-full rounded-xl border border-slate-800 bg-slate-900 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-600 focus:border-cyan-500/50"
+              className="crystal-field mt-2 px-4 py-3 text-sm"
             />
           </div>
 
@@ -215,17 +215,17 @@ export default function SetupCompetitorsStep({
               name="website_url"
               type="url"
               placeholder="https://competitor.com"
-              className="mt-2 w-full rounded-xl border border-slate-800 bg-slate-900 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-600 focus:border-cyan-500/50"
+              className="crystal-field mt-2 px-4 py-3 text-sm"
             />
 
-            <p className="mt-2 text-xs leading-5 text-slate-600">
+            <p className="mt-2 text-xs leading-5 text-slate-400">
               Recommended for web-search
               source attribution.
             </p>
           </div>
 
           {error && (
-            <div className="mt-4 flex gap-2 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-300">
+            <div className="mt-4 flex gap-2 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-700">
               <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />
               {error}
             </div>
@@ -233,7 +233,7 @@ export default function SetupCompetitorsStep({
 
           <button
             disabled={loading}
-            className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-cyan-400 px-4 py-2.5 text-sm font-medium text-slate-950 disabled:opacity-50"
+            className="crystal-primary-button mt-5 w-full px-4 py-2.5 text-sm"
           >
             {loading ? (
               <>
@@ -249,23 +249,23 @@ export default function SetupCompetitorsStep({
           </button>
         </form>
 
-        <div className="rounded-xl border border-slate-800 bg-slate-950/50">
-          <div className="border-b border-slate-800 px-5 py-4">
-            <div className="font-medium text-white">
+        <div className="crystal-list">
+          <div className="border-b border-slate-200/80 px-5 py-4">
+            <div className="font-medium text-slate-950">
               Configured Competitors
             </div>
           </div>
 
           {competitors.length === 0 ? (
             <div className="p-8 text-center">
-              <Building2 className="mx-auto h-6 w-6 text-slate-600" />
+              <Building2 className="mx-auto h-6 w-6 text-slate-400" />
 
               <div className="mt-3 text-sm text-slate-500">
                 No competitors configured.
               </div>
             </div>
           ) : (
-            <div className="divide-y divide-slate-800">
+            <div className="divide-y divide-slate-200/70">
               {competitors.map(
                 (competitor) => (
                   <div
@@ -276,7 +276,7 @@ export default function SetupCompetitorsStep({
                   >
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        <div className="font-medium text-slate-200">
+                        <div className="font-medium text-slate-800">
                           {competitor.name}
                         </div>
 
@@ -291,7 +291,7 @@ export default function SetupCompetitorsStep({
                       </div>
                     </div>
 
-                    <div className="text-xs text-slate-600">
+                    <div className="text-xs text-slate-400">
                       Brand #
                       {competitor.brand_id}
                     </div>

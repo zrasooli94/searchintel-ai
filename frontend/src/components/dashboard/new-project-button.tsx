@@ -157,10 +157,10 @@ export default function NewProjectButton() {
 
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-5 backdrop-blur-sm">
-          <div className="w-full max-w-xl rounded-2xl border border-slate-800 bg-slate-950 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-slate-800 p-6">
+          <div className="w-full max-w-xl crystal-panel rounded-[22px] shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-200/80 p-6">
               <div>
-                <h2 className="text-lg font-semibold text-white">
+                <h2 className="text-lg font-semibold text-slate-950">
                   New SearchIntel Project
                 </h2>
 
@@ -176,7 +176,7 @@ export default function NewProjectButton() {
                 onClick={() =>
                   setOpen(false)
                 }
-                className="rounded-lg p-2 text-slate-500 hover:bg-slate-900 hover:text-white"
+                className="rounded-lg p-2 text-slate-500 hover:bg-white hover:text-slate-950"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -187,7 +187,7 @@ export default function NewProjectButton() {
               className="space-y-5 p-6"
             >
               <div>
-                <label className="text-sm text-slate-300">
+                <label className="text-sm text-slate-700">
                   Project name
                 </label>
 
@@ -196,12 +196,12 @@ export default function NewProjectButton() {
                   required
                   minLength={3}
                   placeholder="Acme Search Intelligence"
-                  className="mt-2 w-full rounded-xl border border-slate-800 bg-slate-900 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-600 focus:border-cyan-500/50"
+                  className="mt-2 w-full rounded-xl border border-slate-200/80 bg-white px-4 py-3 text-sm text-slate-950 outline-none placeholder:text-slate-400 focus:border-cyan-500/50"
                 />
               </div>
 
               <div>
-                <label className="text-sm text-slate-300">
+                <label className="text-sm text-slate-700">
                   Target brand
                 </label>
 
@@ -210,12 +210,12 @@ export default function NewProjectButton() {
                   required
                   minLength={2}
                   placeholder="Acme"
-                  className="mt-2 w-full rounded-xl border border-slate-800 bg-slate-900 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-600 focus:border-cyan-500/50"
+                  className="mt-2 w-full rounded-xl border border-slate-200/80 bg-white px-4 py-3 text-sm text-slate-950 outline-none placeholder:text-slate-400 focus:border-cyan-500/50"
                 />
               </div>
 
               <div>
-                <label className="text-sm text-slate-300">
+                <label className="text-sm text-slate-700">
                   Primary website
                 </label>
 
@@ -224,12 +224,12 @@ export default function NewProjectButton() {
                   required
                   type="url"
                   placeholder="https://example.com"
-                  className="mt-2 w-full rounded-xl border border-slate-800 bg-slate-900 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-600 focus:border-cyan-500/50"
+                  className="mt-2 w-full rounded-xl border border-slate-200/80 bg-white px-4 py-3 text-sm text-slate-950 outline-none placeholder:text-slate-400 focus:border-cyan-500/50"
                 />
               </div>
 
               <div>
-                <label className="text-sm text-slate-300">
+                <label className="text-sm text-slate-700">
                   Description
                 </label>
 
@@ -237,7 +237,7 @@ export default function NewProjectButton() {
                   name="project_description"
                   rows={3}
                   placeholder="SEO, GEO and AI visibility project."
-                  className="mt-2 w-full resize-none rounded-xl border border-slate-800 bg-slate-900 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-600 focus:border-cyan-500/50"
+                  className="mt-2 w-full resize-none rounded-xl border border-slate-200/80 bg-white px-4 py-3 text-sm text-slate-950 outline-none placeholder:text-slate-400 focus:border-cyan-500/50"
                 />
               </div>
 
@@ -253,7 +253,7 @@ export default function NewProjectButton() {
                   onClick={() =>
                     setOpen(false)
                   }
-                  className="rounded-xl border border-slate-800 px-4 py-2.5 text-sm text-slate-300 hover:bg-slate-900"
+                  className="rounded-xl border border-slate-200/80 px-4 py-2.5 text-sm text-slate-700 hover:bg-white"
                 >
                   Cancel
                 </button>

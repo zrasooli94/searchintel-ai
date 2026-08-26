@@ -77,14 +77,14 @@ function deltaClass(
   }
 
   if (value > 0) {
-    return "text-emerald-400";
+    return "text-emerald-600";
   }
 
   if (value < 0) {
-    return "text-red-400";
+    return "text-red-600";
   }
 
-  return "text-slate-400";
+  return "text-slate-500";
 }
 
 
@@ -100,22 +100,22 @@ function MetricCard({
   icon: typeof Gauge;
 }) {
   return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
-      <div className="flex items-center justify-between">
-        <span className="text-sm text-slate-400">
+    <div className="crystal-card rounded-[20px] p-5">
+      <div className="flex items-start justify-between gap-4">
+        <span className="crystal-eyebrow">
           {label}
         </span>
 
-        <div className="rounded-xl bg-slate-800 p-2.5">
-          <Icon className="h-4 w-4 text-cyan-400" />
+        <div className="crystal-icon h-10 w-10">
+          <Icon className="h-[18px] w-[18px] text-[#5f75ff]" />
         </div>
       </div>
 
-      <div className="mt-5 text-3xl font-semibold text-white">
+      <div className="crystal-value mt-5 text-3xl font-medium">
         {value}
       </div>
 
-      <div className="mt-2 text-xs text-slate-500">
+      <div className="mt-3 text-xs leading-5 text-slate-500">
         {detail}
       </div>
     </div>
@@ -142,8 +142,8 @@ function ComparisonRow({
       : metricValue(value);
 
   return (
-    <div className="grid grid-cols-[1.4fr_1fr_1fr_0.8fr] items-center gap-4 border-b border-slate-800/70 px-5 py-4 last:border-0">
-      <div className="text-sm text-slate-300">
+    <div className="grid grid-cols-[1.4fr_1fr_1fr_0.8fr] items-center gap-4 border-b border-slate-200/65 px-5 py-4 transition hover:bg-slate-50/50 last:border-0">
+      <div className="text-sm text-slate-700">
         {label}
       </div>
 
@@ -151,7 +151,7 @@ function ComparisonRow({
         {render(metric.baseline)}
       </div>
 
-      <div className="text-sm text-slate-200">
+      <div className="text-sm text-slate-800">
         {render(metric.comparison)}
       </div>
 
@@ -208,18 +208,18 @@ export default function ExperimentsDashboard({
       summary={visibilitySummary}
       title="Experiments"
     >
-      <div className="mx-auto max-w-7xl space-y-6 p-5 lg:p-8">
+      <div className="crystal-page mx-auto max-w-[1450px] space-y-7 p-5 lg:p-8 xl:px-10">
         <section>
           <div>
-            <div className="text-sm text-slate-500">
+            <div className="crystal-eyebrow">
               Controlled measurement
             </div>
 
-            <h2 className="mt-1 text-xl font-semibold text-white">
+            <h2 className="mt-2 text-2xl font-medium tracking-[-0.035em] text-slate-950">
               GEO Experiments
             </h2>
 
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1.5 text-sm text-slate-500">
               Compare like-for-like measurement modes
               and track optimization changes.
             </p>
@@ -251,7 +251,7 @@ export default function ExperimentsDashboard({
 
         <section>
           <div className="mb-4">
-            <h2 className="font-semibold text-white">
+            <h2 className="font-semibold text-slate-950">
               Experiment Registry
             </h2>
 
@@ -261,7 +261,7 @@ export default function ExperimentsDashboard({
             </p>
           </div>
 
-          <div className="grid gap-4 xl:grid-cols-3">
+          <div className="grid gap-5 xl:grid-cols-2">
             {experiments.experiments.map(
               (experiment) => {
                 const web =
@@ -271,15 +271,15 @@ export default function ExperimentsDashboard({
                 return (
                   <div
                     key={experiment.id}
-                    className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5"
+                    className="crystal-card rounded-[22px] p-5 lg:p-6"
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div>
-                        <div className="text-xs uppercase tracking-wider text-slate-500">
+                        <div className="crystal-eyebrow">
                           {experiment.phase}
                         </div>
 
-                        <h3 className="mt-2 text-lg font-semibold text-white">
+                        <h3 className="mt-2 text-xl font-medium tracking-[-0.025em] text-slate-950">
                           {experiment.name}
                         </h3>
                       </div>
@@ -317,29 +317,29 @@ export default function ExperimentsDashboard({
                     </div>
 
                     <div className="mt-6 grid grid-cols-2 gap-3">
-                      <div className="rounded-xl border border-slate-800 bg-slate-950/50 p-3">
+                      <div className="crystal-subcard rounded-2xl p-3.5">
                         <div className="text-xs text-slate-500">
                           Runs
                         </div>
 
-                        <div className="mt-1 text-lg font-semibold text-white">
+                        <div className="mt-1 text-lg font-semibold text-slate-950">
                           {experiment.runs}
                         </div>
                       </div>
 
-                      <div className="rounded-xl border border-slate-800 bg-slate-950/50 p-3">
+                      <div className="crystal-subcard rounded-2xl p-3.5">
                         <div className="text-xs text-slate-500">
                           Prompts
                         </div>
 
-                        <div className="mt-1 text-lg font-semibold text-white">
+                        <div className="mt-1 text-lg font-semibold text-slate-950">
                           {experiment.prompts}
                         </div>
                       </div>
                     </div>
 
                     {!experiment.analysis_is_current && (
-                      <div className="mt-5 flex gap-2 rounded-xl border border-amber-500/20 bg-amber-500/10 p-3 text-xs leading-5 text-amber-200">
+                      <div className="mt-5 flex gap-2 rounded-2xl border border-amber-200 bg-amber-50/75 p-3.5 text-xs leading-5 text-amber-800">
                         <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />
 
                         <div>
@@ -347,7 +347,7 @@ export default function ExperimentsDashboard({
                             Analysis update recommended
                           </div>
 
-                          <div className="mt-1 text-amber-200/70">
+                          <div className="mt-1 text-amber-700/75">
                             {experiment.analysis_stale_responses}
                             {" of "}
                             {experiment.analysis_total_responses}
@@ -363,7 +363,7 @@ export default function ExperimentsDashboard({
                           Response coverage
                         </span>
 
-                        <span className="text-slate-200">
+                        <span className="text-slate-800">
                           {percent(
                             experiment
                               .target_response_coverage,
@@ -378,7 +378,7 @@ export default function ExperimentsDashboard({
                               Web visibility
                             </span>
 
-                            <span className="text-slate-200">
+                            <span className="text-slate-800">
                               {metricValue(
                                 experiment
                                   .web_visibility_score_v1,
@@ -391,7 +391,7 @@ export default function ExperimentsDashboard({
                               Verified coverage
                             </span>
 
-                            <span className="text-slate-200">
+                            <span className="text-slate-800">
                               {percent(
                                 experiment
                                   .entity_verified_target_mention_rate,
@@ -404,7 +404,7 @@ export default function ExperimentsDashboard({
                               Retrieved coverage
                             </span>
 
-                            <span className="text-slate-200">
+                            <span className="text-slate-800">
                               {percent(
                                 experiment
                                   .grounded_target_mention_rate,
@@ -417,7 +417,7 @@ export default function ExperimentsDashboard({
                               Cited coverage
                             </span>
 
-                            <span className="text-slate-200">
+                            <span className="text-slate-800">
                               {percent(
                                 experiment
                                   .target_cited_response_coverage,
@@ -432,7 +432,7 @@ export default function ExperimentsDashboard({
                               Visibility score V1
                             </span>
 
-                            <span className="text-slate-200">
+                            <span className="text-slate-800">
                               {
                                 experiment
                                   .visibility_score_v1
@@ -445,7 +445,7 @@ export default function ExperimentsDashboard({
                               Mention rate
                             </span>
 
-                            <span className="text-slate-200">
+                            <span className="text-slate-800">
                               {percent(
                                 experiment.mention_rate,
                               )}
@@ -467,11 +467,11 @@ export default function ExperimentsDashboard({
         />
 
         {comparison && (
-          <section className="rounded-2xl border border-slate-800 bg-slate-900/60">
-            <div className="border-b border-slate-800 p-5 lg:p-6">
+          <section className="crystal-panel rounded-[22px]">
+            <div className="p-5 pb-4 lg:p-6 lg:pb-4">
               <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                 <div>
-                  <h2 className="font-semibold text-white">
+                  <h2 className="font-semibold text-slate-950">
                     Same-Mode Comparison
                   </h2>
 
@@ -482,13 +482,13 @@ export default function ExperimentsDashboard({
                 </div>
 
                 <div className="flex items-center gap-3 text-sm">
-                  <span className="rounded-lg bg-slate-800 px-3 py-1.5 text-slate-300">
+                  <span className="rounded-lg bg-slate-100 px-3 py-1.5 text-slate-700">
                     {comparison.baseline_name}
                   </span>
 
-                  <ArrowRight className="h-4 w-4 text-slate-600" />
+                  <ArrowRight className="h-4 w-4 text-slate-400" />
 
-                  <span className="rounded-lg bg-slate-800 px-3 py-1.5 text-slate-300">
+                  <span className="rounded-lg bg-slate-100 px-3 py-1.5 text-slate-700">
                     {comparison.comparison_name}
                   </span>
                 </div>
@@ -496,7 +496,7 @@ export default function ExperimentsDashboard({
             </div>
 
             {!comparisonAnalysisCurrent && (
-              <div className="mx-5 mt-5 flex gap-2 rounded-xl border border-amber-500/20 bg-amber-500/10 p-3 text-sm text-amber-200 lg:mx-6">
+              <div className="mx-5 mt-2 flex gap-2 rounded-2xl border border-amber-200 bg-amber-50/75 p-4 text-sm text-amber-800 lg:mx-6">
                 <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />
 
                 <div>
@@ -504,14 +504,14 @@ export default function ExperimentsDashboard({
                     Analysis generations differ or are stale
                   </div>
 
-                  <div className="mt-1 text-xs leading-5 text-amber-200/70">
+                  <div className="mt-1 text-xs leading-5 text-amber-700/75">
                     Re-analyze legacy responses before treating this comparison as analysis-generation consistent.
                   </div>
                 </div>
               </div>
             )}
 
-            <div className="grid grid-cols-[1.4fr_1fr_1fr_0.8fr] gap-4 border-b border-slate-800 px-5 py-3 text-xs uppercase tracking-wider text-slate-500">
+            <div className="mt-5 grid grid-cols-[1.4fr_1fr_1fr_0.8fr] gap-4 border-y border-slate-200/70 bg-slate-50/55 px-5 py-3 text-[11px] uppercase tracking-[0.1em] text-slate-500">
               <div>
                 Metric
               </div>
@@ -598,10 +598,10 @@ export default function ExperimentsDashboard({
         )}
 
         <section className="grid gap-6 xl:grid-cols-[1fr_1.5fr]">
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
+          <div className="crystal-panel rounded-[22px] p-6">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="font-semibold text-white">
+                <h2 className="font-semibold text-slate-950">
                   Measurement Modes
                 </h2>
 
@@ -610,29 +610,29 @@ export default function ExperimentsDashboard({
                 </p>
               </div>
 
-              <Layers3 className="h-5 w-5 text-slate-600" />
+              <Layers3 className="h-5 w-5 text-slate-400" />
             </div>
 
             <div className="mt-6 space-y-4">
-              <div className="rounded-xl border border-violet-500/15 bg-violet-500/5 p-4">
-                <div className="flex items-center gap-2 font-medium text-violet-300">
+              <div className="crystal-subcard rounded-[18px] border-violet-200/80 bg-violet-50/55 p-4">
+                <div className="flex items-center gap-2 font-medium text-violet-700">
                   <Bot className="h-4 w-4" />
                   Memory
                 </div>
 
-                <p className="mt-2 text-sm leading-6 text-slate-400">
+                <p className="mt-2 text-sm leading-7 text-slate-600">
                   Measures model-memory or latent brand
                   knowledge without live web retrieval.
                 </p>
               </div>
 
-              <div className="rounded-xl border border-cyan-500/15 bg-cyan-500/5 p-4">
-                <div className="flex items-center gap-2 font-medium text-cyan-300">
+              <div className="crystal-subcard rounded-[18px] border-blue-200/80 bg-blue-50/55 p-4">
+                <div className="flex items-center gap-2 font-medium text-blue-700">
                   <Globe2 className="h-4 w-4" />
                   Web Search
                 </div>
 
-                <p className="mt-2 text-sm leading-6 text-slate-400">
+                <p className="mt-2 text-sm leading-7 text-slate-600">
                   Measures live-web retrieval,
                   first-party evidence exposure and
                   citation behavior.
@@ -641,10 +641,10 @@ export default function ExperimentsDashboard({
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
+          <div className="crystal-panel rounded-[22px] p-6">
             <div className="flex items-start justify-between">
               <div>
-                <h2 className="font-semibold text-white">
+                <h2 className="font-semibold text-slate-950">
                   Web Experiments
                 </h2>
 
@@ -653,7 +653,7 @@ export default function ExperimentsDashboard({
                 </p>
               </div>
 
-              <Activity className="h-5 w-5 text-cyan-400" />
+              <Activity className="h-5 w-5 text-[#5f75ff]" />
             </div>
 
             {experiments.experiments
@@ -666,19 +666,19 @@ export default function ExperimentsDashboard({
                 (item) => (
                   <div
                     key={item.id}
-                    className="mt-6"
+                    className="mt-6 border-t border-slate-200/70 pt-6 first:mt-5 first:border-t-0 first:pt-0"
                   >
-                    <div className="text-lg font-semibold text-white">
+                    <div className="text-lg font-semibold text-slate-950">
                       {item.name}
                     </div>
 
-                    <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                      <div className="rounded-xl border border-slate-800 bg-slate-950/50 p-4">
+                    <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                      <div className="crystal-subcard rounded-2xl p-4">
                         <div className="text-xs text-slate-500">
                           Web visibility
                         </div>
 
-                        <div className="mt-2 text-xl font-semibold text-white">
+                        <div className="crystal-value mt-2 text-xl font-medium">
                           {metricValue(
                             item
                               .web_visibility_score_v1,
@@ -686,12 +686,12 @@ export default function ExperimentsDashboard({
                         </div>
                       </div>
 
-                      <div className="rounded-xl border border-slate-800 bg-slate-950/50 p-4">
+                      <div className="crystal-subcard rounded-2xl p-4">
                         <div className="text-xs text-slate-500">
                           Raw coverage
                         </div>
 
-                        <div className="mt-2 text-xl font-semibold text-white">
+                        <div className="crystal-value mt-2 text-xl font-medium">
                           {percent(
                             item
                               .target_response_coverage,
@@ -699,12 +699,12 @@ export default function ExperimentsDashboard({
                         </div>
                       </div>
 
-                      <div className="rounded-xl border border-slate-800 bg-slate-950/50 p-4">
+                      <div className="crystal-subcard rounded-2xl p-4">
                         <div className="text-xs text-slate-500">
                           Verified coverage
                         </div>
 
-                        <div className="mt-2 text-xl font-semibold text-white">
+                        <div className="crystal-value mt-2 text-xl font-medium">
                           {percent(
                             item
                               .entity_verified_target_mention_rate,
@@ -712,12 +712,12 @@ export default function ExperimentsDashboard({
                         </div>
                       </div>
 
-                      <div className="rounded-xl border border-slate-800 bg-slate-950/50 p-4">
+                      <div className="crystal-subcard rounded-2xl p-4">
                         <div className="text-xs text-slate-500">
                           Source presence
                         </div>
 
-                        <div className="mt-2 text-xl font-semibold text-white">
+                        <div className="crystal-value mt-2 text-xl font-medium">
                           {percent(
                             item
                               .target_source_presence_rate,
@@ -725,12 +725,12 @@ export default function ExperimentsDashboard({
                         </div>
                       </div>
 
-                      <div className="rounded-xl border border-slate-800 bg-slate-950/50 p-4">
+                      <div className="crystal-subcard rounded-2xl p-4">
                         <div className="text-xs text-slate-500">
                           Retrieved
                         </div>
 
-                        <div className="mt-2 text-xl font-semibold text-white">
+                        <div className="crystal-value mt-2 text-xl font-medium">
                           {percent(
                             item
                               .grounded_target_mention_rate,
@@ -738,12 +738,12 @@ export default function ExperimentsDashboard({
                         </div>
                       </div>
 
-                      <div className="rounded-xl border border-slate-800 bg-slate-950/50 p-4">
+                      <div className="crystal-subcard rounded-2xl p-4">
                         <div className="text-xs text-slate-500">
                           Cited
                         </div>
 
-                        <div className="mt-2 text-xl font-semibold text-white">
+                        <div className="crystal-value mt-2 text-xl font-medium">
                           {percent(
                             item
                               .target_cited_response_coverage,
@@ -752,7 +752,7 @@ export default function ExperimentsDashboard({
                       </div>
                     </div>
 
-                    <div className="mt-5 flex items-center justify-between rounded-xl border border-slate-800 bg-slate-950/40 px-4 py-3 text-xs">
+                    <div className="mt-4 flex items-center justify-between rounded-xl bg-slate-50/70 px-4 py-3 text-xs">
                       <span className="text-slate-500">
                         Analysis freshness
                       </span>

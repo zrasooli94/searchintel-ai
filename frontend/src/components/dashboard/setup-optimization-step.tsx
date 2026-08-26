@@ -616,15 +616,15 @@ export default function SetupOptimizationStep({
 
 
   return (
-    <section className="mt-8 rounded-2xl border border-slate-800 bg-slate-900/60">
-      <div className="border-b border-slate-800 p-6">
+    <section className="mt-8 crystal-panel rounded-[22px]">
+      <div className="border-b border-slate-200/80 p-6">
         <div className="flex gap-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-400/10 text-emerald-400">
+          <div className="crystal-step-badge">
             6
           </div>
 
           <div>
-            <h2 className="font-semibold text-white">
+            <h2 className="font-semibold text-slate-950">
               Web Optimization Experiment
             </h2>
 
@@ -644,9 +644,9 @@ export default function SetupOptimizationStep({
           </div>
         ) : (
           <>
-            <div className="rounded-xl border border-slate-800 bg-slate-950/50 p-5">
-              <div className="flex items-center gap-2 text-sm font-medium text-white">
-                <Globe2 className="h-4 w-4 text-cyan-400" />
+            <div className="crystal-subcard rounded-[18px] p-5">
+              <div className="flex items-center gap-2 text-sm font-medium text-slate-950">
+                <Globe2 className="h-4 w-4 text-[#5f75ff]" />
                 Frozen baseline source
               </div>
 
@@ -657,7 +657,7 @@ export default function SetupOptimizationStep({
                       Experiment
                     </span>
 
-                    <span className="text-right text-slate-300">
+                    <span className="text-right text-slate-700">
                       {baselineExperiment?.name
                         ?? `#${baselineJob.experiment_id}`}
                     </span>
@@ -668,7 +668,7 @@ export default function SetupOptimizationStep({
                       Benchmark
                     </span>
 
-                    <span className="text-slate-300">
+                    <span className="text-slate-700">
                       #{baselineJob.id}
                     </span>
                   </div>
@@ -678,7 +678,7 @@ export default function SetupOptimizationStep({
                       Frozen prompts
                     </span>
 
-                    <span className="text-slate-300">
+                    <span className="text-slate-700">
                       {baselineJob.total_prompts}
                     </span>
                   </div>
@@ -688,7 +688,7 @@ export default function SetupOptimizationStep({
                       Model
                     </span>
 
-                    <span className="text-slate-300">
+                    <span className="text-slate-700">
                       {String(
                         baselineJob
                           .config_snapshot
@@ -699,7 +699,7 @@ export default function SetupOptimizationStep({
                   </div>
                 </div>
               ) : (
-                <div className="mt-4 flex gap-2 rounded-lg border border-amber-500/20 bg-amber-500/10 p-3 text-sm text-amber-300">
+                <div className="mt-4 flex gap-2 rounded-lg border border-amber-500/20 bg-amber-500/10 p-3 text-sm text-amber-700">
                   <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />
                   No completed Web Search baseline is available yet.
                 </div>
@@ -707,10 +707,10 @@ export default function SetupOptimizationStep({
             </div>
 
             {optimizationJob && (
-              <div className="mt-5 rounded-xl border border-slate-800 bg-slate-950/50 p-5">
+              <div className="mt-5 rounded-xl border border-slate-200/80 bg-[#fbfcff] p-5">
                 <div className="flex items-center justify-between gap-5">
                   <div>
-                    <div className="flex items-center gap-2 text-sm font-medium text-white">
+                    <div className="flex items-center gap-2 text-sm font-medium text-slate-950">
                       <FlaskConical className="h-4 w-4 text-emerald-400" />
 
                       {optimizationExperiment?.name
@@ -724,7 +724,7 @@ export default function SetupOptimizationStep({
                     </div>
                   </div>
 
-                  <div className="text-lg font-semibold text-emerald-300">
+                  <div className="text-lg font-semibold text-emerald-700">
                     {Math.round(
                       optimizationJob
                         .progress_percentage
@@ -733,7 +733,7 @@ export default function SetupOptimizationStep({
                   </div>
                 </div>
 
-                <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-800">
+                <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-100">
                   <div
                     className="h-full rounded-full bg-emerald-400 transition-all"
                     style={{
@@ -760,7 +760,7 @@ export default function SetupOptimizationStep({
                 {optimizationJob.status
                   === "completed"
                   && (
-                    <div className="mt-4 flex items-center gap-2 text-sm text-emerald-300">
+                    <div className="mt-4 flex items-center gap-2 text-sm text-emerald-700">
                       <CheckCircle2 className="h-4 w-4" />
                       Optimization measurement completed.
                     </div>
@@ -769,7 +769,7 @@ export default function SetupOptimizationStep({
                 {optimizationJob.status
                   === "completed_with_errors"
                   && (
-                    <div className="mt-4 flex items-center gap-2 text-sm text-amber-300">
+                    <div className="mt-4 flex items-center gap-2 text-sm text-amber-700">
                       <TriangleAlert className="h-4 w-4" />
                       Optimization completed with failed runs.
                     </div>
@@ -778,7 +778,7 @@ export default function SetupOptimizationStep({
             )}
 
             {error && (
-              <div className="mt-5 flex gap-2 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-300">
+              <div className="mt-5 flex gap-2 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-700">
                 <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />
                 {error}
               </div>
@@ -795,7 +795,7 @@ export default function SetupOptimizationStep({
                     loading
                     || starting
                   }
-                  className="flex items-center justify-center gap-2 rounded-xl border border-slate-700 px-4 py-3 text-sm font-medium text-slate-300 disabled:opacity-50"
+                  className="flex items-center justify-center gap-2 rounded-xl border border-slate-300 px-4 py-3 text-sm font-medium text-slate-700 disabled:opacity-50"
                 >
                   <RefreshCw className="h-4 w-4" />
                   Refresh
@@ -813,7 +813,7 @@ export default function SetupOptimizationStep({
                       === "completed"
                     )
                   }
-                  className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-400 px-4 py-3 text-sm font-medium text-slate-950 disabled:opacity-50"
+                  className="crystal-primary-button flex-1 px-4 py-3 text-sm"
                 >
                   {starting ? (
                     <>

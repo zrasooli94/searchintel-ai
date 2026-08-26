@@ -302,16 +302,16 @@ export default function SetupPromptsStep({
 
 
   return (
-    <section className="mt-8 rounded-2xl border border-slate-800 bg-slate-900/60">
-      <div className="border-b border-slate-800 p-6">
+    <section className="mt-8 crystal-panel rounded-[22px]">
+      <div className="border-b border-slate-200/80 p-6">
         <div className="flex items-start justify-between gap-5">
           <div className="flex gap-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-400/10 text-cyan-400">
+            <div className="crystal-step-badge">
               4
             </div>
 
             <div>
-              <h2 className="font-semibold text-white">
+              <h2 className="font-semibold text-slate-950">
                 Prompt Set
               </h2>
 
@@ -323,7 +323,7 @@ export default function SetupPromptsStep({
             </div>
           </div>
 
-          <div className="rounded-xl bg-slate-800 px-3 py-2 text-sm font-medium text-slate-300">
+          <div className="rounded-xl bg-slate-100 px-3 py-2 text-sm font-medium text-slate-700">
             {prompts.length} prompts
           </div>
         </div>
@@ -339,17 +339,17 @@ export default function SetupPromptsStep({
       <div className="grid gap-6 p-6 xl:grid-cols-[1fr_1fr]">
         <form
           onSubmit={submit}
-          className="rounded-xl border border-slate-800 bg-slate-950/50 p-5"
+          className="crystal-subcard rounded-[18px] p-5"
         >
-          <div className="flex items-center gap-2 font-medium text-white">
-            <Upload className="h-4 w-4 text-cyan-400" />
+          <div className="flex items-center gap-2 font-medium text-slate-950">
+            <Upload className="h-4 w-4 text-[#5f75ff]" />
             Bulk Import
           </div>
 
           <p className="mt-2 text-xs leading-5 text-slate-500">
             One prompt per line. Add a
             category before the prompt using
-            <span className="mx-1 text-cyan-300">
+            <span className="mx-1 text-violet-600">
               category | prompt
             </span>
             . Lines without a category become
@@ -370,7 +370,7 @@ export default function SetupPromptsStep({
 comparison | ${targetBrand} alternatives
 problem_solution | how can businesses ...
 brand | what is ${targetBrand}`}
-            className="mt-5 w-full resize-y rounded-xl border border-slate-800 bg-slate-900 px-4 py-3 font-mono text-sm leading-6 text-white outline-none placeholder:text-slate-600 focus:border-cyan-500/50"
+            className="mt-5 w-full resize-y rounded-xl border border-slate-200/80 bg-white px-4 py-3 font-mono text-sm leading-6 text-slate-950 outline-none placeholder:text-slate-400 focus:border-violet-400/70"
           />
 
           <div className="mt-4 flex flex-wrap gap-2">
@@ -378,7 +378,7 @@ brand | what is ${targetBrand}`}
               (category) => (
                 <span
                   key={category}
-                  className="rounded-lg bg-slate-800 px-2.5 py-1 text-xs text-slate-400"
+                  className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs text-slate-400"
                 >
                   {category}
                 </span>
@@ -387,14 +387,14 @@ brand | what is ${targetBrand}`}
           </div>
 
           {error && (
-            <div className="mt-4 flex gap-2 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-300">
+            <div className="mt-4 flex gap-2 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-700">
               <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />
               {error}
             </div>
           )}
 
           {success && (
-            <div className="mt-4 flex gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3 text-sm text-emerald-300">
+            <div className="mt-4 flex gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3 text-sm text-emerald-700">
               <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
               {success}
             </div>
@@ -402,7 +402,7 @@ brand | what is ${targetBrand}`}
 
           <button
             disabled={loading}
-            className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-cyan-400 px-4 py-2.5 text-sm font-medium text-slate-950 disabled:opacity-50"
+            className="crystal-primary-button mt-5 w-full px-4 py-2.5 text-sm"
           >
             {loading ? (
               <>
@@ -418,16 +418,16 @@ brand | what is ${targetBrand}`}
           </button>
         </form>
 
-        <div className="rounded-xl border border-slate-800 bg-slate-950/50">
-          <div className="border-b border-slate-800 px-5 py-4">
-            <div className="font-medium text-white">
+        <div className="crystal-list">
+          <div className="border-b border-slate-200/80 px-5 py-4">
+            <div className="font-medium text-slate-950">
               Current Prompt Set
             </div>
           </div>
 
           {prompts.length === 0 ? (
             <div className="p-8 text-center">
-              <FileText className="mx-auto h-6 w-6 text-slate-600" />
+              <FileText className="mx-auto h-6 w-6 text-slate-400" />
 
               <div className="mt-3 text-sm text-slate-500">
                 No prompts configured yet.
@@ -435,7 +435,7 @@ brand | what is ${targetBrand}`}
             </div>
           ) : (
             <>
-              <div className="flex flex-wrap gap-2 border-b border-slate-800 p-4">
+              <div className="flex flex-wrap gap-2 border-b border-slate-200/80 p-4">
                 {Object.entries(
                   categoryCounts,
                 ).map(
@@ -447,7 +447,7 @@ brand | what is ${targetBrand}`}
                       key={
                         category
                       }
-                      className="rounded-lg bg-slate-800 px-2.5 py-1 text-xs text-slate-400"
+                      className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs text-slate-400"
                     >
                       {pretty(
                         category,
@@ -459,7 +459,7 @@ brand | what is ${targetBrand}`}
                 )}
               </div>
 
-              <div className="max-h-[520px] divide-y divide-slate-800 overflow-y-auto">
+              <div className="max-h-[520px] divide-y divide-slate-200/70 overflow-y-auto">
                 {prompts.map(
                   (prompt) => (
                     <div
@@ -470,11 +470,11 @@ brand | what is ${targetBrand}`}
                         <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />
 
                         <div className="min-w-0 flex-1">
-                          <div className="text-sm leading-6 text-slate-200">
+                          <div className="text-sm leading-6 text-slate-800">
                             {prompt.text}
                           </div>
 
-                          <div className="mt-2 text-xs text-slate-600">
+                          <div className="mt-2 text-xs text-slate-400">
                             {pretty(
                               prompt.category,
                             )}
@@ -491,7 +491,7 @@ brand | what is ${targetBrand}`}
                               prompt
                             )
                           }
-                          className="shrink-0 rounded-lg border border-slate-800 p-2 text-slate-500 transition hover:border-cyan-500/30 hover:bg-cyan-500/10 hover:text-cyan-300"
+                          className="shrink-0 rounded-lg border border-slate-200/80 p-2 text-slate-500 transition hover:border-violet-300/80 hover:bg-violet-50 hover:text-violet-600"
                           title="Edit prompt"
                         >
                           <Pencil className="h-3.5 w-3.5" />

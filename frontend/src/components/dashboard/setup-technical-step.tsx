@@ -215,15 +215,15 @@ export default function SetupTechnicalStep({
 
 
   return (
-    <section className="mt-8 rounded-2xl border border-slate-800 bg-slate-900/60">
-      <div className="border-b border-slate-800 p-6">
+    <section className="mt-8 crystal-panel rounded-[22px]">
+      <div className="border-b border-slate-200/80 p-6">
         <div className="flex items-start gap-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-400/10 text-cyan-400">
+          <div className="crystal-step-badge">
             2
           </div>
 
           <div>
-            <h2 className="font-semibold text-white">
+            <h2 className="font-semibold text-slate-950">
               Crawl & Technical Audit
             </h2>
 
@@ -237,9 +237,9 @@ export default function SetupTechnicalStep({
       </div>
 
       <div className="grid gap-4 p-6 md:grid-cols-2">
-        <div className="rounded-xl border border-slate-800 bg-slate-950/50 p-5">
+        <div className="crystal-subcard rounded-[18px] p-5">
           <div className="flex items-center justify-between">
-            <Globe2 className="h-5 w-5 text-cyan-400" />
+            <Globe2 className="h-5 w-5 text-[#5f75ff]" />
 
             {pages > 0 && (
               <CheckCircle2 className="h-5 w-5 text-emerald-400" />
@@ -250,7 +250,7 @@ export default function SetupTechnicalStep({
             Crawled pages
           </div>
 
-          <div className="mt-1 text-3xl font-semibold text-white">
+          <div className="mt-1 text-3xl font-semibold text-slate-950">
             {pages}
           </div>
 
@@ -261,7 +261,7 @@ export default function SetupTechnicalStep({
               || auditing
             }
             onClick={runCrawl}
-            className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-cyan-400 px-4 py-2.5 text-sm font-medium text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-50"
+            className="crystal-primary-button mt-5 w-full px-4 py-2.5 text-sm"
           >
             {crawling ? (
               <>
@@ -278,15 +278,15 @@ export default function SetupTechnicalStep({
             )}
           </button>
 
-          <p className="mt-3 text-xs leading-5 text-slate-600">
+          <p className="mt-3 text-xs leading-5 text-slate-400">
             Maximum 25 pages for the
             onboarding crawl.
           </p>
         </div>
 
-        <div className="rounded-xl border border-slate-800 bg-slate-950/50 p-5">
+        <div className="crystal-subcard rounded-[18px] p-5">
           <div className="flex items-center justify-between">
-            <SearchCheck className="h-5 w-5 text-cyan-400" />
+            <SearchCheck className="h-5 w-5 text-[#5f75ff]" />
 
             {audit && (
               <CheckCircle2 className="h-5 w-5 text-emerald-400" />
@@ -299,9 +299,9 @@ export default function SetupTechnicalStep({
 
           {audit ? (
             <>
-              <div className="mt-1 text-3xl font-semibold text-white">
+              <div className="mt-1 text-3xl font-semibold text-slate-950">
                 {audit.score}
-                <span className="text-lg text-slate-600">
+                <span className="text-lg text-slate-400">
                   /100
                 </span>
               </div>
@@ -313,11 +313,11 @@ export default function SetupTechnicalStep({
             </>
           ) : (
             <>
-              <div className="mt-1 text-3xl font-semibold text-slate-600">
+              <div className="mt-1 text-3xl font-semibold text-slate-400">
                 —
               </div>
 
-              <div className="mt-2 text-xs text-slate-600">
+              <div className="mt-2 text-xs text-slate-400">
                 No audit has been run.
               </div>
             </>
@@ -331,7 +331,7 @@ export default function SetupTechnicalStep({
               || auditing
             }
             onClick={runAudit}
-            className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-4 py-2.5 text-sm font-medium text-cyan-300 transition hover:bg-cyan-500/15 disabled:cursor-not-allowed disabled:border-slate-800 disabled:bg-slate-900 disabled:text-slate-600"
+            className="crystal-secondary-button mt-5 w-full px-4 py-2.5 text-sm"
           >
             {auditing ? (
               <>
@@ -349,7 +349,7 @@ export default function SetupTechnicalStep({
           </button>
 
           {pages === 0 && (
-            <p className="mt-3 text-xs text-amber-400/80">
+            <p className="mt-3 text-xs text-amber-700">
               Crawl the website before
               running an audit.
             </p>
@@ -358,16 +358,16 @@ export default function SetupTechnicalStep({
       </div>
 
       {(message || error) && (
-        <div className="border-t border-slate-800 px-6 py-4">
+        <div className="border-t border-slate-200/80 px-6 py-4">
           {message && (
-            <div className="flex items-center gap-2 text-sm text-emerald-300">
+            <div className="flex items-center gap-2 text-sm text-emerald-700">
               <CheckCircle2 className="h-4 w-4" />
               {message}
             </div>
           )}
 
           {error && (
-            <div className="flex items-start gap-2 text-sm text-red-300">
+            <div className="flex items-start gap-2 text-sm text-red-700">
               <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />
               {error}
             </div>

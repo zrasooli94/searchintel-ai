@@ -36,22 +36,22 @@ function MetricCard({
   icon: typeof Gauge;
 }) {
   return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
-      <div className="flex items-center justify-between">
-        <span className="text-sm text-slate-400">
+    <div className="crystal-card rounded-[20px] p-5">
+      <div className="flex items-start justify-between gap-4">
+        <span className="crystal-eyebrow">
           {label}
         </span>
 
-        <div className="rounded-xl bg-slate-800 p-2.5">
-          <Icon className="h-4 w-4 text-cyan-400" />
+        <div className="crystal-icon h-10 w-10">
+          <Icon className="h-[18px] w-[18px] text-[#5f75ff]" />
         </div>
       </div>
 
-      <div className="mt-5 text-3xl font-semibold text-white">
+      <div className="crystal-value mt-5 text-3xl font-medium">
         {value}
       </div>
 
-      <div className="mt-2 text-xs text-slate-500">
+      <div className="mt-3 text-xs leading-5 text-slate-500">
         {detail}
       </div>
     </div>
@@ -68,15 +68,15 @@ export default function TechnicalSEODashboard({
       summary={visibilitySummary}
       title="Technical SEO"
     >
-      <div className="mx-auto max-w-7xl space-y-6 p-5 lg:p-8">
+      <div className="crystal-page mx-auto max-w-[1450px] space-y-7 p-5 lg:p-8 xl:px-10">
         <section>
           <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
             <div>
-              <div className="text-sm text-slate-500">
+              <div className="crystal-eyebrow">
                 Website health
               </div>
 
-              <h2 className="mt-1 text-xl font-semibold text-white">
+              <h2 className="mt-2 text-2xl font-medium tracking-[-0.035em] text-slate-950">
                 {seo.website.domain}
               </h2>
             </div>
@@ -85,7 +85,7 @@ export default function TechnicalSEODashboard({
               href={seo.website.base_url}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-2 text-sm text-cyan-400 hover:text-cyan-300"
+              className="crystal-secondary-button px-3.5 py-2 text-sm"
             >
               Open website
               <ExternalLink className="h-4 w-4" />
@@ -123,9 +123,9 @@ export default function TechnicalSEODashboard({
           </div>
         </section>
 
-        <section className="rounded-2xl border border-slate-800 bg-slate-900/60">
-          <div className="border-b border-slate-800 p-5 lg:p-6">
-            <h2 className="font-semibold text-white">
+        <section className="crystal-panel rounded-[22px]">
+          <div className="p-5 pb-4 lg:p-6 lg:pb-4">
+            <h2 className="font-semibold text-slate-950">
               Crawled Pages
             </h2>
 
@@ -137,7 +137,7 @@ export default function TechnicalSEODashboard({
           <div className="overflow-x-auto">
             <table className="w-full min-w-[900px] text-left">
               <thead>
-                <tr className="border-b border-slate-800 text-xs uppercase tracking-wider text-slate-500">
+                <tr className="border-y border-slate-200/70 bg-slate-50/55 text-[11px] uppercase tracking-[0.1em] text-slate-500">
                   <th className="px-6 py-4">
                     Page
                   </th>
@@ -168,7 +168,7 @@ export default function TechnicalSEODashboard({
                 {seo.pages.map((page) => (
                   <tr
                     key={page.id}
-                    className="border-b border-slate-800/70 last:border-0"
+                    className="border-b border-slate-200/65 transition hover:bg-slate-50/55 last:border-0"
                   >
                     <td className="px-6 py-5">
                       <div className="max-w-xl">
@@ -176,7 +176,7 @@ export default function TechnicalSEODashboard({
                           href={page.url}
                           target="_blank"
                           rel="noreferrer"
-                          className="font-medium text-slate-200 hover:text-cyan-300"
+                          className="font-medium text-slate-900 transition hover:text-violet-700"
                         >
                           {page.path}
                         </a>
@@ -202,15 +202,15 @@ export default function TechnicalSEODashboard({
                       </span>
                     </td>
 
-                    <td className="px-4 py-5 text-sm text-slate-300">
+                    <td className="px-4 py-5 text-sm text-slate-700">
                       {page.word_count}
                     </td>
 
-                    <td className="px-4 py-5 text-sm text-slate-300">
+                    <td className="px-4 py-5 text-sm text-slate-700">
                       {page.internal_link_count}
                     </td>
 
-                    <td className="px-4 py-5 text-sm text-slate-300">
+                    <td className="px-4 py-5 text-sm text-slate-700">
                       {page.external_link_count}
                     </td>
 
@@ -229,8 +229,8 @@ export default function TechnicalSEODashboard({
         </section>
 
         <section className="grid gap-6 xl:grid-cols-[1fr_1.25fr]">
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
-            <h2 className="font-semibold text-white">
+          <div className="crystal-panel rounded-[22px] p-6">
+            <h2 className="font-semibold text-slate-950">
               Technical Checks
             </h2>
 
@@ -242,7 +242,7 @@ export default function TechnicalSEODashboard({
               {seo.checks.map((check) => (
                 <div
                   key={check.key}
-                  className="flex items-center justify-between rounded-xl border border-slate-800 bg-slate-950/50 px-4 py-3"
+                  className="crystal-subcard flex items-center justify-between rounded-2xl px-4 py-3.5"
                 >
                   <div className="flex items-center gap-3">
                     {check.status === "passed" ? (
@@ -251,7 +251,7 @@ export default function TechnicalSEODashboard({
                       <CircleAlert className="h-4 w-4 text-amber-400" />
                     )}
 
-                    <span className="text-sm text-slate-300">
+                    <span className="text-sm text-slate-700">
                       {check.label}
                     </span>
                   </div>
@@ -277,10 +277,10 @@ export default function TechnicalSEODashboard({
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
+          <div className="crystal-panel rounded-[22px] p-6">
             <div className="flex items-start justify-between">
               <div>
-                <h2 className="font-semibold text-white">
+                <h2 className="font-semibold text-slate-950">
                   Recommendations
                 </h2>
 
@@ -289,18 +289,18 @@ export default function TechnicalSEODashboard({
                 </p>
               </div>
 
-              <FileText className="h-5 w-5 text-slate-600" />
+              <FileText className="h-5 w-5 text-slate-400" />
             </div>
 
             {seo.recommendations.length === 0 ? (
-              <div className="mt-8 rounded-2xl border border-emerald-500/15 bg-emerald-500/5 p-6">
+              <div className="mt-8 rounded-[20px] border border-emerald-200/80 bg-emerald-50/65 p-6">
                 <CheckCircle2 className="h-6 w-6 text-emerald-400" />
 
-                <h3 className="mt-4 font-medium text-white">
+                <h3 className="mt-4 font-medium text-slate-950">
                   No active technical recommendations
                 </h3>
 
-                <p className="mt-2 text-sm leading-6 text-slate-400">
+                <p className="mt-2 text-sm leading-7 text-slate-600">
                   The latest audit produced no rule-based
                   technical SEO issues.
                 </p>
@@ -311,22 +311,22 @@ export default function TechnicalSEODashboard({
                   (recommendation) => (
                     <div
                       key={recommendation.id}
-                      className="rounded-xl border border-slate-800 bg-slate-950/50 p-4"
+                      className="crystal-subcard rounded-[18px] p-4"
                     >
                       <div className="flex items-start justify-between gap-4">
                         <div>
-                          <div className="font-medium text-white">
+                          <div className="font-medium text-slate-950">
                             {recommendation.title}
                           </div>
 
-                          <div className="mt-2 text-sm leading-6 text-slate-400">
+                          <div className="mt-2 text-sm leading-7 text-slate-600">
                             {
                               recommendation.recommendation
                             }
                           </div>
                         </div>
 
-                        <span className="rounded-lg bg-amber-500/10 px-2.5 py-1 text-xs text-amber-300">
+                        <span className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700">
                           {recommendation.priority}
                         </span>
                       </div>

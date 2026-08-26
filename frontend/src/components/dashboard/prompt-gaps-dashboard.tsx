@@ -52,14 +52,14 @@ function priorityClasses(
   priority: string,
 ) {
   if (priority === "high") {
-    return "bg-red-500/10 text-red-300";
+    return "border border-red-200 bg-red-50 text-red-700";
   }
 
   if (priority === "medium") {
-    return "bg-amber-500/10 text-amber-300";
+    return "border border-amber-200 bg-amber-50 text-amber-700";
   }
 
-  return "bg-slate-800 text-slate-300";
+  return "border border-slate-200 bg-slate-50 text-slate-600";
 }
 
 
@@ -75,22 +75,22 @@ function MetricCard({
   icon: typeof Gauge;
 }) {
   return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
-      <div className="flex items-center justify-between">
-        <span className="text-sm text-slate-400">
+    <div className="crystal-card rounded-[20px] p-5">
+      <div className="flex items-start justify-between gap-4">
+        <span className="crystal-eyebrow">
           {label}
         </span>
 
-        <div className="rounded-xl bg-slate-800 p-2.5">
-          <Icon className="h-4 w-4 text-cyan-400" />
+        <div className="crystal-icon h-10 w-10">
+          <Icon className="h-[18px] w-[18px] text-[#5f75ff]" />
         </div>
       </div>
 
-      <div className="mt-5 text-3xl font-semibold text-white">
+      <div className="crystal-value mt-5 text-3xl font-medium">
         {value}
       </div>
 
-      <div className="mt-2 text-xs text-slate-500">
+      <div className="mt-3 text-xs leading-5 text-slate-500">
         {detail}
       </div>
     </div>
@@ -180,18 +180,18 @@ export default function PromptGapsDashboard({
       summary={visibilitySummary}
       title="Prompt Gaps"
     >
-      <div className="mx-auto max-w-7xl space-y-6 p-5 lg:p-8">
+      <div className="crystal-page mx-auto max-w-[1450px] space-y-7 p-5 lg:p-8 xl:px-10">
         <section>
           <div>
-            <div className="text-sm text-slate-500">
+            <div className="crystal-eyebrow">
               Prompt opportunity intelligence
             </div>
 
-            <h2 className="mt-1 text-xl font-semibold text-white">
+            <h2 className="mt-2 text-2xl font-medium tracking-[-0.035em] text-slate-950">
               {gaps.target_brand}
             </h2>
 
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1.5 text-sm text-slate-500">
               {gaps.total_prompts} measured prompts ·{" "}
               {benchmarkMode} ·{" "}
               {prettyLabel(
@@ -232,8 +232,8 @@ export default function PromptGapsDashboard({
         </section>
 
         <section className="grid gap-6 xl:grid-cols-2">
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
-            <h2 className="font-semibold text-white">
+          <div className="crystal-panel rounded-[22px] p-6">
+            <h2 className="font-semibold text-slate-950">
               Gap Distribution
             </h2>
 
@@ -241,8 +241,25 @@ export default function PromptGapsDashboard({
               Current prompt visibility state.
             </p>
 
-            <div className="mt-4 h-72">
-              <ResponsiveContainer
+            {gaps.total_prompts === 0 ? (
+              <div className="mt-6 flex min-h-[260px] items-center justify-center rounded-[20px] border border-dashed border-slate-200 bg-slate-50/40 p-8 text-center">
+                <div>
+                  <div className="crystal-icon mx-auto h-11 w-11">
+                    <SearchX className="h-5 w-5 text-[#5f75ff]" />
+                  </div>
+
+                  <h3 className="mt-4 font-medium text-slate-900">
+                    No measured prompt gaps yet
+                  </h3>
+
+                  <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-slate-500">
+                    Run or select a compatible web-search experiment to generate opportunity data.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="mt-4 h-72">
+                <ResponsiveContainer
                 width="100%"
                 height="100%"
               >
@@ -261,9 +278,9 @@ export default function PromptGapsDashboard({
                           key={entry.name}
                           fill={
                             [
-                              "#f43f5e",
+                              "#7c6cff",
                               "#f59e0b",
-                              "#34d399",
+                              "#34c98f",
                             ][index]
                           }
                         />
@@ -273,24 +290,27 @@ export default function PromptGapsDashboard({
 
                   <Tooltip
                     contentStyle={{
-                      background: "#020617",
+                      background: "rgba(255,255,255,0.98)",
                       border:
-                        "1px solid #1e293b",
-                      borderRadius: "12px",
+                        "1px solid #e2e8f0",
+                      borderRadius: "14px",
+                      boxShadow:
+                        "0 12px 35px rgba(51,65,85,0.10)",
                     }}
                   />
                 </PieChart>
               </ResponsiveContainer>
-            </div>
+              </div>
+            )}
 
             <div className="grid grid-cols-3 gap-3">
               {gapDistribution.map(
                 (item) => (
                   <div
                     key={item.name}
-                    className="rounded-xl border border-slate-800 bg-slate-950/50 p-3"
+                    className="crystal-subcard rounded-2xl p-3.5"
                   >
-                    <div className="text-lg font-semibold text-white">
+                    <div className="text-lg font-semibold text-slate-950">
                       {item.value}
                     </div>
 
@@ -303,8 +323,8 @@ export default function PromptGapsDashboard({
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
-            <h2 className="font-semibold text-white">
+          <div className="crystal-panel rounded-[22px] p-6">
+            <h2 className="font-semibold text-slate-950">
               Prompt Categories
             </h2>
 
@@ -312,8 +332,25 @@ export default function PromptGapsDashboard({
               Opportunity distribution by prompt category.
             </p>
 
-            <div className="mt-6 h-80">
-              <ResponsiveContainer
+            {categoryData.length === 0 ? (
+              <div className="mt-6 flex min-h-[320px] items-center justify-center rounded-[20px] border border-dashed border-slate-200 bg-slate-50/40 p-8 text-center">
+                <div>
+                  <div className="crystal-icon mx-auto h-11 w-11">
+                    <Radar className="h-5 w-5 text-[#5f75ff]" />
+                  </div>
+
+                  <h3 className="mt-4 font-medium text-slate-900">
+                    No opportunity categories yet
+                  </h3>
+
+                  <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-slate-500">
+                    Categories will appear after grounded prompt opportunities are available.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="mt-6 h-80">
+                <ResponsiveContainer
                 width="100%"
                 height="100%"
               >
@@ -327,7 +364,7 @@ export default function PromptGapsDashboard({
                 >
                   <CartesianGrid
                     horizontal={false}
-                    stroke="#1e293b"
+                    stroke="#e2e8f0"
                     strokeDasharray="3 3"
                   />
 
@@ -347,7 +384,7 @@ export default function PromptGapsDashboard({
                     dataKey="name"
                     width={130}
                     tick={{
-                      fill: "#cbd5e1",
+                      fill: "#64748b",
                       fontSize: 12,
                     }}
                     axisLine={false}
@@ -356,30 +393,33 @@ export default function PromptGapsDashboard({
 
                   <Tooltip
                     contentStyle={{
-                      background: "#020617",
+                      background: "rgba(255,255,255,0.98)",
                       border:
-                        "1px solid #1e293b",
-                      borderRadius: "12px",
+                        "1px solid #e2e8f0",
+                      borderRadius: "14px",
+                      boxShadow:
+                        "0 12px 35px rgba(51,65,85,0.10)",
                     }}
                   />
 
                   <Bar
                     dataKey="value"
-                    fill="#22d3ee"
+                    fill="#5f75ff"
                     radius={[0, 5, 5, 0]}
                     name="Prompts"
                   />
                 </BarChart>
               </ResponsiveContainer>
-            </div>
+              </div>
+            )}
           </div>
         </section>
 
-        <section className="rounded-2xl border border-slate-800 bg-slate-900/60">
-          <div className="border-b border-slate-800 p-5 lg:p-6">
+        <section className="crystal-panel rounded-[22px]">
+          <div className="border-b border-slate-200/80 p-5 lg:p-6">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h2 className="font-semibold text-white">
+                <h2 className="font-semibold text-slate-950">
                   Priority Opportunities
                 </h2>
 
@@ -389,14 +429,29 @@ export default function PromptGapsDashboard({
                 </p>
               </div>
 
-              <Radar className="h-5 w-5 text-slate-600" />
+              <Radar className="h-5 w-5 text-slate-400" />
             </div>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[1100px] text-left">
+          {gaps.opportunities.length === 0 ? (
+            <div className="border-t border-slate-200/70 px-6 py-12 text-center">
+              <div className="crystal-icon mx-auto h-11 w-11">
+                <Target className="h-5 w-5 text-[#5f75ff]" />
+              </div>
+
+              <h3 className="mt-4 font-medium text-slate-900">
+                No priority opportunities yet
+              </h3>
+
+              <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
+                Opportunity rows will appear when the selected measurement contains grounded prompt gaps.
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[1100px] text-left">
               <thead>
-                <tr className="border-b border-slate-800 text-xs uppercase tracking-wider text-slate-500">
+                <tr className="border-y border-slate-200/70 bg-slate-50/55 text-[11px] uppercase tracking-[0.1em] text-slate-500">
                   <th className="px-6 py-4">
                     Prompt
                   </th>
@@ -436,10 +491,10 @@ export default function PromptGapsDashboard({
                   (item) => (
                     <tr
                       key={item.id}
-                      className="border-b border-slate-800/70 align-top last:border-0"
+                      className="border-b border-slate-200/65 align-top transition hover:bg-slate-50/55 last:border-0"
                     >
                       <td className="max-w-md px-6 py-5">
-                        <div className="font-medium leading-6 text-slate-200">
+                        <div className="font-medium leading-6 text-slate-800">
                           {item.prompt_text}
                         </div>
 
@@ -455,7 +510,7 @@ export default function PromptGapsDashboard({
                       </td>
 
                       <td className="px-4 py-5">
-                        <span className="whitespace-nowrap rounded-lg bg-slate-800 px-2.5 py-1 text-xs text-slate-300">
+                        <span className="whitespace-nowrap rounded-lg bg-slate-100 px-2.5 py-1 text-xs text-slate-700">
                           {prettyLabel(
                             item.gap_type,
                           )}
@@ -475,19 +530,19 @@ export default function PromptGapsDashboard({
                         </span>
                       </td>
 
-                      <td className="px-4 py-5 text-sm font-medium text-slate-300">
+                      <td className="px-4 py-5 text-sm font-medium text-slate-700">
                         {item.target_mention_rate.toFixed(
                           0,
                         )}
                         %
                       </td>
 
-                      <td className="px-4 py-5 text-sm text-slate-300">
+                      <td className="px-4 py-5 text-sm text-slate-700">
                         {item.top_competitor_name ??
                           "—"}
                       </td>
 
-                      <td className="px-4 py-5 text-sm text-slate-300">
+                      <td className="px-4 py-5 text-sm text-slate-700">
                         {item.top_competitor_run_coverage.toFixed(
                           0,
                         )}
@@ -495,7 +550,7 @@ export default function PromptGapsDashboard({
                       </td>
 
                       <td className="px-4 py-5">
-                        <span className="text-lg font-semibold text-cyan-300">
+                        <span className="text-lg font-semibold text-violet-600">
                           {item.opportunity_score.toFixed(
                             0,
                           )}
@@ -505,27 +560,28 @@ export default function PromptGapsDashboard({
                   ),
                 )}
               </tbody>
-            </table>
-          </div>
+              </table>
+            </div>
+          )}
         </section>
 
-        <section className="rounded-2xl border border-cyan-500/15 bg-cyan-500/5 p-6">
+        <section className="rounded-[22px] border border-blue-200/70 bg-blue-50/65 p-6">
           <div className="flex gap-4">
-            <div className="mt-0.5 rounded-xl bg-cyan-400/10 p-2.5">
+            <div className="crystal-icon mt-0.5 h-10 w-10 shrink-0">
               {gaps.covered_prompts ===
               gaps.total_prompts ? (
                 <CircleCheck className="h-5 w-5 text-emerald-400" />
               ) : (
-                <SearchX className="h-5 w-5 text-cyan-400" />
+                <SearchX className="h-5 w-5 text-[#5f75ff]" />
               )}
             </div>
 
             <div>
-              <h2 className="font-semibold text-white">
+              <h2 className="font-semibold text-slate-950">
                 Measurement basis
               </h2>
 
-              <p className="mt-2 max-w-4xl text-sm leading-6 text-slate-400">
+              <p className="mt-2 max-w-4xl text-sm leading-7 text-slate-600">
                 For this web-search experiment, target
                 and competitor presence require both a
                 resolved textual brand mention and

@@ -150,12 +150,12 @@ function Metric({
   value: string;
 }) {
   return (
-    <div className="rounded-xl border border-slate-800 bg-slate-950/50 p-4">
+    <div className="crystal-subcard rounded-2xl p-4">
       <div className="text-xs text-slate-500">
         {label}
       </div>
 
-      <div className="mt-2 text-xl font-semibold text-white">
+      <div className="crystal-value mt-2 text-xl font-medium">
         {value}
       </div>
     </div>
@@ -786,16 +786,16 @@ export default function RetrievalMonitoringPanel({
 
 
   return (
-    <section className="rounded-2xl border border-cyan-500/20 bg-slate-900/60">
-      <div className="border-b border-slate-800 p-5 lg:p-6">
+    <section className="crystal-panel overflow-hidden rounded-[24px]">
+      <div className="p-5 pb-4 lg:p-6 lg:pb-4">
         <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
           <div>
-            <div className="flex items-center gap-2 text-sm text-cyan-300">
+            <div className="flex items-center gap-2 text-sm font-medium text-violet-600">
               <Globe2 className="h-4 w-4" />
               Retrieval Monitoring
             </div>
 
-            <h2 className="mt-2 text-lg font-semibold text-white">
+            <h2 className="mt-2 text-lg font-semibold text-slate-950">
               Frozen Web Retrieval Check
             </h2>
 
@@ -818,7 +818,7 @@ export default function RetrievalMonitoringPanel({
               || running
               || baselineJob === null
             }
-            className="inline-flex min-w-[190px] items-center justify-center gap-2 rounded-xl border border-cyan-400 bg-cyan-400 px-5 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-cyan-500/20 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:border-slate-700 disabled:bg-slate-800 disabled:text-slate-500 disabled:shadow-none"
+            className="crystal-primary-button min-w-[190px] px-5 py-3 text-sm"
           >
             {starting || running ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -839,7 +839,7 @@ export default function RetrievalMonitoringPanel({
 
       <div className="grid gap-6 p-5 lg:grid-cols-[0.9fr_1.4fr] lg:p-6">
         <div>
-          <div className="text-xs uppercase tracking-wider text-slate-500">
+          <div className="crystal-eyebrow">
             Frozen reference
           </div>
 
@@ -849,13 +849,13 @@ export default function RetrievalMonitoringPanel({
               Loading benchmark reference...
             </div>
           ) : baselineJob ? (
-            <div className="mt-4 space-y-3 rounded-xl border border-slate-800 bg-slate-950/50 p-4 text-sm">
+            <div className="crystal-subcard mt-4 space-y-3 rounded-[18px] p-4 text-sm">
               <div className="flex justify-between gap-4">
                 <span className="text-slate-500">
                   Experiment
                 </span>
 
-                <span className="text-right text-slate-200">
+                <span className="text-right text-slate-800">
                   {baselineExperiment?.name ?? "Baseline"}
                 </span>
               </div>
@@ -865,7 +865,7 @@ export default function RetrievalMonitoringPanel({
                   Benchmark
                 </span>
 
-                <span className="text-slate-200">
+                <span className="text-slate-800">
                   #{baselineJob.id}
                 </span>
               </div>
@@ -875,7 +875,7 @@ export default function RetrievalMonitoringPanel({
                   Prompts
                 </span>
 
-                <span className="text-slate-200">
+                <span className="text-slate-800">
                   {baselineJob.total_prompts}
                 </span>
               </div>
@@ -885,7 +885,7 @@ export default function RetrievalMonitoringPanel({
                   Model
                 </span>
 
-                <span className="text-right text-slate-200">
+                <span className="text-right text-slate-800">
                   {providerModel(
                     baselineJob,
                   )}
@@ -897,27 +897,27 @@ export default function RetrievalMonitoringPanel({
                   Mode
                 </span>
 
-                <span className="text-cyan-300">
+                <span className="font-medium text-violet-600">
                   {baselineJob.benchmark_mode}
                 </span>
               </div>
             </div>
           ) : (
-            <div className="mt-4 rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 text-sm text-amber-300">
+            <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50/75 p-4 text-sm text-amber-800">
               No completed Web Search baseline is available.
             </div>
           )}
 
           {monitoringExperiment && monitoringJob && (
-            <div className="mt-4 rounded-xl border border-slate-800 bg-slate-950/40 p-4">
+            <div className="crystal-subcard mt-4 rounded-[18px] p-4">
               <div className="flex items-center gap-2">
                 {running ? (
-                  <Loader2 className="h-4 w-4 animate-spin text-cyan-400" />
+                  <Loader2 className="h-4 w-4 animate-spin text-[#5f75ff]" />
                 ) : (
                   <Clock3 className="h-4 w-4 text-slate-500" />
                 )}
 
-                <span className="text-sm font-medium text-slate-200">
+                <span className="text-sm font-medium text-slate-800">
                   {monitoringExperiment.name}
                 </span>
               </div>
@@ -938,7 +938,7 @@ export default function RetrievalMonitoringPanel({
 
         <div>
           <div className="flex items-center justify-between gap-4">
-            <div className="text-xs uppercase tracking-wider text-slate-500">
+            <div className="crystal-eyebrow">
               Latest completed check
             </div>
 
@@ -947,8 +947,8 @@ export default function RetrievalMonitoringPanel({
                 className={[
                   "inline-flex items-center gap-2 rounded-lg px-2.5 py-1 text-xs font-medium",
                   retrievalDetected
-                    ? "bg-emerald-500/10 text-emerald-300"
-                    : "bg-slate-800 text-slate-400",
+                    ? "border border-emerald-200 bg-emerald-50 text-emerald-700"
+                    : "border border-slate-200 bg-slate-50 text-slate-600",
                 ].join(" ")}
               >
                 {retrievalDetected ? (
@@ -966,7 +966,7 @@ export default function RetrievalMonitoringPanel({
 
           {latestSummary ? (
             <>
-              <div className="mt-4 text-lg font-semibold text-white">
+              <div className="mt-4 text-lg font-semibold text-slate-950">
                 {latestSummary.name}
               </div>
 
@@ -1011,8 +1011,8 @@ export default function RetrievalMonitoringPanel({
               </p>
             </>
           ) : (
-            <div className="mt-4 rounded-xl border border-slate-800 bg-slate-950/50 p-5">
-              <div className="text-sm text-slate-300">
+            <div className="crystal-subcard mt-4 rounded-[18px] p-5">
+              <div className="text-sm text-slate-700">
                 No monitoring checks yet.
               </div>
 
@@ -1027,7 +1027,7 @@ export default function RetrievalMonitoringPanel({
       </div>
 
       {error && (
-        <div className="border-t border-red-500/20 bg-red-500/5 px-5 py-4 text-sm text-red-300 lg:px-6">
+        <div className="border-t border-red-200 bg-red-50/70 px-5 py-4 text-sm text-red-700 lg:px-6">
           {error}
         </div>
       )}

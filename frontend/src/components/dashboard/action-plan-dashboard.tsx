@@ -42,14 +42,14 @@ function priorityClass(
   priority: string,
 ) {
   if (priority === "high") {
-    return "bg-red-500/10 text-red-300";
+    return "border border-red-200 bg-red-50 text-red-700";
   }
 
   if (priority === "medium") {
-    return "bg-amber-500/10 text-amber-300";
+    return "border border-amber-200 bg-amber-50 text-amber-700";
   }
 
-  return "bg-slate-800 text-slate-300";
+  return "border border-slate-200 bg-slate-50 text-slate-600";
 }
 
 
@@ -65,22 +65,22 @@ function StatCard({
   icon: typeof Gauge;
 }) {
   return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
-      <div className="flex items-center justify-between">
-        <span className="text-sm text-slate-400">
+    <div className="crystal-card rounded-[20px] p-5">
+      <div className="flex items-start justify-between gap-4">
+        <span className="crystal-eyebrow">
           {label}
         </span>
 
-        <div className="rounded-xl bg-slate-800 p-2.5">
-          <Icon className="h-4 w-4 text-cyan-400" />
+        <div className="crystal-icon h-10 w-10">
+          <Icon className="h-[18px] w-[18px] text-[#5f75ff]" />
         </div>
       </div>
 
-      <div className="mt-5 text-3xl font-semibold text-white">
+      <div className="crystal-value mt-5 text-3xl font-medium">
         {value}
       </div>
 
-      <div className="mt-2 text-xs text-slate-500">
+      <div className="mt-3 text-xs leading-5 text-slate-500">
         {detail}
       </div>
     </div>
@@ -97,28 +97,28 @@ export default function ActionPlanDashboard({
       summary={visibilitySummary}
       title="Action Plan"
     >
-      <div className="mx-auto max-w-7xl space-y-6 p-5 lg:p-8">
+      <div className="crystal-page mx-auto max-w-[1450px] space-y-7 p-5 lg:p-8 xl:px-10">
         <section>
           <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
             <div>
-              <div className="text-sm text-slate-500">
+              <div className="crystal-eyebrow">
                 Consolidated GEO strategy
               </div>
 
-              <h2 className="mt-1 text-xl font-semibold text-white">
+              <h2 className="mt-2 text-2xl font-medium tracking-[-0.035em] text-slate-950">
                 {plan.target_brand}
               </h2>
 
-              <p className="mt-1 text-sm text-slate-500">
+              <p className="mt-1.5 text-sm text-slate-500">
                 Plan #{plan.plan_id} ·{" "}
                 {plan.experiment_name} ·{" "}
                 {plan.benchmark_mode}
               </p>
             </div>
 
-            <div className="rounded-xl border border-slate-800 bg-slate-900 px-4 py-2 text-sm text-slate-300">
-              Stored plan status:{" "}
-              <span className="font-medium text-emerald-300">
+            <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm text-slate-600">
+              Stored plan status
+              <span className="font-medium text-emerald-700">
                 {plan.plan_status}
               </span>
             </div>
@@ -163,22 +163,22 @@ export default function ActionPlanDashboard({
         </section>
 
         <section className="grid gap-6 xl:grid-cols-[1.5fr_0.8fr]">
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
-            <h2 className="font-semibold text-white">
+          <div className="crystal-panel rounded-[22px] p-6">
+            <h2 className="font-semibold text-slate-950">
               Strategy Summary
             </h2>
 
-            <p className="mt-4 text-sm leading-7 text-slate-300">
+            <p className="mt-4 text-sm leading-7 text-slate-700">
               {plan.strategy_summary}
             </p>
           </div>
 
-          <div className="rounded-2xl border border-cyan-500/15 bg-cyan-500/5 p-6">
-            <div className="text-sm text-slate-500">
+          <div className="rounded-[22px] border border-violet-200/70 bg-gradient-to-br from-violet-50/70 via-white to-blue-50/70 p-6 shadow-[0_14px_40px_rgba(79,70,229,0.045)]">
+            <div className="crystal-eyebrow">
               Current Web Signal
             </div>
 
-            <div className="mt-3 text-2xl font-semibold capitalize text-white">
+            <div className="mt-3 text-2xl font-semibold capitalize text-slate-950">
               {
                 visibilitySummary
                   .diagnosis
@@ -188,12 +188,12 @@ export default function ActionPlanDashboard({
             </div>
 
             <div className="mt-5 grid grid-cols-2 gap-3">
-              <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-3">
-                <div className="text-xs text-slate-500">
+              <div className="crystal-subcard rounded-2xl p-4">
+                <div className="shrink-0 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-500">
                   Web visibility
                 </div>
 
-                <div className="mt-2 text-lg font-semibold text-white">
+                <div className="crystal-value mt-2 text-xl font-medium">
                   {visibilitySummary.target
                     .web_visibility_score
                     ?.toFixed(2) ??
@@ -201,12 +201,12 @@ export default function ActionPlanDashboard({
                 </div>
               </div>
 
-              <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-3">
+              <div className="crystal-subcard rounded-2xl p-4">
                 <div className="text-xs text-slate-500">
                   Cited coverage
                 </div>
 
-                <div className="mt-2 text-lg font-semibold text-white">
+                <div className="crystal-value mt-2 text-xl font-medium">
                   {visibilitySummary.target
                     .cited_response_coverage
                     ?.toFixed(2) ??
@@ -224,16 +224,16 @@ export default function ActionPlanDashboard({
           </div>
         </section>
 
-        <section className="rounded-2xl border border-amber-500/15 bg-amber-500/5 p-5">
+        <section className="rounded-[22px] border border-amber-200 bg-amber-50/65 p-5">
           <div className="flex gap-3">
-            <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-400" />
+            <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
 
             <div>
-              <div className="font-medium text-amber-200">
+              <div className="font-medium text-amber-800">
                 Historical plan provenance
               </div>
 
-              <p className="mt-2 text-sm leading-6 text-slate-400">
+              <p className="mt-2 text-sm leading-7 text-slate-600">
                 {plan.provenance_note}
               </p>
             </div>
@@ -242,7 +242,11 @@ export default function ActionPlanDashboard({
 
         <section>
           <div className="mb-4">
-            <h2 className="font-semibold text-white">
+            <div className="crystal-eyebrow">
+              Execution priorities
+            </div>
+
+            <h2 className="mt-2 text-xl font-medium tracking-[-0.025em] text-slate-950">
               Priority Actions
             </h2>
 
@@ -258,24 +262,24 @@ export default function ActionPlanDashboard({
               (action) => (
                 <details
                   key={action.id}
-                  className="group rounded-2xl border border-slate-800 bg-slate-900/60"
+                  className="group crystal-card overflow-hidden rounded-[22px]"
                 >
                   <summary className="cursor-pointer list-none p-5 lg:p-6">
                     <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
                       <div className="flex min-w-0 gap-4">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-800 text-sm font-semibold text-cyan-300">
+                        <div className="crystal-step-badge">
                           {action.sort_order}
                         </div>
 
                         <div className="min-w-0">
-                          <h3 className="font-medium text-white">
+                          <h3 className="text-[15px] font-medium leading-6 text-slate-950">
                             {action.title}
                           </h3>
 
                           <div className="mt-2 flex flex-wrap gap-2">
                             <span
                               className={[
-                                "rounded-lg px-2.5 py-1 text-xs font-medium",
+                                "rounded-full px-2.5 py-1 text-xs font-medium",
                                 priorityClass(
                                   action.priority,
                                 ),
@@ -284,18 +288,18 @@ export default function ActionPlanDashboard({
                               {action.priority}
                             </span>
 
-                            <span className="rounded-lg bg-slate-800 px-2.5 py-1 text-xs text-slate-300">
+                            <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs text-slate-700">
                               {pretty(
                                 action.action_type,
                               )}
                             </span>
 
-                            <span className="rounded-lg bg-slate-800 px-2.5 py-1 text-xs text-slate-400">
+                            <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs text-slate-500">
                               Effort:{" "}
                               {action.effort}
                             </span>
 
-                            <span className="rounded-lg bg-slate-800 px-2.5 py-1 text-xs text-slate-400">
+                            <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs text-slate-500">
                               Stored status:{" "}
                               {action.status}
                             </span>
@@ -313,24 +317,24 @@ export default function ActionPlanDashboard({
                     </div>
                   </summary>
 
-                  <div className="border-t border-slate-800 px-5 pb-6 pt-5 lg:px-6">
+                  <div className="border-t border-slate-200/70 bg-slate-50/25 px-5 pb-6 pt-5 lg:px-6">
                     <div className="grid gap-6 xl:grid-cols-2">
                       <div>
-                        <div className="text-xs uppercase tracking-wider text-slate-500">
+                        <div className="crystal-eyebrow">
                           Rationale
                         </div>
 
-                        <p className="mt-3 text-sm leading-6 text-slate-300">
+                        <p className="mt-3 text-sm leading-6 text-slate-700">
                           {action.rationale}
                         </p>
 
                         {action.target_page && (
                           <div className="mt-5">
-                            <div className="text-xs uppercase tracking-wider text-slate-500">
+                            <div className="crystal-eyebrow">
                               Target page
                             </div>
 
-                            <div className="mt-2 text-sm text-cyan-300">
+                            <div className="mt-2 text-sm font-medium text-violet-600">
                               {action.target_page}
                             </div>
                           </div>
@@ -338,7 +342,7 @@ export default function ActionPlanDashboard({
                       </div>
 
                       <div>
-                        <div className="text-xs uppercase tracking-wider text-slate-500">
+                        <div className="crystal-eyebrow">
                           Implementation
                         </div>
 
@@ -350,9 +354,9 @@ export default function ActionPlanDashboard({
                             ) => (
                               <li
                                 key={`${action.id}-step-${index}`}
-                                className="flex gap-3 text-sm leading-6 text-slate-300"
+                                className="flex gap-3 text-sm leading-6 text-slate-700"
                               >
-                                <span className="text-cyan-500">
+                                <span className="font-medium text-violet-600">
                                   {index + 1}.
                                 </span>
 
@@ -367,9 +371,9 @@ export default function ActionPlanDashboard({
                     </div>
 
                     <div className="mt-6 grid gap-5 lg:grid-cols-3">
-                      <div className="rounded-xl border border-slate-800 bg-slate-950/50 p-4">
-                        <div className="flex items-center gap-2 text-sm font-medium text-white">
-                          <FileCheck2 className="h-4 w-4 text-cyan-400" />
+                      <div className="crystal-subcard rounded-[18px] p-4">
+                        <div className="flex items-center gap-2 text-sm font-medium text-slate-950">
+                          <FileCheck2 className="h-4 w-4 text-[#5f75ff]" />
                           Evidence
                         </div>
 
@@ -381,7 +385,7 @@ export default function ActionPlanDashboard({
                             ) => (
                               <li
                                 key={`${action.id}-evidence-${index}`}
-                                className="text-xs leading-5 text-slate-400"
+                                className="text-xs leading-5 text-slate-600"
                               >
                                 • {item}
                               </li>
@@ -390,9 +394,9 @@ export default function ActionPlanDashboard({
                         </ul>
                       </div>
 
-                      <div className="rounded-xl border border-slate-800 bg-slate-950/50 p-4">
-                        <div className="flex items-center gap-2 text-sm font-medium text-white">
-                          <Target className="h-4 w-4 text-emerald-400" />
+                      <div className="crystal-subcard rounded-[18px] p-4">
+                        <div className="flex items-center gap-2 text-sm font-medium text-slate-950">
+                          <Target className="h-4 w-4 text-emerald-600" />
                           Success Metrics
                         </div>
 
@@ -404,7 +408,7 @@ export default function ActionPlanDashboard({
                             ) => (
                               <li
                                 key={`${action.id}-metric-${index}`}
-                                className="text-xs leading-5 text-slate-400"
+                                className="text-xs leading-5 text-slate-600"
                               >
                                 • {item}
                               </li>
@@ -413,9 +417,9 @@ export default function ActionPlanDashboard({
                         </ul>
                       </div>
 
-                      <div className="rounded-xl border border-slate-800 bg-slate-950/50 p-4">
-                        <div className="flex items-center gap-2 text-sm font-medium text-white">
-                          <Layers3 className="h-4 w-4 text-violet-400" />
+                      <div className="crystal-subcard rounded-[18px] p-4">
+                        <div className="flex items-center gap-2 text-sm font-medium text-slate-950">
+                          <Layers3 className="h-4 w-4 text-violet-600" />
                           Dependencies
                         </div>
 
@@ -429,7 +433,7 @@ export default function ActionPlanDashboard({
                               ) => (
                                 <li
                                   key={`${action.id}-dependency-${index}`}
-                                  className="text-xs leading-5 text-slate-400"
+                                  className="text-xs leading-5 text-slate-600"
                                 >
                                   • {item}
                                 </li>
@@ -437,7 +441,7 @@ export default function ActionPlanDashboard({
                             )}
                           </ul>
                         ) : (
-                          <div className="mt-3 text-xs text-slate-600">
+                          <div className="mt-3 text-xs text-slate-500">
                             No stored dependencies.
                           </div>
                         )}
@@ -451,8 +455,12 @@ export default function ActionPlanDashboard({
         </section>
 
         <section className="grid gap-6 xl:grid-cols-2">
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
-            <h2 className="font-semibold text-white">
+          <div className="crystal-panel rounded-[22px] p-6">
+            <div className="crystal-eyebrow">
+              Execution roadmap
+            </div>
+
+            <h2 className="mt-2 text-xl font-medium tracking-[-0.025em] text-slate-950">
               Recommended Sequence
             </h2>
 
@@ -464,9 +472,9 @@ export default function ActionPlanDashboard({
                 ) => (
                   <li
                     key={index}
-                    className="flex gap-3 text-sm leading-6 text-slate-300"
+                    className="flex gap-3 text-sm leading-6 text-slate-700"
                   >
-                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-cyan-500/10 text-xs text-cyan-300">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl border border-violet-200 bg-violet-50 text-xs font-medium text-violet-700">
                       {index + 1}
                     </span>
 
@@ -477,8 +485,12 @@ export default function ActionPlanDashboard({
             </ol>
           </div>
 
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
-            <h2 className="font-semibold text-white">
+          <div className="crystal-panel rounded-[22px] p-6">
+            <div className="crystal-eyebrow">
+              Guardrails
+            </div>
+
+            <h2 className="mt-2 text-xl font-medium tracking-[-0.025em] text-slate-950">
               Risks & Limits
             </h2>
 
@@ -490,11 +502,11 @@ export default function ActionPlanDashboard({
                 ) => (
                   <div
                     key={index}
-                    className="flex gap-3 rounded-xl border border-slate-800 bg-slate-950/50 p-3"
+                    className="crystal-subcard flex gap-3 rounded-[16px] p-3.5"
                   >
-                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
+                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
 
-                    <p className="text-xs leading-5 text-slate-400">
+                    <p className="text-xs leading-5 text-slate-600">
                       {item}
                     </p>
                   </div>

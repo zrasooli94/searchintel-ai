@@ -142,7 +142,7 @@ export default function PromptEditModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-5 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/35 p-5 backdrop-blur-[2px]"
       onMouseDown={
         (event) => {
           if (
@@ -154,10 +154,10 @@ export default function PromptEditModal({
         }
       }
     >
-      <div className="w-full max-w-2xl overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 shadow-2xl">
-        <div className="flex items-center justify-between border-b border-slate-800 px-6 py-5">
+      <div className="crystal-panel w-full max-w-2xl overflow-hidden rounded-[24px] bg-white/95 shadow-[0_30px_90px_rgba(15,23,42,0.16)]">
+        <div className="flex items-center justify-between border-b border-slate-200/80 px-6 py-5">
           <div>
-            <h2 className="font-semibold text-white">
+            <h2 className="font-semibold text-slate-950">
               Edit Prompt
             </h2>
 
@@ -171,7 +171,7 @@ export default function PromptEditModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-2 text-slate-500 transition hover:bg-slate-900 hover:text-white"
+            className="rounded-xl p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-900"
           >
             <X className="h-5 w-5" />
           </button>
@@ -191,7 +191,7 @@ export default function PromptEditModal({
                     event.target.value
                   )
               }
-              className="mt-2 w-full rounded-xl border border-slate-800 bg-slate-900 px-4 py-3 text-sm text-white outline-none focus:border-cyan-500/50"
+              className="crystal-field mt-2 px-4 py-3 text-sm"
             >
               {categories.map(
                 (item) => (
@@ -221,24 +221,24 @@ export default function PromptEditModal({
               }
               rows={6}
               autoFocus
-              className="mt-2 w-full resize-y rounded-xl border border-slate-800 bg-slate-900 px-4 py-3 text-sm leading-6 text-white outline-none focus:border-cyan-500/50"
+              className="crystal-field mt-2 resize-y px-4 py-3 text-sm leading-6"
             />
           </div>
 
           {error && (
-            <div className="flex gap-2 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-300">
+            <div className="flex gap-2 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-700">
               <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />
               {error}
             </div>
           )}
         </div>
 
-        <div className="flex justify-end gap-3 border-t border-slate-800 px-6 py-5">
+        <div className="flex justify-end gap-3 border-t border-slate-200/80 px-6 py-5">
           <button
             type="button"
             onClick={onClose}
             disabled={saving}
-            className="rounded-xl border border-slate-800 px-4 py-2.5 text-sm text-slate-300 transition hover:bg-slate-900"
+            className="crystal-secondary-button px-4 py-2.5 text-sm"
           >
             Cancel
           </button>
@@ -250,7 +250,7 @@ export default function PromptEditModal({
               saving
               || text.trim().length < 5
             }
-            className="flex items-center gap-2 rounded-xl bg-cyan-400 px-5 py-2.5 text-sm font-medium text-slate-950 disabled:opacity-50"
+            className="crystal-primary-button px-5 py-2.5 text-sm"
           >
             {saving ? (
               <>
