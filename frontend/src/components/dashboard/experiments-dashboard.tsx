@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 
 import DashboardShell from "@/components/dashboard/dashboard-shell";
+import ReanalyzeExperimentButton from "@/components/dashboard/reanalyze-experiment-button";
 import RetrievalMonitoringPanel from "@/components/dashboard/retrieval-monitoring-panel";
 
 import type {
@@ -342,7 +343,7 @@ export default function ExperimentsDashboard({
                       <div className="mt-5 flex gap-2 rounded-2xl border border-amber-200 bg-amber-50/75 p-3.5 text-xs leading-5 text-amber-800">
                         <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />
 
-                        <div>
+                        <div className="min-w-0 flex-1">
                           <div className="font-medium">
                             Analysis update recommended
                           </div>
@@ -351,8 +352,25 @@ export default function ExperimentsDashboard({
                             {experiment.analysis_stale_responses}
                             {" of "}
                             {experiment.analysis_total_responses}
-                            {" analyzed responses use legacy or unknown analysis."}
+                            {" stored responses use legacy, unknown, or missing analysis."}
                           </div>
+
+                          <ReanalyzeExperimentButton
+                            projectId={
+                              experiments.project_id
+                            }
+                            experimentId={
+                              experiment.id
+                            }
+                            staleResponses={
+                              experiment
+                                .analysis_stale_responses
+                            }
+                            totalResponses={
+                              experiment
+                                .analysis_total_responses
+                            }
+                          />
                         </div>
                       </div>
                     )}

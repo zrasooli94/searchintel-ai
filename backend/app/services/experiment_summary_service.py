@@ -92,8 +92,7 @@ class ExperimentSummaryService:
                         experiment_ids
                     ),
                     AIRun.include_in_metrics.is_(True),
-                    AIResponse.visibility_analyzed_at
-                    .is_not(None),
+                    AIRun.status == "completed",
                 )
             ).all()
         )
