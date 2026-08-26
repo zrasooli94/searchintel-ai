@@ -4,9 +4,6 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from app.db.session import SessionLocal
-from app.repositories.ai_model_repository import (
-    AIModelRepository,
-)
 from app.repositories.ai_run_repository import (
     AIRunRepository,
 )
@@ -22,6 +19,7 @@ from app.repositories.project_repository import (
 from app.repositories.prompt_repository import (
     PromptRepository,
 )
+from app.services.ai_model_service import AIModelService
 from app.services.ai_run_service import AIRunService
 from app.services.visibility_analysis_service import (
     VisibilityAnalysisService,
@@ -238,16 +236,6 @@ class BenchmarkService:
             ]
 
         else:
-            if model_id is None:
-                raise HTTPException(
-                    status_code=400,
-                    detail=(
-                        "model_id is required when "
-                        "no source benchmark job is "
-                        "provided."
-                    ),
-                )
-
             prompts = (
                 PromptRepository
                 .list_active_by_project(
@@ -275,22 +263,14 @@ class BenchmarkService:
                 for prompt in prompts
             ]
 
-        model = AIModelRepository.get_by_id(
-            db,
-            model_id,
+        model = (
+            AIModelService.resolve_execution_model(
+                db,
+                model_id,
+            )
         )
 
-        if model is None:
-            raise HTTPException(
-                status_code=404,
-                detail="AI model not found.",
-            )
-
-        if not model.is_active:
-            raise HTTPException(
-                status_code=400,
-                detail="AI model is inactive.",
-            )
+        model_id = model.id
 
         config_snapshot = {
             "benchmark_mode":

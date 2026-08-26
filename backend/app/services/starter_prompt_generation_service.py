@@ -2,23 +2,15 @@ import json
 import re
 
 from fastapi import HTTPException
-from sqlalchemy import (
-    func,
-    select,
-)
 from sqlalchemy.orm import Session
 
 from app.integrations.ai.provider_factory import (
     ProviderFactory,
 )
 from app.models.ai_model import AIModel
-from app.models.ai_run import AIRun
 
 from app.repositories.ai_engine_repository import (
     AIEngineRepository,
-)
-from app.repositories.ai_model_repository import (
-    AIModelRepository,
 )
 from app.repositories.page_repository import (
     PageRepository,
@@ -35,6 +27,8 @@ from app.repositories.prompt_repository import (
 from app.repositories.website_repository import (
     WebsiteRepository,
 )
+
+from app.services.ai_model_service import AIModelService
 
 
 class StarterPromptGenerationService:
@@ -66,132 +60,10 @@ class StarterPromptGenerationService:
         db: Session,
         model_id: int | None,
     ):
-        if model_id is not None:
-            model = (
-                AIModelRepository.get_by_id(
-                    db,
-                    model_id,
-                )
-            )
-
-            if model is None:
-                raise HTTPException(
-                    status_code=404,
-                    detail="AI model not found.",
-                )
-
-            if not model.is_active:
-                raise HTTPException(
-                    status_code=400,
-                    detail="AI model is inactive.",
-                )
-
-            if (
-                not model.provider_model_id
-                or model.provider_model_id
-                == "configure-later"
-            ):
-                raise HTTPException(
-                    status_code=400,
-                    detail=(
-                        "Selected AI model is not "
-                        "configured for provider use."
-                    ),
-                )
-
-            return model
-
-        # Prefer a model that has already
-        # completed successful SearchIntel runs.
-        statement = (
-            select(
-                AIModel,
-                func.count(
-                    AIRun.id
-                ).label("run_count"),
-            )
-            .join(
-                AIRun,
-                AIRun.model_id
-                == AIModel.id,
-            )
-            .where(
-                AIModel.is_active.is_(True),
-                AIModel.provider_model_id
-                != "configure-later",
-                AIRun.status
-                == "completed",
-            )
-            .group_by(
-                AIModel.id
-            )
-            .order_by(
-                func.count(
-                    AIRun.id
-                ).desc(),
-                AIModel.id.desc(),
-            )
-            .limit(1)
+        return AIModelService.resolve_execution_model(
+            db,
+            model_id,
         )
-
-        row = db.execute(
-            statement
-        ).first()
-
-        if row is not None:
-            return row[0]
-
-        # Fallback to any active configured
-        # OpenAI model.
-        engine = (
-            AIEngineRepository.get_by_slug(
-                db,
-                "openai",
-            )
-        )
-
-        if engine is None:
-            raise HTTPException(
-                status_code=400,
-                detail=(
-                    "No supported AI engine "
-                    "is configured."
-                ),
-            )
-
-        candidates = (
-            AIModelRepository.list_by_engine(
-                db,
-                engine.id,
-            )
-        )
-
-        candidates = [
-            model
-            for model in candidates
-            if (
-                model.is_active
-                and model.provider_model_id
-                and model.provider_model_id
-                != "configure-later"
-            )
-        ]
-
-        if not candidates:
-            raise HTTPException(
-                status_code=400,
-                detail=(
-                    "No active configured AI "
-                    "model is available."
-                ),
-            )
-
-        return sorted(
-            candidates,
-            key=lambda model:
-                model.id,
-            reverse=True,
-        )[0]
 
     @staticmethod
     def extract_json(

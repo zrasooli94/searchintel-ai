@@ -239,7 +239,7 @@ export default function SetupBaselineStep({
             },
             body:
               JSON.stringify({
-                model_id: 2,
+                model_id: null,
                 experiment_id:
                   experiment.id,
                 benchmark_mode:
@@ -576,7 +576,14 @@ export default function SetupBaselineStep({
             </span>
 
             <span className="text-sm text-slate-300">
-              GPT-5.6 Luna
+              {job
+                && typeof (
+                  job.config_snapshot
+                    .provider_model_id
+                ) === "string"
+                ? job.config_snapshot
+                    .provider_model_id
+                : "Auto-select configured model"}
             </span>
           </div>
         </div>
