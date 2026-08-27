@@ -4,7 +4,6 @@ import type {
   EntitiesSummary,
   ExperimentComparison,
   ExperimentsSummary,
-  GeoExperiment,
   GeoOpportunitySummary,
   SiteRAGGapSummary,
   ProjectCompetitor,
@@ -15,6 +14,9 @@ import type {
   VisibilitySummary,
   WebsiteSetupState,
 } from "@/lib/types";
+import {
+  latestCompletedExperimentForMode,
+} from "@/lib/experiment-selection";
 import {
   searchIntelApiBaseUrl,
   searchIntelFetch,
@@ -41,32 +43,38 @@ async function fetchJson<T>(
 }
 
 
-async function getLatestCompletedExperiment(
+async function getLatestCompletedExperimentForMode(
   projectId: number,
-): Promise<GeoExperiment> {
-  const experiments = await fetchJson<
-    GeoExperiment[]
-  >(
-    `${searchIntelApiBaseUrl()}/projects/${projectId}/geo-experiments`,
+  benchmarkMode: string,
+) {
+  const summary = await getExperimentsSummary(
+    projectId,
   );
 
-  const completed = experiments
-    .filter(
-      (experiment) =>
-        experiment.status === "completed",
-    )
-    .sort(
-      (a, b) =>
-        b.id - a.id,
+  return latestCompletedExperimentForMode(
+    summary.experiments,
+    benchmarkMode,
+  );
+}
+
+
+async function getRequiredLatestCompletedExperimentForMode(
+  projectId: number,
+  benchmarkMode: string,
+) {
+  const experiment =
+    await getLatestCompletedExperimentForMode(
+      projectId,
+      benchmarkMode,
     );
 
-  if (completed.length === 0) {
+  if (!experiment) {
     throw new Error(
-      "No completed experiment exists for this project.",
+      `No completed ${benchmarkMode} experiment exists for this project.`,
     );
   }
 
-  return completed[0];
+  return experiment;
 }
 
 
@@ -104,8 +112,9 @@ export async function getLatestCompletedVisibilitySummary(
   projectId: number,
 ): Promise<VisibilitySummary> {
   const experiment =
-    await getLatestCompletedExperiment(
+    await getRequiredLatestCompletedExperimentForMode(
       projectId,
+      "web_search",
     );
 
   return fetchJson<VisibilitySummary>(
@@ -117,23 +126,11 @@ export async function getLatestCompletedVisibilitySummary(
 export async function getLatestCompletedWebVisibilitySummary(
   projectId: number,
 ): Promise<VisibilitySummary | null> {
-  const summary =
-    await getExperimentsSummary(
-      projectId,
-    );
-
   const experiment =
-    summary.experiments
-      .filter(
-        (item) =>
-          item.status === "completed"
-          && item.benchmark_mode ===
-            "web_search",
-      )
-      .sort(
-        (a, b) =>
-          b.id - a.id,
-      )[0];
+    await getLatestCompletedExperimentForMode(
+      projectId,
+      "web_search",
+    );
 
   if (!experiment) {
     return null;
@@ -158,8 +155,9 @@ export async function getLatestCompletedAIVisibilityMetrics(
   projectId: number,
 ): Promise<AIVisibilityMetrics> {
   const experiment =
-    await getLatestCompletedExperiment(
+    await getRequiredLatestCompletedExperimentForMode(
       projectId,
+      "web_search",
     );
 
   return fetchJson<AIVisibilityMetrics>(
@@ -249,23 +247,11 @@ export async function getLatestCompletedPromptGapContext(
 export async function getLatestCompletedSiteRAGGaps(
   projectId: number,
 ): Promise<SiteRAGGapSummary | null> {
-  const summary =
-    await getExperimentsSummary(
-      projectId,
-    );
-
   const experiment =
-    summary.experiments
-      .filter(
-        (item) =>
-          item.status === "completed"
-          && item.benchmark_mode ===
-            "site_rag",
-      )
-      .sort(
-        (a, b) =>
-          b.id - a.id,
-      )[0];
+    await getLatestCompletedExperimentForMode(
+      projectId,
+      "site_rag",
+    );
 
   if (!experiment) {
     return null;
