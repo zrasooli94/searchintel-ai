@@ -1,3 +1,8 @@
+import {
+  searchIntelApiBaseUrl,
+  searchIntelFetch,
+} from "@/lib/server-api";
+
 export async function POST(
   _request: Request,
   context: {
@@ -11,11 +16,9 @@ export async function POST(
   } = await context.params;
 
   const apiBase =
-    process.env
-      .SEARCHINTEL_API_BASE_URL ??
-    "http://127.0.0.1:8000/api/v1";
+    searchIntelApiBaseUrl();
 
-  const response = await fetch(
+  const response = await searchIntelFetch(
     `${apiBase}/websites/${websiteId}/technical-audit`,
     {
       method: "POST",

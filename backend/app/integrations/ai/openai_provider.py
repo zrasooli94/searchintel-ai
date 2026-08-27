@@ -21,7 +21,10 @@ class OpenAIProvider:
             )
 
         self.client = OpenAI(
-            api_key=settings.openai_api_key
+            api_key=(
+                settings.openai_api_key
+                .get_secret_value()
+            )
         )
 
     def execute(

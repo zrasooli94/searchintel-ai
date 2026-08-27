@@ -15,20 +15,16 @@ import type {
   VisibilitySummary,
   WebsiteSetupState,
 } from "@/lib/types";
-
-
-function apiBaseUrl(): string {
-  return (
-    process.env.SEARCHINTEL_API_BASE_URL ??
-    "http://127.0.0.1:8000/api/v1"
-  );
-}
+import {
+  searchIntelApiBaseUrl,
+  searchIntelFetch,
+} from "@/lib/server-api";
 
 
 async function fetchJson<T>(
   url: string,
 ): Promise<T> {
-  const response = await fetch(
+  const response = await searchIntelFetch(
     url,
     {
       cache: "no-store",
@@ -51,7 +47,7 @@ async function getLatestCompletedExperiment(
   const experiments = await fetchJson<
     GeoExperiment[]
   >(
-    `${apiBaseUrl()}/projects/${projectId}/geo-experiments`,
+    `${searchIntelApiBaseUrl()}/projects/${projectId}/geo-experiments`,
   );
 
   const completed = experiments
@@ -78,7 +74,7 @@ export async function getProjectWorkspaces(): Promise<
   ProjectWorkspace[]
 > {
   return fetchJson<ProjectWorkspace[]>(
-    `${apiBaseUrl()}/projects/workspaces`,
+    `${searchIntelApiBaseUrl()}/projects/workspaces`,
   );
 }
 
@@ -113,7 +109,7 @@ export async function getLatestCompletedVisibilitySummary(
     );
 
   return fetchJson<VisibilitySummary>(
-    `${apiBaseUrl()}/geo-experiments/${experiment.id}/visibility-summary`,
+    `${searchIntelApiBaseUrl()}/geo-experiments/${experiment.id}/visibility-summary`,
   );
 }
 
@@ -144,7 +140,7 @@ export async function getLatestCompletedWebVisibilitySummary(
   }
 
   return fetchJson<VisibilitySummary>(
-    `${apiBaseUrl()}/geo-experiments/${experiment.id}/visibility-summary`,
+    `${searchIntelApiBaseUrl()}/geo-experiments/${experiment.id}/visibility-summary`,
   );
 }
 
@@ -153,7 +149,7 @@ export async function getTechnicalSEOSummary(
   projectId: number,
 ): Promise<TechnicalSEOSummary> {
   return fetchJson<TechnicalSEOSummary>(
-    `${apiBaseUrl()}/projects/${projectId}/technical-seo-summary`,
+    `${searchIntelApiBaseUrl()}/projects/${projectId}/technical-seo-summary`,
   );
 }
 
@@ -167,7 +163,7 @@ export async function getLatestCompletedAIVisibilityMetrics(
     );
 
   return fetchJson<AIVisibilityMetrics>(
-    `${apiBaseUrl()}/geo-experiments/${experiment.id}/visibility-metrics`,
+    `${searchIntelApiBaseUrl()}/geo-experiments/${experiment.id}/visibility-metrics`,
   );
 }
 
@@ -212,7 +208,7 @@ export async function getLatestCompletedPromptGapContext(
   for (const experiment of experiments) {
     const gaps =
       await fetchJson<GeoOpportunitySummary>(
-        `${apiBaseUrl()}/geo-experiments/${experiment.id}/opportunities`,
+        `${searchIntelApiBaseUrl()}/geo-experiments/${experiment.id}/opportunities`,
       );
 
     fallback ??= {
@@ -226,7 +222,7 @@ export async function getLatestCompletedPromptGapContext(
     ) {
       const visibilitySummary =
         await fetchJson<VisibilitySummary>(
-          `${apiBaseUrl()}/geo-experiments/${experiment.id}/visibility-summary`,
+          `${searchIntelApiBaseUrl()}/geo-experiments/${experiment.id}/visibility-summary`,
         );
 
       return {
@@ -238,7 +234,7 @@ export async function getLatestCompletedPromptGapContext(
 
   const visibilitySummary =
     await fetchJson<VisibilitySummary>(
-      `${apiBaseUrl()}/geo-experiments/${fallback!.experimentId}/visibility-summary`,
+      `${searchIntelApiBaseUrl()}/geo-experiments/${fallback!.experimentId}/visibility-summary`,
     );
 
   return {
@@ -276,7 +272,7 @@ export async function getLatestCompletedSiteRAGGaps(
   }
 
   return fetchJson<SiteRAGGapSummary>(
-    `${apiBaseUrl()}/geo-experiments/${experiment.id}/site-rag-gaps`,
+    `${searchIntelApiBaseUrl()}/geo-experiments/${experiment.id}/site-rag-gaps`,
   );
 }
 
@@ -285,7 +281,7 @@ export async function getExperimentsSummary(
   projectId: number,
 ): Promise<ExperimentsSummary> {
   return fetchJson<ExperimentsSummary>(
-    `${apiBaseUrl()}/projects/${projectId}/experiments-summary`,
+    `${searchIntelApiBaseUrl()}/projects/${projectId}/experiments-summary`,
   );
 }
 
@@ -296,7 +292,7 @@ export async function getExperimentComparison(
   comparisonId: number,
 ): Promise<ExperimentComparison> {
   return fetchJson<ExperimentComparison>(
-    `${apiBaseUrl()}/projects/${projectId}/geo-experiments/compare?baseline_id=${baselineId}&comparison_id=${comparisonId}`,
+    `${searchIntelApiBaseUrl()}/projects/${projectId}/geo-experiments/compare?baseline_id=${baselineId}&comparison_id=${comparisonId}`,
   );
 }
 
@@ -305,7 +301,7 @@ export async function getEntitiesSummary(
   projectId: number,
 ): Promise<EntitiesSummary> {
   return fetchJson<EntitiesSummary>(
-    `${apiBaseUrl()}/projects/${projectId}/entities-summary`,
+    `${searchIntelApiBaseUrl()}/projects/${projectId}/entities-summary`,
   );
 }
 
@@ -313,8 +309,8 @@ export async function getEntitiesSummary(
 export async function getActionPlanSummary(
   projectId: number,
 ): Promise<ActionPlanSummary | null> {
-  const response = await fetch(
-    `${apiBaseUrl()}/projects/${projectId}/action-plan-summary`,
+  const response = await searchIntelFetch(
+    `${searchIntelApiBaseUrl()}/projects/${projectId}/action-plan-summary`,
     {
       cache: "no-store",
     },
@@ -337,8 +333,8 @@ export async function getActionPlanSummary(
 export async function getWebsiteSetupState(
   websiteId: number,
 ): Promise<WebsiteSetupState> {
-  const pagesResponse = await fetch(
-    `${apiBaseUrl()}/websites/${websiteId}/pages`,
+  const pagesResponse = await searchIntelFetch(
+    `${searchIntelApiBaseUrl()}/websites/${websiteId}/pages`,
     {
       cache: "no-store",
     },
@@ -352,8 +348,8 @@ export async function getWebsiteSetupState(
 
   const pages = await pagesResponse.json() as unknown[];
 
-  const auditResponse = await fetch(
-    `${apiBaseUrl()}/websites/${websiteId}/technical-audits/latest`,
+  const auditResponse = await searchIntelFetch(
+    `${searchIntelApiBaseUrl()}/websites/${websiteId}/technical-audits/latest`,
     {
       cache: "no-store",
     },
@@ -386,7 +382,7 @@ export async function getProjectCompetitors(
   projectId: number,
 ): Promise<ProjectCompetitor[]> {
   return fetchJson<ProjectCompetitor[]>(
-    `${apiBaseUrl()}/projects/${projectId}/competitors`,
+    `${searchIntelApiBaseUrl()}/projects/${projectId}/competitors`,
   );
 }
 
@@ -395,6 +391,6 @@ export async function getProjectPrompts(
   projectId: number,
 ): Promise<ProjectPrompt[]> {
   return fetchJson<ProjectPrompt[]>(
-    `${apiBaseUrl()}/projects/${projectId}/prompts`,
+    `${searchIntelApiBaseUrl()}/projects/${projectId}/prompts`,
   );
 }
