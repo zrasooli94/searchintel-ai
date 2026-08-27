@@ -1,6 +1,10 @@
 import TechnicalSEODashboard from "@/components/dashboard/technical-seo-dashboard";
 
 import {
+  redirect,
+} from "next/navigation";
+
+import {
   getLatestCompletedVisibilitySummary,
   getTechnicalSEOSummary,
 } from "@/lib/api";
@@ -38,6 +42,12 @@ export default async function Page({
       projectId,
     ),
   ]);
+
+  if (!seo) {
+    redirect(
+      `/projects/${projectId}/setup`,
+    );
+  }
 
   return (
     <TechnicalSEODashboard

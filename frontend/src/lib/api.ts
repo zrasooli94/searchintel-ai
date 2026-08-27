@@ -144,10 +144,25 @@ export async function getLatestCompletedWebVisibilitySummary(
 
 export async function getTechnicalSEOSummary(
   projectId: number,
-): Promise<TechnicalSEOSummary> {
-  return fetchJson<TechnicalSEOSummary>(
+): Promise<TechnicalSEOSummary | null> {
+  const response = await searchIntelFetch(
     `${searchIntelApiBaseUrl()}/projects/${projectId}/technical-seo-summary`,
+    {
+      cache: "no-store",
+    },
   );
+
+  if (response.status === 404) {
+    return null;
+  }
+
+  if (!response.ok) {
+    throw new Error(
+      `SearchIntel API returned ${response.status}.`,
+    );
+  }
+
+  return response.json() as Promise<TechnicalSEOSummary>;
 }
 
 

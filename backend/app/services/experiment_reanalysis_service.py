@@ -49,6 +49,7 @@ class ExperimentReanalysisService:
         db: Session,
         project_id: int,
         experiment_id: int,
+        force: bool = False,
     ) -> dict:
         experiment = db.get(
             GeoExperiment,
@@ -80,10 +81,16 @@ class ExperimentReanalysisService:
             )
         ]
 
+        selected_run_ids = (
+            [row.run_id for row in before]
+            if force
+            else stale_run_ids
+        )
+
         failed_run_ids: list[int] = []
         reanalyzed = 0
 
-        for run_id in stale_run_ids:
+        for run_id in selected_run_ids:
             try:
                 VisibilityAnalysisService.analyze(
                     db,
@@ -136,7 +143,7 @@ class ExperimentReanalysisService:
 
             "skipped_current":
                 len(before)
-                - len(stale_run_ids),
+                - len(selected_run_ids),
 
             "reanalyzed":
                 reanalyzed,

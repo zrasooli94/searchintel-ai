@@ -111,11 +111,19 @@ export default function SetupTechnicalStep({
     string | null
   >(null);
 
+  const [
+    warning,
+    setWarning,
+  ] = useState<
+    string | null
+  >(null);
+
 
   async function runCrawl() {
     setCrawling(true);
     setMessage(null);
     setError(null);
+    setWarning(null);
 
     try {
       const response =
@@ -145,9 +153,15 @@ export default function SetupTechnicalStep({
         result.pages_crawled,
       );
 
-      setMessage(
-        `Crawl completed: ${result.pages_crawled} pages crawled, ${result.pages_failed} failed.`,
-      );
+      if (result.crawl_limited) {
+        setWarning(
+          result.limitations.join(" "),
+        );
+      } else {
+        setMessage(
+          `Crawl completed: ${result.pages_crawled} pages crawled, ${result.pages_failed} failed.`,
+        );
+      }
 
       router.refresh();
 
@@ -168,6 +182,7 @@ export default function SetupTechnicalStep({
     setAuditing(true);
     setMessage(null);
     setError(null);
+    setWarning(null);
 
     try {
       const response =
@@ -357,12 +372,19 @@ export default function SetupTechnicalStep({
         </div>
       </div>
 
-      {(message || error) && (
+      {(message || warning || error) && (
         <div className="border-t border-slate-200/80 px-6 py-4">
           {message && (
             <div className="flex items-center gap-2 text-sm text-emerald-700">
               <CheckCircle2 className="h-4 w-4" />
               {message}
+            </div>
+          )}
+
+          {warning && (
+            <div className="flex items-start gap-2 text-sm text-amber-700">
+              <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />
+              {warning}
             </div>
           )}
 

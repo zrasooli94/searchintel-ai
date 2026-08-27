@@ -31,10 +31,10 @@ class BrandAliasService:
 
         alias = alias.strip()
 
-        if len(alias) < 2:
+        if not alias:
             raise HTTPException(
                 status_code=400,
-                detail="Alias is too short.",
+                detail="Alias cannot be empty.",
             )
 
         normalized = (

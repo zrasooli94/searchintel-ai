@@ -128,6 +128,11 @@ export default function PromptGapsDashboard({
         gaps.target_absent_prompts,
     },
     {
+      name: "Unmeasured",
+      value:
+        gaps.unmeasured_prompts,
+    },
+    {
       name: "Covered",
       value:
         gaps.covered_prompts,
@@ -201,7 +206,7 @@ export default function PromptGapsDashboard({
             </h2>
 
             <p className="mt-1.5 text-sm text-slate-500">
-              {gaps.total_prompts} measured prompts ·{" "}
+              {gaps.total_prompts} analyzed prompts ·{" "}
               {benchmarkMode} ·{" "}
               {prettyLabel(
                 measurementBasis,
@@ -540,10 +545,10 @@ export default function PromptGapsDashboard({
                       </td>
 
                       <td className="px-4 py-5 text-sm font-medium text-slate-700">
-                        {item.target_mention_rate.toFixed(
-                          0,
-                        )}
-                        %
+                        {item.gap_type ===
+                        "unmeasured_web_search"
+                          ? "N/A"
+                          : `${item.target_mention_rate.toFixed(0)}%`}
                       </td>
 
                       <td className="px-4 py-5 text-sm text-slate-700">
@@ -552,10 +557,10 @@ export default function PromptGapsDashboard({
                       </td>
 
                       <td className="px-4 py-5 text-sm text-slate-700">
-                        {item.top_competitor_run_coverage.toFixed(
-                          0,
-                        )}
-                        %
+                        {item.gap_type ===
+                        "unmeasured_web_search"
+                          ? "N/A"
+                          : `${item.top_competitor_run_coverage.toFixed(0)}%`}
                       </td>
 
                       <td className="px-4 py-5">
@@ -605,7 +610,9 @@ export default function PromptGapsDashboard({
               <p className="mt-2 text-xs text-slate-500">
                 Competitor pressure depends on the
                 completeness of registered first-party
-                domain mappings.
+                domain mappings. Prompts with no live-web
+                sources are reported as unmeasured rather
+                than content or competitor gaps.
               </p>
             </div>
           </div>

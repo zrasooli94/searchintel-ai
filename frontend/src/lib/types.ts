@@ -363,6 +363,7 @@ export type GeoPromptOpportunity = {
     category_weight?: number;
     benchmark_mode?: string;
     measurement_basis?: string;
+    web_search_measured?: boolean;
     web_grounding_note?: string | null;
   } | null;
 
@@ -385,6 +386,7 @@ export type GeoOpportunitySummary = {
   target_absent_prompts: number;
   competitor_dominance_prompts: number;
   covered_prompts: number;
+  unmeasured_prompts: number;
 
   opportunities: GeoPromptOpportunity[];
 };
@@ -842,6 +844,9 @@ export type CrawlResult = {
   pages_crawled: number;
   pages_discovered: number;
   pages_failed: number;
+  pages_blocked_by_robots: number;
+  crawl_limited: boolean;
+  limitations: string[];
 };
 
 export type TechnicalAuditSetupState = {

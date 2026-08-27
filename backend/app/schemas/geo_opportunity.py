@@ -55,6 +55,7 @@ class GeoOpportunitySummary(BaseModel):
     target_absent_prompts: int
     competitor_dominance_prompts: int
     covered_prompts: int
+    unmeasured_prompts: int
 
     opportunities: list[
         GeoPromptOpportunityRead

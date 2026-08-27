@@ -10,7 +10,7 @@ class ProjectOnboardRequest(BaseModel):
     project_description: str | None = None
 
     target_brand: str = Field(
-        min_length=2,
+        min_length=1,
         max_length=255,
     )
 

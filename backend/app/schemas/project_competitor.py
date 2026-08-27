@@ -7,7 +7,7 @@ from pydantic import (
 
 class ProjectCompetitorCreate(BaseModel):
     name: str = Field(
-        min_length=2,
+        min_length=1,
         max_length=255,
     )
 

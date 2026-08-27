@@ -102,6 +102,7 @@ class CrawlerService:
 
         pages_crawled = 0
         pages_failed = 0
+        pages_blocked_by_robots = 0
 
         with httpx.Client(
             timeout=10.0,
@@ -128,6 +129,7 @@ class CrawlerService:
                     cls.USER_AGENT,
                     requested_url,
                 ):
+                    pages_blocked_by_robots += 1
                     continue
 
                 try:
@@ -354,9 +356,23 @@ class CrawlerService:
 
             db.commit()
 
+        limitations = []
+
+        if pages_blocked_by_robots:
+            limitations.append(
+                "The website's robots policy blocked "
+                f"{pages_blocked_by_robots} discovered URL(s) "
+                "from SearchIntelBot. Results cover only "
+                "the pages the site allowed the crawler to read."
+            )
+
         return {
             "website_id": website.id,
             "pages_crawled": pages_crawled,
             "pages_discovered": len(discovered),
             "pages_failed": pages_failed,
+            "pages_blocked_by_robots":
+                pages_blocked_by_robots,
+            "crawl_limited": bool(limitations),
+            "limitations": limitations,
         }

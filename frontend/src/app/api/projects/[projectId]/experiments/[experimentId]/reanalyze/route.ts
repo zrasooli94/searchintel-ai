@@ -21,7 +21,7 @@ export async function POST(
     searchIntelApiBaseUrl();
 
   const response = await searchIntelFetch(
-    `${apiBase}/projects/${projectId}/experiments/${experimentId}/reanalyze-visibility`,
+    `${apiBase}/projects/${projectId}/experiments/${experimentId}/reanalyze-visibility?force=true`,
     {
       method: "POST",
       cache: "no-store",

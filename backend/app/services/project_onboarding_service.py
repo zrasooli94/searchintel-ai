@@ -66,10 +66,10 @@ class ProjectOnboardingService:
                 ),
             )
 
-        if len(target_brand_name) < 2:
+        if not target_brand_name:
             raise HTTPException(
                 status_code=400,
-                detail="Brand name is too short.",
+                detail="Brand name cannot be empty.",
             )
 
         existing_project = (

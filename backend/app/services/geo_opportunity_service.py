@@ -64,7 +64,11 @@ class GeoOpportunityService:
     def gap_type(
         target_rate: float,
         competitor_pressure: float,
+        web_search_measured: bool = True,
     ) -> str:
+
+        if not web_search_measured:
+            return "unmeasured_web_search"
 
         if (
             target_rate == 0
@@ -325,6 +329,8 @@ class GeoOpportunityService:
             tuple[int, int]
         ] = set()
 
+        web_search_response_ids: set[int] = set()
+
         if benchmark_mode == "web_search":
 
             source_statement = (
@@ -336,23 +342,25 @@ class GeoOpportunityService:
                     WebSearchSource.response_id.in_(
                         response_ids
                     ),
-                    WebSearchSource.brand_id
-                    .is_not(None),
                 )
             )
 
-            grounded_brand_response_pairs = {
-                (
-                    response_id,
-                    brand_id,
-                )
-                for (
-                    response_id,
-                    brand_id,
-                )
-                in db.execute(
+            source_rows = list(
+                db.execute(
                     source_statement
                 ).all()
+            )
+
+            web_search_response_ids = {
+                response_id
+                for response_id, _brand_id
+                in source_rows
+            }
+
+            grounded_brand_response_pairs = {
+                (response_id, brand_id)
+                for response_id, brand_id
+                in source_rows
                 if brand_id is not None
             }
 
@@ -435,6 +443,16 @@ class GeoOpportunityService:
                 prompt_response_ids[
                     prompt_id
                 ]
+            )
+
+            web_search_measured = (
+                benchmark_mode != "web_search"
+                or any(
+                    response_id
+                    in web_search_response_ids
+                    for response_id
+                    in response_ids_for_prompt
+                )
             )
 
             run_count = len(
@@ -533,18 +551,23 @@ class GeoOpportunityService:
                 )
             )
 
-            opportunity_score = round(
-                (
-                    visibility_gap * 0.70
-                    + competitor_pressure * 0.30
+            opportunity_score = (
+                round(
+                    (
+                        visibility_gap * 0.70
+                        + competitor_pressure * 0.30
+                    )
+                    * category_weight,
+                    2,
                 )
-                * category_weight,
-                2,
+                if web_search_measured
+                else 0.0
             )
 
             gap_type = cls.gap_type(
                 target_rate,
                 competitor_pressure,
+                web_search_measured,
             )
 
             priority = (
@@ -554,7 +577,15 @@ class GeoOpportunityService:
             )
 
             recommendation = (
-                cls.recommendation(
+                (
+                    "No live-web sources were returned for this "
+                    "prompt. Treat retrieval and citation visibility "
+                    "as unmeasured; do not infer a content or "
+                    "competitive visibility gap from this response "
+                    "alone."
+                )
+                if not web_search_measured
+                else cls.recommendation(
                     prompt.category,
                     gap_type,
                     (
@@ -610,6 +641,9 @@ class GeoOpportunityService:
 
                     "measurement_basis":
                         measurement_basis,
+
+                    "web_search_measured":
+                        web_search_measured,
 
                     "web_grounding_note": (
                         (
@@ -730,6 +764,12 @@ class GeoOpportunityService:
                 sum(
                     item.gap_type
                     == "covered"
+                    for item in opportunities
+                ),
+            "unmeasured_prompts":
+                sum(
+                    item.gap_type
+                    == "unmeasured_web_search"
                     for item in opportunities
                 ),
             "opportunities":

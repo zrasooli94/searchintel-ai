@@ -128,7 +128,7 @@ export default function ReanalyzeExperimentButton({
         type="button"
         disabled={
           running
-          || staleResponses === 0
+          || totalResponses === 0
         }
         onClick={reanalyze}
         className="crystal-primary-button px-3.5 py-2 text-xs"
@@ -164,6 +164,16 @@ export default function ReanalyzeExperimentButton({
             {staleResponses} of{" "}
             {totalResponses} responses need
             the current analyzer.
+          </div>
+        )}
+
+      {!running &&
+        staleResponses === 0 &&
+        totalResponses > 0 && (
+          <div className="mt-1 text-[11px] text-slate-500">
+            Force a derived-data rebuild after
+            changing brand, domain, alias, or
+            competitor configuration.
           </div>
         )}
     </div>

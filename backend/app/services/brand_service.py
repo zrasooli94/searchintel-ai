@@ -25,10 +25,10 @@ class BrandService:
     ) -> Brand:
         name = data.name.strip()
 
-        if len(name) < 2:
+        if not name:
             raise HTTPException(
                 status_code=400,
-                detail="Brand name is too short.",
+                detail="Brand name cannot be empty.",
             )
 
         normalized_name = cls.normalize_name(name)

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.db.deps import get_db
@@ -42,10 +42,12 @@ def analyze_visibility(
 def reanalyze_experiment_visibility(
     project_id: int,
     experiment_id: int,
+    force: bool = Query(default=False),
     db: Session = Depends(get_db),
 ):
     return ExperimentReanalysisService.reanalyze(
         db=db,
         project_id=project_id,
         experiment_id=experiment_id,
+        force=force,
     )
