@@ -1,11 +1,12 @@
 from collections import defaultdict
 
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models.site_rag_gap import SiteRAGGap
 from app.repositories.geo_experiment_repository import (
     GeoExperimentRepository,
+)
+from app.repositories.site_rag_gap_analysis_repository import (
+    SiteRAGGapAnalysisRepository,
 )
 from app.repositories.site_rag_gap_repository import (
     SiteRAGGapRepository,
@@ -206,22 +207,21 @@ class SiteRAGActionBridgeService:
         project_id: int,
     ) -> dict | None:
 
-        experiment_id = db.scalar(
-            select(
-                SiteRAGGap.experiment_id
+        analysis = (
+            SiteRAGGapAnalysisRepository
+            .latest_completed_by_project(
+                db,
+                project_id,
             )
-            .where(
-                SiteRAGGap.project_id
-                == project_id
-            )
-            .order_by(
-                SiteRAGGap.experiment_id.desc()
-            )
-            .limit(1)
         )
 
-        if experiment_id is None:
+        if analysis is None:
             return None
+
+        if analysis.gap_count == 0:
+            return None
+
+        experiment_id = analysis.experiment_id
 
         experiment = (
             GeoExperimentRepository.get(

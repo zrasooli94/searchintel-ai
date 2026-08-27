@@ -92,6 +92,9 @@ class ActionPlanSummaryServiceTests(unittest.TestCase):
             self.db,
             self.project_id,
         )
+        self.db.add.assert_not_called()
+        self.db.commit.assert_not_called()
+        self.db.flush.assert_not_called()
 
     @patch(
         "app.services.action_plan_summary_service."
@@ -240,6 +243,9 @@ class ActionPlanSummaryServiceTests(unittest.TestCase):
         )
         get_experiment.assert_called_once_with(self.db, 8)
         list_items.assert_called_once_with(self.db, 7)
+        self.db.add.assert_not_called()
+        self.db.commit.assert_not_called()
+        self.db.flush.assert_not_called()
 
 
 if __name__ == "__main__":

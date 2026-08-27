@@ -1,4 +1,5 @@
 from collections import defaultdict
+from datetime import datetime, timezone
 
 from fastapi import HTTPException
 from sqlalchemy import select
@@ -16,6 +17,9 @@ from app.repositories.project_brand_repository import (
 )
 from app.repositories.site_rag_gap_repository import (
     SiteRAGGapRepository,
+)
+from app.repositories.site_rag_gap_analysis_repository import (
+    SiteRAGGapAnalysisRepository,
 )
 from app.services.site_rag_metrics_service import (
     SiteRAGMetricsService,
@@ -338,6 +342,8 @@ class SiteRAGGapService:
             experiment_id,
         )
 
+        gap_count = 0
+
         for prompt_id in sorted(
             prompt_ids
         ):
@@ -537,6 +543,19 @@ class SiteRAGGapService:
                         gap_type
                     ),
             )
+
+            gap_count += 1
+
+        SiteRAGGapAnalysisRepository.record_completed(
+            db=db,
+            experiment_id=experiment.id,
+            project_id=experiment.project_id,
+            target_brand_id=target.id,
+            gap_version=cls.GAP_VERSION,
+            total_prompts=len(prompt_ids),
+            gap_count=gap_count,
+            refreshed_at=datetime.now(timezone.utc),
+        )
 
         db.commit()
 

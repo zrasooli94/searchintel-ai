@@ -40,6 +40,10 @@ class BenchmarkServicePromptSnapshotTests(unittest.TestCase):
     )
     @patch(
         "app.services.benchmark_service."
+        "PromptRepository.list_active_by_project"
+    )
+    @patch(
+        "app.services.benchmark_service."
         "BenchmarkRepository.create_items"
     )
     @patch(
@@ -65,6 +69,7 @@ class BenchmarkServicePromptSnapshotTests(unittest.TestCase):
         list_items,
         create_job,
         create_items,
+        list_active_prompts,
         resolve_model,
     ):
         get_project.return_value = self.project
@@ -141,6 +146,18 @@ class BenchmarkServicePromptSnapshotTests(unittest.TestCase):
             ],
             4,
         )
+        self.assertEqual(
+            job_arguments["config_snapshot"][
+                "prompt_source_experiment_id"
+            ],
+            4,
+        )
+        self.assertIsNone(
+            job_arguments["config_snapshot"][
+                "source_benchmark_job_id"
+            ]
+        )
+        list_active_prompts.assert_not_called()
         resolve_model.assert_called_once_with(self.db, 2)
         self.db.commit.assert_called_once_with()
         self.db.refresh.assert_called_once_with(created_job)
@@ -182,6 +199,45 @@ class BenchmarkServicePromptSnapshotTests(unittest.TestCase):
             context.exception.detail,
             "Optimization benchmark mode must match the source "
             "benchmark mode.",
+        )
+        self.db.commit.assert_not_called()
+
+    @patch(
+        "app.services.benchmark_service."
+        "BenchmarkRepository.get_job"
+    )
+    @patch(
+        "app.services.benchmark_service."
+        "ProjectRepository.get_by_id"
+    )
+    def test_optimization_source_still_rejects_model_mismatch(
+        self,
+        get_project,
+        get_job,
+    ):
+        get_project.return_value = self.project
+        get_job.return_value = SimpleNamespace(
+            id=4,
+            project_id=4,
+            model_id=1,
+            benchmark_mode="web_search",
+            status="completed",
+        )
+
+        with self.assertRaises(HTTPException) as context:
+            BenchmarkService.create(
+                db=self.db,
+                project_id=4,
+                model_id=2,
+                benchmark_mode="web_search",
+                source_benchmark_job_id=4,
+            )
+
+        self.assertEqual(context.exception.status_code, 400)
+        self.assertEqual(
+            context.exception.detail,
+            "Optimization model must match the source benchmark "
+            "model.",
         )
         self.db.commit.assert_not_called()
 
