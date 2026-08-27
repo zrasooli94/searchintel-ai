@@ -91,6 +91,7 @@ class BenchmarkService:
         experiment_id: int | None = None,
         benchmark_mode: str = "memory",
         source_benchmark_job_id: int | None = None,
+        prompt_source_benchmark_job_id: int | None = None,
     ) -> dict:
         project = ProjectRepository.get_by_id(
             db,
@@ -139,7 +140,21 @@ class BenchmarkService:
                     ),
                 )
 
+        if (
+            source_benchmark_job_id is not None
+            and prompt_source_benchmark_job_id is not None
+        ):
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "Use either source_benchmark_job_id "
+                    "or prompt_source_benchmark_job_id, "
+                    "not both."
+                ),
+            )
+
         source_job = None
+        prompt_source_job = None
         source_items = None
 
         if source_benchmark_job_id is not None:
@@ -242,6 +257,79 @@ class BenchmarkService:
                 for item in source_items
             ]
 
+        elif prompt_source_benchmark_job_id is not None:
+            prompt_source_job = (
+                BenchmarkRepository.get_job(
+                    db,
+                    prompt_source_benchmark_job_id,
+                )
+            )
+
+            if prompt_source_job is None:
+                raise HTTPException(
+                    status_code=404,
+                    detail=(
+                        "Prompt source benchmark job "
+                        "not found."
+                    ),
+                )
+
+            if prompt_source_job.project_id != project_id:
+                raise HTTPException(
+                    status_code=400,
+                    detail=(
+                        "Prompt source benchmark job "
+                        "does not belong to this project."
+                    ),
+                )
+
+            if prompt_source_job.status != "completed":
+                raise HTTPException(
+                    status_code=400,
+                    detail=(
+                        "Prompt source benchmark job "
+                        "must be completed."
+                    ),
+                )
+
+            source_items = (
+                BenchmarkRepository.list_items(
+                    db,
+                    prompt_source_job.id,
+                )
+            )
+
+            if not source_items:
+                raise HTTPException(
+                    status_code=400,
+                    detail=(
+                        "Prompt source benchmark has no "
+                        "prompt snapshots."
+                    ),
+                )
+
+            if any(
+                item.prompt_text_snapshot is None
+                for item in source_items
+            ):
+                raise HTTPException(
+                    status_code=400,
+                    detail=(
+                        "Prompt source benchmark contains "
+                        "missing prompt snapshots."
+                    ),
+                )
+
+            prompt_snapshots = [
+                {
+                    "prompt_id":
+                        item.prompt_id,
+                    "prompt_text_snapshot":
+                        item.prompt_text_snapshot,
+                }
+                for item in source_items
+            ]
+
         else:
             prompts = (
                 PromptRepository
@@ -328,7 +416,11 @@ class BenchmarkService:
             "prompt_source": (
                 "benchmark_snapshot"
                 if source_job is not None
-                else "active_prompts"
+                else (
+                    "benchmark_snapshot_cross_mode"
+                    if prompt_source_job is not None
+                    else "active_prompts"
+                )
             ),
 
             "source_benchmark_job_id": (
@@ -340,6 +432,18 @@ class BenchmarkService:
             "source_experiment_id": (
                 source_job.experiment_id
                 if source_job is not None
+                else None
+            ),
+
+            "prompt_source_benchmark_job_id": (
+                prompt_source_job.id
+                if prompt_source_job is not None
+                else None
+            ),
+
+            "prompt_source_experiment_id": (
+                prompt_source_job.experiment_id
+                if prompt_source_job is not None
                 else None
             ),
         }

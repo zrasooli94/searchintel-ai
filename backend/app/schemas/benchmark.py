@@ -8,6 +8,7 @@ class BenchmarkStartRequest(BaseModel):
     model_id: int | None = None
     experiment_id: int | None = None
     source_benchmark_job_id: int | None = None
+    prompt_source_benchmark_job_id: int | None = None
 
     benchmark_mode: Literal[
         "memory",

@@ -56,6 +56,9 @@ def start_benchmark(
         source_benchmark_job_id=(
             data.source_benchmark_job_id
         ),
+        prompt_source_benchmark_job_id=(
+            data.prompt_source_benchmark_job_id
+        ),
     )
 
     background_tasks.add_task(
