@@ -2,55 +2,52 @@
 
 ## Architecture
 
-SearchIntel has no committed vendor-specific hosting manifest. Deploy it as
-three independently managed services:
+SearchIntel V1 uses the same provider split as ChargeOps:
 
-1. The Next.js application in `frontend/` serves the dashboard and same-origin
-   proxy routes.
-2. The FastAPI application in `backend/` serves `/api/v1`, liveness, readiness,
-   and OpenAPI endpoints.
-3. PostgreSQL 16 stores application and measurement data. The production
-   database must use durable storage, backups, and encrypted connections where
-   the provider supports them.
+1. Vercel runs the Next.js application in `frontend/` and its same-origin
+   server proxy routes.
+2. Render runs the FastAPI application in `backend/`, including `/api/v1`,
+   liveness, readiness, and OpenAPI endpoints.
+3. Neon runs the separate PostgreSQL database over TLS.
 
 The frontend calls the backend from the Next.js server. The shared API token
-is server-only and must never use a `NEXT_PUBLIC_` prefix. No Vercel, Render,
-Railway, Fly, or other platform is assumed by the repository.
+is server-only and must never use a `NEXT_PUBLIC_` prefix.
 
 ## Prepared staging architecture
 
-The repository now includes `render.yaml` for the workspace's established
-Render deployment convention. It prepares three Singapore-region resources:
+- `render.yaml` defines only `searchintel-staging-api`, a free Render Python
+  web service in Singapore. It does not provision a frontend or database.
+- `frontend/vercel.json` selects Next.js and the verified webpack production
+  build for the Vercel project whose root directory is `frontend/`.
+- Neon must contain a separate SearchIntel PostgreSQL project/database. Never
+  reuse the ChargeOps Neon database.
 
-- `searchintel-staging-web`: free Node web service rooted at `frontend/`
-- `searchintel-staging-api`: free Python web service rooted at `backend/`
-- `searchintel-staging-db`: free PostgreSQL 16 database with public inbound
-  database access disabled
+Configure Render `DATABASE_URL` from the Neon pooled or direct TLS connection
+string. SearchIntel normalizes Neon provider URLs beginning with
+`postgresql://` to the installed Psycopg 3 driver. The Render Blueprint
+generates `API_TOKEN`; securely copy the same value into Vercel as the
+server-only `SEARCHINTEL_API_TOKEN`.
 
-Render supplies HTTPS `onrender.com` origins. Before the first Blueprint sync,
-set the two non-secret URL values requested by Render:
+After Vercel assigns the frontend origin, set Render `CORS_ORIGINS` to that
+exact HTTPS origin. Set Vercel `SEARCHINTEL_API_BASE_URL` to the Render HTTPS
+origin followed by `/api/v1`. Do not use `NEXT_PUBLIC_` variables.
 
-- Backend `CORS_ORIGINS` must be the exact HTTPS frontend origin.
-- Frontend `SEARCHINTEL_API_BASE_URL` must be the exact HTTPS backend origin
-  followed by `/api/v1`.
-
-The Blueprint generates `API_TOKEN` and copies it directly to the frontend's
-server-only `SEARCHINTEL_API_TOKEN`; the value is never stored in Git. It also
-maps the database's private `connectionString` to `DATABASE_URL`. SearchIntel
-normalizes Render's `postgresql://` URL to the installed Psycopg 3 driver.
-
-Free Render services do not support a separate pre-deploy command. The staging
-API therefore runs `alembic upgrade head` before starting its single Uvicorn
-worker. Paid production should use a separate pre-deploy migration job as
-described below. Free Render PostgreSQL is staging-only, limited to one active
-free database per workspace, and expires after 30 days.
+The staging API runs `alembic upgrade head` before starting its single Uvicorn
+worker, matching the established portfolio deployment pattern. Paid production
+may move migrations into a distinct release job.
 
 The staging data strategy is an empty migrated database first. After health
 acceptance, import only reviewed demo data through a temporary, access-controlled
 database transfer. Do not commit a database dump, copy local `.env` values, or
 rerun paid AI benchmarks merely to populate staging. The current local
 ChargeOps/CXOps dataset may be copied only after confirming it contains no
-private customer data and excluding unrelated test projects.
+private customer data. A reviewed transfer must preserve the relational rows
+for the local ChargeOps and CXOps projects only (currently project IDs 1 and
+4), exclude the unrelated Facebook test project (currently project ID 5), and
+verify row counts and foreign keys transactionally before acceptance. The
+schema contains no application credential table, but the transfer process must
+still inspect exported column names and never include provider credentials or
+environment files.
 
 ## Prerequisites
 
@@ -151,9 +148,11 @@ local process/port capabilities that are unavailable in restricted builders.
 7. Release the frontend with its backend URL and matching API token.
 8. Run the smoke checklist below.
 
-For the prepared Render staging Blueprint, first create or link a Git remote,
-push the reviewed release commits, sign in to Render, and create a Blueprint
-from the repository's `render.yaml`. Auto-deploy is intentionally disabled.
+For staging, first create or link the GitHub repository and push the reviewed
+release commits. Then create the Neon database, sync the Render backend from
+`render.yaml`, and import the Vercel project with `frontend/` as its root.
+Auto-deploy remains disabled on the Render backend until live acceptance is
+complete.
 
 ## Smoke checklist
 
@@ -201,5 +200,6 @@ real token into tickets or logs.
   references are retrieval grounding references, not web citations.
 - `memory`, `web_search`, and `site_rag` measurements are not quantitatively
   interchangeable.
-- No vendor-specific infrastructure, TLS, backup schedule, or monitoring
-  service is provisioned by this repository.
+- Provider accounts, custom domains, Neon backups, and external monitoring are
+  managed outside this repository; the committed manifests configure only the
+  Render backend and Vercel frontend build.
