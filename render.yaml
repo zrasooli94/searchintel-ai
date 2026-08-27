@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: searchintel-staging-api
+    name: searchintel-api
     runtime: python
     plan: free
     region: singapore

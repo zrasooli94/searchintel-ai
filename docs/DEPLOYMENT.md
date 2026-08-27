@@ -13,9 +13,28 @@ SearchIntel V1 uses the same provider split as ChargeOps:
 The frontend calls the backend from the Next.js server. The shared API token
 is server-only and must never use a `NEXT_PUBLIC_` prefix.
 
+## Live V1 deployment
+
+- Frontend: `https://searchintel-ai.vercel.app`
+- Backend: `https://searchintel-api.onrender.com`
+- Database: a dedicated Neon PostgreSQL 16 project in Singapore
+- Source: `https://github.com/zrasooli94/searchintel-ai`, branch `master`
+
+The Render backend and Vercel frontend deploy commit `92091e4`. Render uses the
+Neon pooled TLS connection string and runs Alembic before starting one Uvicorn
+worker. Vercel owns only the `frontend/` service and communicates with Render
+through its server-side proxy using secret environment variables.
+
+The initial live dataset was transferred transactionally from the reviewed
+local SearchIntel data. It contains only the ChargeOps and CXOps projects and
+their relational dependency closure; the unrelated Facebook test project was
+excluded. The import verified target row counts table by table and confirmed
+the schema at `c31d8f2a4b70` before live acceptance. No provider credential,
+environment file, or application credential table was transferred.
+
 ## Prepared staging architecture
 
-- `render.yaml` defines only `searchintel-staging-api`, a free Render Python
+- `render.yaml` defines only `searchintel-api`, a free Render Python
   web service in Singapore. It does not provision a frontend or database.
 - `frontend/vercel.json` selects Next.js and the verified webpack production
   build for the Vercel project whose root directory is `frontend/`.
