@@ -1,8 +1,8 @@
 import PromptGapsDashboard from "@/components/dashboard/prompt-gaps-dashboard";
 
 import {
-  getLatestCompletedPromptOpportunities,
-  getLatestCompletedVisibilitySummary,
+  getLatestCompletedPromptGapContext,
+  getLatestCompletedSiteRAGGaps,
 } from "@/lib/api";
 
 
@@ -28,21 +28,27 @@ export default async function Page({
   );
 
   const [
-    visibilitySummary,
-    gaps,
+    webContext,
+    siteRagGaps,
   ] = await Promise.all([
-    getLatestCompletedVisibilitySummary(
+    getLatestCompletedPromptGapContext(
       projectId,
     ),
-    getLatestCompletedPromptOpportunities(
+    getLatestCompletedSiteRAGGaps(
       projectId,
     ),
   ]);
+
+  const {
+    visibilitySummary,
+    gaps,
+  } = webContext;
 
   return (
     <PromptGapsDashboard
       visibilitySummary={visibilitySummary}
       gaps={gaps}
+      siteRagGaps={siteRagGaps}
     />
   );
 }

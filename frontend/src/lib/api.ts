@@ -6,6 +6,7 @@ import type {
   ExperimentsSummary,
   GeoExperiment,
   GeoOpportunitySummary,
+  SiteRAGGapSummary,
   ProjectCompetitor,
   ProjectPrompt,
   ProjectWorkspace,
@@ -140,16 +141,111 @@ export async function getLatestCompletedAIVisibilityMetrics(
 }
 
 
-export async function getLatestCompletedPromptOpportunities(
+export async function getLatestCompletedPromptGapContext(
   projectId: number,
-): Promise<GeoOpportunitySummary> {
-  const experiment =
-    await getLatestCompletedExperiment(
+): Promise<{
+  visibilitySummary: VisibilitySummary;
+  gaps: GeoOpportunitySummary;
+}> {
+  const summary =
+    await getExperimentsSummary(
       projectId,
     );
 
-  return fetchJson<GeoOpportunitySummary>(
-    `${apiBaseUrl()}/geo-experiments/${experiment.id}/opportunities`,
+  const experiments =
+    summary.experiments
+      .filter(
+        (item) =>
+          item.status === "completed"
+          && item.benchmark_mode ===
+            "web_search",
+      )
+      .sort(
+        (a, b) =>
+          b.id - a.id,
+      );
+
+  if (experiments.length === 0) {
+    throw new Error(
+      "No completed web-search experiment exists for this project.",
+    );
+  }
+
+  let fallback:
+    | {
+        experimentId: number;
+        gaps: GeoOpportunitySummary;
+      }
+    | null = null;
+
+  for (const experiment of experiments) {
+    const gaps =
+      await fetchJson<GeoOpportunitySummary>(
+        `${apiBaseUrl()}/geo-experiments/${experiment.id}/opportunities`,
+      );
+
+    fallback ??= {
+      experimentId: experiment.id,
+      gaps,
+    };
+
+    if (
+      gaps.total_prompts > 0
+      || gaps.opportunities.length > 0
+    ) {
+      const visibilitySummary =
+        await fetchJson<VisibilitySummary>(
+          `${apiBaseUrl()}/geo-experiments/${experiment.id}/visibility-summary`,
+        );
+
+      return {
+        visibilitySummary,
+        gaps,
+      };
+    }
+  }
+
+  const visibilitySummary =
+    await fetchJson<VisibilitySummary>(
+      `${apiBaseUrl()}/geo-experiments/${fallback!.experimentId}/visibility-summary`,
+    );
+
+  return {
+    visibilitySummary,
+    gaps: fallback!.gaps,
+  };
+}
+
+
+
+
+export async function getLatestCompletedSiteRAGGaps(
+  projectId: number,
+): Promise<SiteRAGGapSummary | null> {
+  const summary =
+    await getExperimentsSummary(
+      projectId,
+    );
+
+  const experiment =
+    summary.experiments
+      .filter(
+        (item) =>
+          item.status === "completed"
+          && item.benchmark_mode ===
+            "site_rag",
+      )
+      .sort(
+        (a, b) =>
+          b.id - a.id,
+      )[0];
+
+  if (!experiment) {
+    return null;
+  }
+
+  return fetchJson<SiteRAGGapSummary>(
+    `${apiBaseUrl()}/geo-experiments/${experiment.id}/site-rag-gaps`,
   );
 }
 

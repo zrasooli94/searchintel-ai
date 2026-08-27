@@ -389,6 +389,75 @@ export type GeoOpportunitySummary = {
   opportunities: GeoPromptOpportunity[];
 };
 
+export type SiteRAGGapEvidence = {
+  gap_version?: string;
+  benchmark_mode?: string;
+  measurement_basis?: string;
+  category_weight?: number;
+
+  retrieved_source_count?: number;
+  referenced_source_count?: number;
+
+  supporting_urls?: string[];
+
+  unsupported_run_ids?: number[];
+  unsupported_response_ids?: number[];
+};
+
+
+export type SiteRAGGap = {
+  id: number;
+  experiment_id: number;
+  project_id: number;
+  prompt_id: number;
+  target_brand_id: number;
+
+  prompt_text: string;
+  category: string;
+  intent: string | null;
+
+  run_count: number;
+  answerable_runs: number;
+  unsupported_runs: number;
+
+  answerability_rate: number;
+  unsupported_rate: number;
+
+  gap_type: string;
+  gap_score: number;
+  priority: string;
+
+  evidence: SiteRAGGapEvidence;
+  recommendation: string;
+};
+
+
+export type SiteRAGGapSummary = {
+  experiment_id: number;
+  project_id: number;
+  target_brand_id: number;
+  target_brand: string;
+
+  total_prompts: number;
+  gap_prompts: number;
+  covered_prompts: number;
+
+  high_priority: number;
+  medium_priority: number;
+  low_priority: number;
+
+  gap_type_counts: Record<string, number>;
+
+  site_answerability_rate_v1: number | null;
+  unsupported_answer_rate_v1: number | null;
+  evidence_coverage_rate: number | null;
+  source_reference_rate: number | null;
+  evidence_utilization_rate: number | null;
+
+  gaps: SiteRAGGap[];
+};
+
+
 export type SiteRAGSupportingPage = {
   page_id: number | null;
   url: string;

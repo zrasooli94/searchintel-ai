@@ -24,9 +24,11 @@ import {
 } from "recharts";
 
 import DashboardShell from "@/components/dashboard/dashboard-shell";
+import SiteRAGGapsPanel from "@/components/dashboard/site-rag-gaps-panel";
 
 import type {
   GeoOpportunitySummary,
+  SiteRAGGapSummary,
   VisibilitySummary,
 } from "@/lib/types";
 
@@ -34,6 +36,7 @@ import type {
 type Props = {
   visibilitySummary: VisibilitySummary;
   gaps: GeoOpportunitySummary;
+  siteRagGaps: SiteRAGGapSummary | null;
 };
 
 
@@ -101,6 +104,7 @@ function MetricCard({
 export default function PromptGapsDashboard({
   visibilitySummary,
   gaps,
+  siteRagGaps,
 }: Props) {
   const topScore =
     gaps.opportunities.length > 0
@@ -157,15 +161,6 @@ export default function PromptGapsDashboard({
           b.value - a.value,
       );
 
-  const measurementBasis =
-    gaps.opportunities.find(
-      (item) =>
-        item.evidence
-          ?.measurement_basis,
-    )?.evidence
-      ?.measurement_basis ??
-    "unknown";
-
   const benchmarkMode =
     gaps.opportunities.find(
       (item) =>
@@ -174,6 +169,20 @@ export default function PromptGapsDashboard({
     )?.evidence
       ?.benchmark_mode ??
     visibilitySummary.benchmark_mode;
+
+  const measurementBasis =
+    gaps.opportunities.find(
+      (item) =>
+        item.evidence
+          ?.measurement_basis,
+    )?.evidence
+      ?.measurement_basis ??
+    (
+      benchmarkMode === "web_search"
+        ? "grounded_response_presence"
+        : "not_available"
+    );
+
 
   return (
     <DashboardShell
@@ -564,6 +573,10 @@ export default function PromptGapsDashboard({
             </div>
           )}
         </section>
+
+        <SiteRAGGapsPanel
+          gaps={siteRagGaps}
+        />
 
         <section className="rounded-[22px] border border-blue-200/70 bg-blue-50/65 p-6">
           <div className="flex gap-4">

@@ -3,6 +3,7 @@ from app.models.entity_alias import EntityAlias
 from app.models.entity_relationship import EntityRelationship
 from app.models.web_search_source import WebSearchSource
 from app.models.site_rag_source import SiteRAGSource
+from app.models.site_rag_gap import SiteRAGGap
 from app.models.geo_action_item import GeoActionItem
 from app.models.geo_action_plan import GeoActionPlan
 from app.models.geo_content_diagnosis import GeoContentDiagnosis
@@ -35,6 +36,7 @@ __all__ = [
     "EntityRelationship",
     "WebSearchSource",
     "SiteRAGSource",
+    "SiteRAGGap",
     "GeoActionItem",
     "GeoActionPlan",
     "GeoContentDiagnosis",
