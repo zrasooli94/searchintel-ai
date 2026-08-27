@@ -16,6 +16,7 @@ import {
 import DashboardShell from "@/components/dashboard/dashboard-shell";
 import ReanalyzeExperimentButton from "@/components/dashboard/reanalyze-experiment-button";
 import RetrievalMonitoringPanel from "@/components/dashboard/retrieval-monitoring-panel";
+import SiteRAGExperimentsPanel from "@/components/dashboard/site-rag-experiments-panel";
 
 import type {
   ExperimentComparison,
@@ -257,8 +258,8 @@ export default function ExperimentsDashboard({
             </h2>
 
             <p className="mt-1 text-sm text-slate-500">
-              Memory and live-web experiments remain
-              separate measurement modes.
+              Memory, live-web and Site RAG experiments
+              remain separate measurement modes.
             </p>
           </div>
 
@@ -268,6 +269,10 @@ export default function ExperimentsDashboard({
                 const web =
                   experiment.benchmark_mode ===
                   "web_search";
+
+                const siteRag =
+                  experiment.benchmark_mode ===
+                  "site_rag";
 
                 return (
                   <div
@@ -303,12 +308,16 @@ export default function ExperimentsDashboard({
                         className={[
                           "flex items-center gap-2 rounded-lg px-2.5 py-1 text-xs",
                           web
-                            ? "bg-cyan-500/10 text-cyan-300"
-                            : "bg-violet-500/10 text-violet-300",
+                            ? "bg-blue-50 text-blue-700"
+                            : siteRag
+                              ? "bg-indigo-50 text-indigo-700"
+                              : "bg-violet-50 text-violet-700",
                         ].join(" ")}
                       >
                         {web ? (
                           <Globe2 className="h-3.5 w-3.5" />
+                        ) : siteRag ? (
+                          <Layers3 className="h-3.5 w-3.5" />
                         ) : (
                           <Bot className="h-3.5 w-3.5" />
                         )}
@@ -376,70 +385,70 @@ export default function ExperimentsDashboard({
                     )}
 
                     <div className="mt-5 space-y-3 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-slate-500">
-                          Response coverage
-                        </span>
-
-                        <span className="text-slate-800">
-                          {percent(
-                            experiment
-                              .target_response_coverage,
-                          )}
-                        </span>
-                      </div>
-
-                      {web ? (
+                      {siteRag ? (
                         <>
                           <div className="flex justify-between">
                             <span className="text-slate-500">
-                              Web visibility
+                              Answerability
                             </span>
 
                             <span className="text-slate-800">
-                              {metricValue(
+                              {percent(
                                 experiment
-                                  .web_visibility_score_v1,
+                                  .site_answerability_rate_v1,
                               )}
                             </span>
                           </div>
 
                           <div className="flex justify-between">
                             <span className="text-slate-500">
-                              Verified coverage
+                              Evidence coverage
                             </span>
 
                             <span className="text-slate-800">
                               {percent(
                                 experiment
-                                  .entity_verified_target_mention_rate,
+                                  .evidence_coverage_rate,
                               )}
                             </span>
                           </div>
 
                           <div className="flex justify-between">
                             <span className="text-slate-500">
-                              Retrieved coverage
+                              Source references
                             </span>
 
                             <span className="text-slate-800">
                               {percent(
                                 experiment
-                                  .grounded_target_mention_rate,
+                                  .source_reference_rate,
                               )}
                             </span>
                           </div>
 
                           <div className="flex justify-between">
                             <span className="text-slate-500">
-                              Cited coverage
+                              Evidence utilization
                             </span>
 
                             <span className="text-slate-800">
                               {percent(
                                 experiment
-                                  .target_cited_response_coverage,
+                                  .evidence_utilization_rate,
                               )}
+                            </span>
+                          </div>
+
+                          <div className="flex justify-between">
+                            <span className="text-slate-500">
+                              Supporting pages
+                            </span>
+
+                            <span className="text-slate-800">
+                              {
+                                experiment
+                                  .unique_supporting_pages
+                              }
                             </span>
                           </div>
                         </>
@@ -447,28 +456,99 @@ export default function ExperimentsDashboard({
                         <>
                           <div className="flex justify-between">
                             <span className="text-slate-500">
-                              Visibility score V1
-                            </span>
-
-                            <span className="text-slate-800">
-                              {
-                                experiment
-                                  .visibility_score_v1
-                              }
-                            </span>
-                          </div>
-
-                          <div className="flex justify-between">
-                            <span className="text-slate-500">
-                              Mention rate
+                              Response coverage
                             </span>
 
                             <span className="text-slate-800">
                               {percent(
-                                experiment.mention_rate,
+                                experiment
+                                  .target_response_coverage,
                               )}
                             </span>
                           </div>
+
+                          {web ? (
+                            <>
+                              <div className="flex justify-between">
+                                <span className="text-slate-500">
+                                  Web visibility
+                                </span>
+
+                                <span className="text-slate-800">
+                                  {metricValue(
+                                    experiment
+                                      .web_visibility_score_v1,
+                                  )}
+                                </span>
+                              </div>
+
+                              <div className="flex justify-between">
+                                <span className="text-slate-500">
+                                  Verified coverage
+                                </span>
+
+                                <span className="text-slate-800">
+                                  {percent(
+                                    experiment
+                                      .entity_verified_target_mention_rate,
+                                  )}
+                                </span>
+                              </div>
+
+                              <div className="flex justify-between">
+                                <span className="text-slate-500">
+                                  Retrieved coverage
+                                </span>
+
+                                <span className="text-slate-800">
+                                  {percent(
+                                    experiment
+                                      .grounded_target_mention_rate,
+                                  )}
+                                </span>
+                              </div>
+
+                              <div className="flex justify-between">
+                                <span className="text-slate-500">
+                                  Cited coverage
+                                </span>
+
+                                <span className="text-slate-800">
+                                  {percent(
+                                    experiment
+                                      .target_cited_response_coverage,
+                                  )}
+                                </span>
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <div className="flex justify-between">
+                                <span className="text-slate-500">
+                                  Visibility score V1
+                                </span>
+
+                                <span className="text-slate-800">
+                                  {
+                                    experiment
+                                      .visibility_score_v1
+                                  }
+                                </span>
+                              </div>
+
+                              <div className="flex justify-between">
+                                <span className="text-slate-500">
+                                  Mention rate
+                                </span>
+
+                                <span className="text-slate-800">
+                                  {percent(
+                                    experiment.mention_rate,
+                                  )}
+                                </span>
+                              </div>
+                            </>
+                          )}
                         </>
                       )}
                     </div>
@@ -656,6 +736,19 @@ export default function ExperimentsDashboard({
                   citation behavior.
                 </p>
               </div>
+
+              <div className="crystal-subcard rounded-[18px] border-indigo-200/80 bg-indigo-50/55 p-4">
+                <div className="flex items-center gap-2 font-medium text-indigo-700">
+                  <Layers3 className="h-4 w-4" />
+                  Site RAG
+                </div>
+
+                <p className="mt-2 text-sm leading-7 text-slate-600">
+                  Measures grounded answerability using
+                  only crawled first-party website evidence
+                  and deterministic retrieval.
+                </p>
+              </div>
             </div>
           </div>
 
@@ -800,6 +893,10 @@ export default function ExperimentsDashboard({
               )}
           </div>
         </section>
+
+        <SiteRAGExperimentsPanel
+          experiments={experiments}
+        />
       </div>
     </DashboardShell>
   );

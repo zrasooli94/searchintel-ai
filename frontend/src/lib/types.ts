@@ -250,6 +250,7 @@ export type AIVisibilityMetrics = {
   visibility_score_v1: number;
   web_visibility_score_v1: number | null;
 
+
   target_source_presence_rate: number | null;
   target_source_prompt_coverage: number | null;
 
@@ -388,6 +389,15 @@ export type GeoOpportunitySummary = {
   opportunities: GeoPromptOpportunity[];
 };
 
+export type SiteRAGSupportingPage = {
+  page_id: number | null;
+  url: string;
+  title: string | null;
+
+  response_count: number;
+  reference_count: number;
+};
+
 export type ExperimentSummaryItem = {
   id: number;
   name: string;
@@ -414,6 +424,23 @@ export type ExperimentSummaryItem = {
 
   visibility_score_v1: number;
   web_visibility_score_v1: number | null;
+
+  site_rag_analyzed_runs: number;
+  site_rag_analyzed_prompts: number;
+
+  evidence_coverage_rate: number | null;
+  source_reference_rate: number | null;
+  evidence_utilization_rate: number | null;
+
+  site_answerability_rate_v1: number | null;
+  unsupported_answer_rate_v1: number | null;
+
+  unique_supporting_pages: number;
+  unique_supporting_urls: number;
+
+  avg_sources_per_response: number | null;
+
+  top_supporting_pages: SiteRAGSupportingPage[];
 
   target_response_coverage: number;
   grounded_target_mention_rate: number | null;
@@ -822,7 +849,8 @@ export type BenchmarkJob = {
 
   benchmark_mode:
     | "memory"
-    | "web_search";
+    | "web_search"
+    | "site_rag";
 
   config_snapshot: Record<
     string,

@@ -3,6 +3,7 @@
 import {
   Bot,
   CheckCircle2,
+  Database,
   Globe2,
   Loader2,
   Play,
@@ -33,7 +34,8 @@ type Props = {
 
 type Mode =
   | "web_search"
-  | "memory";
+  | "memory"
+  | "site_rag";
 
 
 function getError(
@@ -186,7 +188,9 @@ export default function SetupBaselineStep({
       const experimentName =
         mode === "web_search"
           ? "Web Baseline V1"
-          : "Memory Baseline V1";
+          : mode === "site_rag"
+            ? "Site RAG Baseline V1"
+            : "Memory Baseline V1";
 
       const experimentResponse =
         await fetch(
@@ -206,7 +210,9 @@ export default function SetupBaselineStep({
                 description:
                   mode === "web_search"
                     ? "Initial controlled live-web retrieval, source and citation baseline."
-                    : "Initial controlled latent model-memory baseline.",
+                    : mode === "site_rag"
+                      ? "Initial controlled first-party website evidence, BM25 retrieval and grounded answerability baseline."
+                      : "Initial controlled latent model-memory baseline.",
               }),
           },
         );
@@ -486,7 +492,7 @@ export default function SetupBaselineStep({
       </div>
 
       <div className="p-6">
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-3">
           <button
             type="button"
             disabled={
@@ -555,6 +561,41 @@ export default function SetupBaselineStep({
 
             <div className="mt-3 text-xs text-slate-400">
               Kept separate from Web Search
+            </div>
+          </button>
+
+          <button
+            type="button"
+            disabled={
+              starting
+              || running
+            }
+            onClick={() =>
+              setMode(
+                "site_rag"
+              )
+            }
+            className={[
+              "rounded-xl border p-5 text-left transition",
+              mode === "site_rag"
+                ? "border-indigo-300 bg-indigo-50"
+                : "border-slate-200/80 bg-[#fbfcff]",
+            ].join(" ")}
+          >
+            <Database className="h-5 w-5 text-indigo-600" />
+
+            <div className="mt-4 font-medium text-slate-950">
+              Site RAG
+            </div>
+
+            <p className="mt-2 text-xs leading-5 text-slate-500">
+              Measures grounded answerability
+              using only crawled first-party
+              website evidence.
+            </p>
+
+            <div className="mt-3 text-xs text-indigo-600">
+              No live-web retrieval
             </div>
           </button>
         </div>
@@ -678,7 +719,9 @@ export default function SetupBaselineStep({
                 Create & Run{" "}
                 {mode === "web_search"
                   ? "Web Baseline"
-                  : "Memory Baseline"}
+                  : mode === "site_rag"
+                    ? "Site RAG Baseline"
+                    : "Memory Baseline"}
               </>
             )}
           </button>

@@ -3,6 +3,15 @@ from datetime import datetime
 from pydantic import BaseModel
 
 
+class SiteRAGSupportingPage(BaseModel):
+    page_id: int | None
+    url: str
+    title: str | None
+
+    response_count: int
+    reference_count: int
+
+
 class ExperimentSummaryItem(BaseModel):
     id: int
     name: str
@@ -29,6 +38,25 @@ class ExperimentSummaryItem(BaseModel):
 
     visibility_score_v1: float
     web_visibility_score_v1: float | None
+
+    site_rag_analyzed_runs: int
+    site_rag_analyzed_prompts: int
+
+    evidence_coverage_rate: float | None
+    source_reference_rate: float | None
+    evidence_utilization_rate: float | None
+
+    site_answerability_rate_v1: float | None
+    unsupported_answer_rate_v1: float | None
+
+    unique_supporting_pages: int
+    unique_supporting_urls: int
+
+    avg_sources_per_response: float | None
+
+    top_supporting_pages: list[
+        SiteRAGSupportingPage
+    ]
 
     target_response_coverage: float
     grounded_target_mention_rate: float | None

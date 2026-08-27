@@ -12,6 +12,7 @@ class BenchmarkStartRequest(BaseModel):
     benchmark_mode: Literal[
         "memory",
         "web_search",
+        "site_rag",
     ] = "memory"
 
 

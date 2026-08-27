@@ -3,6 +3,9 @@ from datetime import datetime, timezone
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
+from app.core.retrieval_versions import (
+    SITE_RAG_RETRIEVAL_VERSION,
+)
 from app.db.session import SessionLocal
 from app.repositories.ai_run_repository import (
     AIRunRepository,
@@ -21,6 +24,9 @@ from app.repositories.prompt_repository import (
 )
 from app.services.ai_model_service import AIModelService
 from app.services.ai_run_service import AIRunService
+from app.services.site_rag_retrieval_service import (
+    SiteRAGRetrievalService,
+)
 from app.services.visibility_analysis_service import (
     VisibilityAnalysisService,
 )
@@ -100,6 +106,7 @@ class BenchmarkService:
         if benchmark_mode not in {
             "memory",
             "web_search",
+            "site_rag",
         }:
             raise HTTPException(
                 status_code=400,
@@ -293,6 +300,27 @@ class BenchmarkService:
             "capture_web_sources":
                 benchmark_mode
                 == "web_search",
+
+            "site_rag_enabled":
+                benchmark_mode
+                == "site_rag",
+
+            "site_rag_retrieval_version":
+                (
+                    SITE_RAG_RETRIEVAL_VERSION
+                    if benchmark_mode
+                    == "site_rag"
+                    else None
+                ),
+
+            "site_rag_top_k":
+                (
+                    SiteRAGRetrievalService
+                    .DEFAULT_TOP_K
+                    if benchmark_mode
+                    == "site_rag"
+                    else None
+                ),
 
             "prompt_count":
                 len(prompt_snapshots),

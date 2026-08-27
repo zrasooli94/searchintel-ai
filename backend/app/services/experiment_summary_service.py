@@ -15,6 +15,9 @@ from app.repositories.geo_experiment_repository import (
 from app.services.visibility_metrics_service import (
     VisibilityMetricsService,
 )
+from app.services.site_rag_metrics_service import (
+    SiteRAGMetricsService,
+)
 
 
 class ExperimentSummaryService:
@@ -148,6 +151,14 @@ class ExperimentSummaryService:
                 )
             )
 
+            site_rag_metrics = (
+                SiteRAGMetricsService.calculate(
+                    db=db,
+                    project_id=project_id,
+                    experiment_id=experiment.id,
+                )
+            )
+
             items.append(
                 {
                     "id":
@@ -237,6 +248,61 @@ class ExperimentSummaryService:
                             "web_visibility_score_v1"
                         ),
 
+                    "site_rag_analyzed_runs":
+                        site_rag_metrics[
+                            "site_rag_analyzed_runs"
+                        ],
+
+                    "site_rag_analyzed_prompts":
+                        site_rag_metrics[
+                            "site_rag_analyzed_prompts"
+                        ],
+
+                    "evidence_coverage_rate":
+                        site_rag_metrics[
+                            "evidence_coverage_rate"
+                        ],
+
+                    "source_reference_rate":
+                        site_rag_metrics[
+                            "source_reference_rate"
+                        ],
+
+                    "evidence_utilization_rate":
+                        site_rag_metrics[
+                            "evidence_utilization_rate"
+                        ],
+
+                    "site_answerability_rate_v1":
+                        site_rag_metrics[
+                            "site_answerability_rate_v1"
+                        ],
+
+                    "unsupported_answer_rate_v1":
+                        site_rag_metrics[
+                            "unsupported_answer_rate_v1"
+                        ],
+
+                    "unique_supporting_pages":
+                        site_rag_metrics[
+                            "unique_supporting_pages"
+                        ],
+
+                    "unique_supporting_urls":
+                        site_rag_metrics[
+                            "unique_supporting_urls"
+                        ],
+
+                    "avg_sources_per_response":
+                        site_rag_metrics[
+                            "avg_sources_per_response"
+                        ],
+
+                    "top_supporting_pages":
+                        site_rag_metrics[
+                            "top_supporting_pages"
+                        ],
+
                     "target_response_coverage":
                         metrics[
                             "target_response_coverage"
@@ -284,6 +350,16 @@ class ExperimentSummaryService:
                     != comparison[
                         "benchmark_mode"
                     ]
+                ):
+                    continue
+
+                # Site RAG has its own evidence /
+                # answerability metric contract.
+                # Do not send it through the legacy
+                # visibility comparison workflow.
+                if (
+                    baseline["benchmark_mode"]
+                    == "site_rag"
                 ):
                     continue
 

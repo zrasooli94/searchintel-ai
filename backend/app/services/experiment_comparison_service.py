@@ -111,6 +111,20 @@ class ExperimentComparisonService:
                 ),
             )
 
+        if (
+            baseline.get("benchmark_mode")
+            == "site_rag"
+        ):
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "Site RAG experiments use dedicated "
+                    "answerability and evidence metrics. "
+                    "Legacy visibility comparison is not "
+                    "available for Site RAG."
+                ),
+            )
+
         def compare_metric(
             name: str,
         ) -> dict:

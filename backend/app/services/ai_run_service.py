@@ -3,6 +3,9 @@ from datetime import datetime, timezone
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
+from app.core.retrieval_versions import (
+    SITE_RAG_RETRIEVAL_VERSION,
+)
 from app.integrations.ai.provider_factory import (
     ProviderFactory,
 )
@@ -22,9 +25,15 @@ from app.repositories.project_repository import (
 from app.repositories.prompt_repository import (
     PromptRepository,
 )
+from app.repositories.site_rag_source_repository import (
+    SiteRAGSourceRepository,
+)
 from app.schemas.ai_run import (
     AIRunCreate,
     AIResponseCreate,
+)
+from app.services.site_rag_retrieval_service import (
+    SiteRAGRetrievalService,
 )
 
 
@@ -93,6 +102,27 @@ class AIRunService:
             "web_search_enabled":
                 data.benchmark_mode
                 == "web_search",
+
+            "site_rag_enabled":
+                data.benchmark_mode
+                == "site_rag",
+
+            "site_rag_retrieval_version":
+                (
+                    SITE_RAG_RETRIEVAL_VERSION
+                    if data.benchmark_mode
+                    == "site_rag"
+                    else None
+                ),
+
+            "site_rag_top_k":
+                (
+                    SiteRAGRetrievalService
+                    .DEFAULT_TOP_K
+                    if data.benchmark_mode
+                    == "site_rag"
+                    else None
+                ),
         }
 
         run = AIRunRepository.create(
@@ -251,6 +281,8 @@ class AIRunService:
 
         db.commit()
 
+        run_id = run.id
+
         try:
             prompt_text = (
                 prompt_override
@@ -258,18 +290,150 @@ class AIRunService:
                 else prompt.text
             )
 
+            provider_mode = (
+                run.benchmark_mode
+            )
+
+            site_rag_result = None
+
+            if (
+                run.benchmark_mode
+                == "site_rag"
+            ):
+                site_rag_result = (
+                    SiteRAGRetrievalService
+                    .retrieve(
+                        db=db,
+                        project_id=
+                            run.project_id,
+                        query=prompt_text,
+                    )
+                )
+
+                prompt_text = (
+                    SiteRAGRetrievalService
+                    .build_grounded_prompt(
+                        query=(
+                            prompt_override
+                            if prompt_override
+                            is not None
+                            else prompt.text
+                        ),
+                        sources=
+                            site_rag_result[
+                                "sources"
+                            ],
+                    )
+                )
+
+                # Site RAG remains an explicit
+                # provider execution mode. Only
+                # web_search activates the web tool.
+
             result = provider.execute(
                 prompt=prompt_text,
                 model_id=model.provider_model_id,
-                mode=run.benchmark_mode,
+                mode=provider_mode,
             )
 
-            AIRunRepository.create_response(
-                db=db,
-                run_id=run.id,
-                response_text=result.response_text,
-                raw_response=result.raw_response,
+            response = (
+                AIRunRepository
+                .create_response(
+                    db=db,
+                    run_id=run.id,
+                    response_text=
+                        result.response_text,
+                    raw_response=
+                        result.raw_response,
+                )
             )
+
+            if site_rag_result is not None:
+                (
+                    SiteRAGSourceRepository
+                    .clear_by_response(
+                        db=db,
+                        response_id=
+                            response.id,
+                    )
+                )
+
+                for source in (
+                    site_rag_result[
+                        "sources"
+                    ]
+                ):
+                    (
+                        SiteRAGSourceRepository
+                        .create(
+                            db=db,
+                            response_id=
+                                response.id,
+                            page_id=
+                                source[
+                                    "page_id"
+                                ],
+                            rank=
+                                source[
+                                    "rank"
+                                ],
+                            chunk_index=
+                                source[
+                                    "chunk_index"
+                                ],
+                            relevance_score=
+                                source[
+                                    "relevance_score"
+                                ],
+                            url=
+                                source[
+                                    "url"
+                                ],
+                            title=
+                                source[
+                                    "title"
+                                ],
+                            excerpt=
+                                source[
+                                    "excerpt"
+                                ],
+                        )
+                    )
+
+                snapshot = dict(
+                    run.config_snapshot
+                    or {}
+                )
+
+                snapshot.update(
+                    {
+                        "site_rag_website_id":
+                            site_rag_result[
+                                "website_id"
+                            ],
+
+                        "site_rag_domain":
+                            site_rag_result[
+                                "domain"
+                            ],
+
+                        "site_rag_retrieval_version":
+                            site_rag_result[
+                                "retrieval_version"
+                            ],
+
+                        "site_rag_source_count":
+                            len(
+                                site_rag_result[
+                                    "sources"
+                                ]
+                            ),
+                    }
+                )
+
+                run.config_snapshot = (
+                    snapshot
+                )
 
             run.status = "completed"
             run.completed_at = datetime.now(
@@ -299,13 +463,28 @@ class AIRunService:
             }
 
         except Exception as exc:
-            run.status = "failed"
-            run.completed_at = datetime.now(
-                timezone.utc
-            )
-            run.error_message = str(exc)[:2000]
+            # Remove any partially flushed response
+            # or Site RAG evidence before recording
+            # the failed execution.
+            db.rollback()
 
-            db.commit()
+            failed_run = (
+                AIRunRepository.get_by_id(
+                    db,
+                    run_id,
+                )
+            )
+
+            if failed_run is not None:
+                failed_run.status = "failed"
+                failed_run.completed_at = datetime.now(
+                    timezone.utc
+                )
+                failed_run.error_message = (
+                    str(exc)[:2000]
+                )
+
+                db.commit()
 
             raise HTTPException(
                 status_code=502,

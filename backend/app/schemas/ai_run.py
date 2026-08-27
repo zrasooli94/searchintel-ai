@@ -11,6 +11,7 @@ class AIRunCreate(BaseModel):
     benchmark_mode: Literal[
         "memory",
         "web_search",
+        "site_rag",
     ] = "memory"
     include_in_metrics: bool = True
 

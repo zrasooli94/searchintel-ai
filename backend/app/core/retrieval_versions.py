@@ -1,0 +1,1 @@
+SITE_RAG_RETRIEVAL_VERSION = "lexical-bm25-v3"

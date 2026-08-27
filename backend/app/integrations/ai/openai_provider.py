@@ -11,6 +11,7 @@ class OpenAIProvider:
     SUPPORTED_MODES = {
         "memory",
         "web_search",
+        "site_rag",
     }
 
     def __init__(self) -> None:

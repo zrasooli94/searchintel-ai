@@ -73,3 +73,9 @@ class AIResponse(Base):
         back_populates="response",
         cascade="all, delete-orphan",
     )
+
+    site_rag_sources = relationship(
+        "SiteRAGSource",
+        back_populates="response",
+        cascade="all, delete-orphan",
+    )
