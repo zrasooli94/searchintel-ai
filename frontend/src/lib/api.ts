@@ -118,6 +118,37 @@ export async function getLatestCompletedVisibilitySummary(
 }
 
 
+export async function getLatestCompletedWebVisibilitySummary(
+  projectId: number,
+): Promise<VisibilitySummary | null> {
+  const summary =
+    await getExperimentsSummary(
+      projectId,
+    );
+
+  const experiment =
+    summary.experiments
+      .filter(
+        (item) =>
+          item.status === "completed"
+          && item.benchmark_mode ===
+            "web_search",
+      )
+      .sort(
+        (a, b) =>
+          b.id - a.id,
+      )[0];
+
+  if (!experiment) {
+    return null;
+  }
+
+  return fetchJson<VisibilitySummary>(
+    `${apiBaseUrl()}/geo-experiments/${experiment.id}/visibility-summary`,
+  );
+}
+
+
 export async function getTechnicalSEOSummary(
   projectId: number,
 ): Promise<TechnicalSEOSummary> {
@@ -281,10 +312,25 @@ export async function getEntitiesSummary(
 
 export async function getActionPlanSummary(
   projectId: number,
-): Promise<ActionPlanSummary> {
-  return fetchJson<ActionPlanSummary>(
+): Promise<ActionPlanSummary | null> {
+  const response = await fetch(
     `${apiBaseUrl()}/projects/${projectId}/action-plan-summary`,
+    {
+      cache: "no-store",
+    },
   );
+
+  if (response.status === 404) {
+    return null;
+  }
+
+  if (!response.ok) {
+    throw new Error(
+      `SearchIntel API returned ${response.status}.`,
+    );
+  }
+
+  return response.json() as Promise<ActionPlanSummary>;
 }
 
 

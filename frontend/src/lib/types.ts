@@ -701,6 +701,49 @@ export type ActionPlanItem = {
   status: string;
 };
 
+export type SiteRAGActionBridgeItem = {
+  gap_type: string;
+  gap_count: number;
+  gap_score: number;
+
+  priority: string;
+  action_type: string;
+
+  title: string;
+  rationale: string;
+
+  impacted_prompt_ids: number[];
+  impacted_gap_ids: number[];
+
+  implementation_steps: string[];
+  evidence: string[];
+  success_metrics: string[];
+  dependencies: string[];
+
+  effort: string;
+};
+
+
+export type SiteRAGActionBridgeSummary = {
+  experiment_id: number;
+  experiment_name: string;
+  benchmark_mode: string;
+
+  total_prompts: number;
+  gap_prompts: number;
+  covered_prompts: number;
+
+  answerability_rate: number | null;
+  unsupported_rate: number | null;
+  evidence_coverage_rate: number | null;
+  evidence_utilization_rate: number | null;
+
+  actions: SiteRAGActionBridgeItem[];
+
+  provenance_note: string;
+};
+
+
 export type ActionPlanSummary = {
   project_id: number;
 
@@ -742,6 +785,8 @@ export type ActionPlanSummary = {
   >;
 
   provenance_note: string;
+
+  site_rag: SiteRAGActionBridgeSummary | null;
 
   actions: ActionPlanItem[];
 };

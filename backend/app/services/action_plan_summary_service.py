@@ -16,6 +16,9 @@ from app.repositories.geo_experiment_repository import (
 from app.repositories.project_repository import (
     ProjectRepository,
 )
+from app.services.site_rag_action_bridge_service import (
+    SiteRAGActionBridgeService,
+)
 
 
 class ActionPlanSummaryService:
@@ -216,6 +219,12 @@ class ActionPlanSummaryService:
             "action_type_counts":
                 dict(
                     action_type_counts
+                ),
+
+            "site_rag":
+                SiteRAGActionBridgeService.build(
+                    db=db,
+                    project_id=project_id,
                 ),
 
             "provenance_note": (

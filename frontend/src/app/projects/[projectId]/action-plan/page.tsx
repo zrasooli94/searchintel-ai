@@ -3,6 +3,7 @@ import ActionPlanDashboard from "@/components/dashboard/action-plan-dashboard";
 import {
   getActionPlanSummary,
   getLatestCompletedVisibilitySummary,
+  getLatestCompletedWebVisibilitySummary,
 } from "@/lib/api";
 
 
@@ -29,9 +30,13 @@ export default async function Page({
 
   const [
     visibilitySummary,
+    webVisibilitySummary,
     plan,
   ] = await Promise.all([
     getLatestCompletedVisibilitySummary(
+      projectId,
+    ),
+    getLatestCompletedWebVisibilitySummary(
       projectId,
     ),
     getActionPlanSummary(
@@ -43,6 +48,9 @@ export default async function Page({
     <ActionPlanDashboard
       visibilitySummary={
         visibilitySummary
+      }
+      webVisibilitySummary={
+        webVisibilitySummary
       }
       plan={plan}
     />

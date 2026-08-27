@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 
 import DashboardShell from "@/components/dashboard/dashboard-shell";
+import SiteRAGActionPlanPanel from "@/components/dashboard/site-rag-action-plan-panel";
 
 import type {
   ActionPlanSummary,
@@ -21,7 +22,8 @@ import type {
 
 type Props = {
   visibilitySummary: VisibilitySummary;
-  plan: ActionPlanSummary;
+  webVisibilitySummary: VisibilitySummary | null;
+  plan: ActionPlanSummary | null;
 };
 
 
@@ -90,8 +92,50 @@ function StatCard({
 
 export default function ActionPlanDashboard({
   visibilitySummary,
+  webVisibilitySummary,
   plan,
 }: Props) {
+  if (!plan) {
+    return (
+      <DashboardShell
+        summary={visibilitySummary}
+        title="Action Plan"
+      >
+        <div className="crystal-page mx-auto max-w-[1450px] p-5 lg:p-8 xl:px-10">
+          <section className="crystal-panel rounded-[22px] p-8">
+            <div className="flex min-h-[340px] items-center justify-center text-center">
+              <div className="max-w-xl">
+                <div className="crystal-icon mx-auto h-12 w-12">
+                  <ClipboardList className="h-5 w-5 text-[#5f75ff]" />
+                </div>
+
+                <div className="crystal-eyebrow mt-5">
+                  Consolidated GEO strategy
+                </div>
+
+                <h2 className="mt-3 text-2xl font-medium tracking-[-0.035em] text-slate-950">
+                  No stored action plan yet
+                </h2>
+
+                <p className="mt-3 text-sm leading-7 text-slate-500">
+                  This project does not yet have a persisted
+                  GEO action plan. Complete the compatible
+                  opportunity and diagnosis workflow before
+                  generating a historical strategy plan.
+                </p>
+
+                <p className="mt-3 text-xs leading-5 text-slate-400">
+                  Missing plan data is an empty state, not an
+                  application error.
+                </p>
+              </div>
+            </div>
+          </section>
+        </div>
+      </DashboardShell>
+    );
+  }
+
   return (
     <DashboardShell
       summary={visibilitySummary}
@@ -180,9 +224,10 @@ export default function ActionPlanDashboard({
 
             <div className="mt-3 text-2xl font-semibold capitalize text-slate-950">
               {
-                visibilitySummary
-                  .diagnosis
+                webVisibilitySummary
+                  ?.diagnosis
                   .primary_bottleneck
+                  ?? "unavailable"
               }{" "}
               bottleneck
             </div>
@@ -194,7 +239,7 @@ export default function ActionPlanDashboard({
                 </div>
 
                 <div className="crystal-value mt-2 text-xl font-medium">
-                  {visibilitySummary.target
+                  {webVisibilitySummary?.target
                     .web_visibility_score
                     ?.toFixed(2) ??
                     "N/A"}
@@ -207,7 +252,7 @@ export default function ActionPlanDashboard({
                 </div>
 
                 <div className="crystal-value mt-2 text-xl font-medium">
-                  {visibilitySummary.target
+                  {webVisibilitySummary?.target
                     .cited_response_coverage
                     ?.toFixed(2) ??
                     "N/A"}
@@ -239,6 +284,10 @@ export default function ActionPlanDashboard({
             </div>
           </div>
         </section>
+
+        <SiteRAGActionPlanPanel
+          data={plan.site_rag}
+        />
 
         <section>
           <div className="mb-4">
