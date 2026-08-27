@@ -15,6 +15,35 @@ from app.main import (
 
 
 class ProductionSettingsTests(unittest.TestCase):
+    def test_provider_postgres_url_uses_psycopg_driver(self):
+        settings = Settings(
+            _env_file=None,
+            database_url=(
+                "postgresql://user:password@db.example/app"
+            ),
+        )
+
+        self.assertEqual(
+            settings.database_url,
+            "postgresql+psycopg://"
+            "user:password@db.example/app",
+        )
+
+    def test_explicit_psycopg_url_is_preserved(self):
+        database_url = (
+            "postgresql+psycopg://"
+            "user:password@db.example/app"
+        )
+        settings = Settings(
+            _env_file=None,
+            database_url=database_url,
+        )
+
+        self.assertEqual(
+            settings.database_url,
+            database_url,
+        )
+
     def test_production_requires_api_token(self):
         with self.assertRaises(ValidationError):
             Settings(

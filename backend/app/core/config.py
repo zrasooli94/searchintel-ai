@@ -1,4 +1,8 @@
-from pydantic import SecretStr, model_validator
+from pydantic import (
+    SecretStr,
+    field_validator,
+    model_validator,
+)
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -13,6 +17,25 @@ class Settings(BaseSettings):
 
     api_token: SecretStr | None = None
     openai_api_key: SecretStr | None = None
+
+    @field_validator("database_url")
+    @classmethod
+    def normalize_database_url(cls, value: str) -> str:
+        if value.startswith("postgres://"):
+            return value.replace(
+                "postgres://",
+                "postgresql+psycopg://",
+                1,
+            )
+
+        if value.startswith("postgresql://"):
+            return value.replace(
+                "postgresql://",
+                "postgresql+psycopg://",
+                1,
+            )
+
+        return value
 
     @property
     def allowed_cors_origins(self) -> list[str]:

@@ -17,6 +17,41 @@ The frontend calls the backend from the Next.js server. The shared API token
 is server-only and must never use a `NEXT_PUBLIC_` prefix. No Vercel, Render,
 Railway, Fly, or other platform is assumed by the repository.
 
+## Prepared staging architecture
+
+The repository now includes `render.yaml` for the workspace's established
+Render deployment convention. It prepares three Singapore-region resources:
+
+- `searchintel-staging-web`: free Node web service rooted at `frontend/`
+- `searchintel-staging-api`: free Python web service rooted at `backend/`
+- `searchintel-staging-db`: free PostgreSQL 16 database with public inbound
+  database access disabled
+
+Render supplies HTTPS `onrender.com` origins. Before the first Blueprint sync,
+set the two non-secret URL values requested by Render:
+
+- Backend `CORS_ORIGINS` must be the exact HTTPS frontend origin.
+- Frontend `SEARCHINTEL_API_BASE_URL` must be the exact HTTPS backend origin
+  followed by `/api/v1`.
+
+The Blueprint generates `API_TOKEN` and copies it directly to the frontend's
+server-only `SEARCHINTEL_API_TOKEN`; the value is never stored in Git. It also
+maps the database's private `connectionString` to `DATABASE_URL`. SearchIntel
+normalizes Render's `postgresql://` URL to the installed Psycopg 3 driver.
+
+Free Render services do not support a separate pre-deploy command. The staging
+API therefore runs `alembic upgrade head` before starting its single Uvicorn
+worker. Paid production should use a separate pre-deploy migration job as
+described below. Free Render PostgreSQL is staging-only, limited to one active
+free database per workspace, and expires after 30 days.
+
+The staging data strategy is an empty migrated database first. After health
+acceptance, import only reviewed demo data through a temporary, access-controlled
+database transfer. Do not commit a database dump, copy local `.env` values, or
+rerun paid AI benchmarks merely to populate staging. The current local
+ChargeOps/CXOps dataset may be copied only after confirming it contains no
+private customer data and excluding unrelated test projects.
+
 ## Prerequisites
 
 - Python 3.13-compatible runtime
@@ -115,6 +150,10 @@ local process/port capabilities that are unavailable in restricted builders.
 6. Verify `/health/live`, then `/health` and the schema revision.
 7. Release the frontend with its backend URL and matching API token.
 8. Run the smoke checklist below.
+
+For the prepared Render staging Blueprint, first create or link a Git remote,
+push the reviewed release commits, sign in to Render, and create a Blueprint
+from the repository's `render.yaml`. Auto-deploy is intentionally disabled.
 
 ## Smoke checklist
 
