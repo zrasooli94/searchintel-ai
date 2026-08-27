@@ -41,6 +41,13 @@ class ActionPlanSummaryService:
                 detail="Project not found.",
             )
 
+        site_rag = (
+            SiteRAGActionBridgeService.build(
+                db=db,
+                project_id=project_id,
+            )
+        )
+
         plan = (
             GeoActionPlanRepository
             .latest_by_project(
@@ -50,13 +57,85 @@ class ActionPlanSummaryService:
         )
 
         if plan is None:
-            raise HTTPException(
-                status_code=404,
-                detail=(
-                    "No GEO action plan exists "
-                    "for this project."
-                ),
-            )
+            return {
+                "project_id":
+                    project_id,
+
+                "has_historical_plan":
+                    False,
+
+                "plan_id":
+                    None,
+
+                "experiment_id":
+                    None,
+
+                "experiment_name":
+                    None,
+
+                "experiment_phase":
+                    None,
+
+                "experiment_status":
+                    None,
+
+                "benchmark_mode":
+                    None,
+
+                "target_brand_id":
+                    None,
+
+                "target_brand":
+                    None,
+
+                "plan_status":
+                    None,
+
+                "created_at":
+                    None,
+
+                "strategy_summary":
+                    None,
+
+                "baseline_metrics":
+                    {},
+
+                "recommended_sequence":
+                    [],
+
+                "risks_and_limits":
+                    [],
+
+                "total_actions":
+                    0,
+
+                "open_actions":
+                    0,
+
+                "completed_actions":
+                    0,
+
+                "high_priority_actions":
+                    0,
+
+                "medium_priority_actions":
+                    0,
+
+                "low_priority_actions":
+                    0,
+
+                "action_type_counts":
+                    {},
+
+                "provenance_note":
+                    None,
+
+                "site_rag":
+                    site_rag,
+
+                "actions":
+                    [],
+            }
 
         experiment = (
             GeoExperimentRepository.get(
@@ -156,6 +235,9 @@ class ActionPlanSummaryService:
             "project_id":
                 project_id,
 
+            "has_historical_plan":
+                True,
+
             "plan_id":
                 plan.id,
 
@@ -222,10 +304,7 @@ class ActionPlanSummaryService:
                 ),
 
             "site_rag":
-                SiteRAGActionBridgeService.build(
-                    db=db,
-                    project_id=project_id,
-                ),
+                site_rag,
 
             "provenance_note": (
                 "This action plan reflects the "

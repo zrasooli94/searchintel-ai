@@ -73,21 +73,23 @@ class SiteRAGActionBridgeSummary(BaseModel):
 class ActionPlanSummary(BaseModel):
     project_id: int
 
-    plan_id: int
+    has_historical_plan: bool
 
-    experiment_id: int
-    experiment_name: str
-    experiment_phase: str
-    experiment_status: str
-    benchmark_mode: str
+    plan_id: int | None
 
-    target_brand_id: int
-    target_brand: str
+    experiment_id: int | None
+    experiment_name: str | None
+    experiment_phase: str | None
+    experiment_status: str | None
+    benchmark_mode: str | None
 
-    plan_status: str
-    created_at: datetime
+    target_brand_id: int | None
+    target_brand: str | None
 
-    strategy_summary: str
+    plan_status: str | None
+    created_at: datetime | None
+
+    strategy_summary: str | None
 
     baseline_metrics: dict
 
@@ -104,7 +106,7 @@ class ActionPlanSummary(BaseModel):
 
     action_type_counts: dict[str, int]
 
-    provenance_note: str
+    provenance_note: str | None
 
     site_rag: SiteRAGActionBridgeSummary | None
 

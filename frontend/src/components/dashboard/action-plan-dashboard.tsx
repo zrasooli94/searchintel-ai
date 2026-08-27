@@ -95,13 +95,13 @@ export default function ActionPlanDashboard({
   webVisibilitySummary,
   plan,
 }: Props) {
-  if (!plan) {
+  if (!plan || !plan.has_historical_plan) {
     return (
       <DashboardShell
         summary={visibilitySummary}
         title="Action Plan"
       >
-        <div className="crystal-page mx-auto max-w-[1450px] p-5 lg:p-8 xl:px-10">
+        <div className="crystal-page mx-auto max-w-[1450px] space-y-7 p-5 lg:p-8 xl:px-10">
           <section className="crystal-panel rounded-[22px] p-8">
             <div className="flex min-h-[340px] items-center justify-center text-center">
               <div className="max-w-xl">
@@ -114,14 +114,14 @@ export default function ActionPlanDashboard({
                 </div>
 
                 <h2 className="mt-3 text-2xl font-medium tracking-[-0.035em] text-slate-950">
-                  No stored action plan yet
+                  No historical GEO action plan yet
                 </h2>
 
                 <p className="mt-3 text-sm leading-7 text-slate-500">
                   This project does not yet have a persisted
-                  GEO action plan. Complete the compatible
-                  opportunity and diagnosis workflow before
-                  generating a historical strategy plan.
+                  historical GEO strategy plan. Current Site RAG
+                  evidence actions remain independent and are
+                  shown below when available.
                 </p>
 
                 <p className="mt-3 text-xs leading-5 text-slate-400">
@@ -131,6 +131,10 @@ export default function ActionPlanDashboard({
               </div>
             </div>
           </section>
+
+          <SiteRAGActionPlanPanel
+            data={plan?.site_rag ?? null}
+          />
         </div>
       </DashboardShell>
     );
@@ -193,9 +197,12 @@ export default function ActionPlanDashboard({
             <StatCard
               label="Source Mode"
               value={pretty(
-                plan.benchmark_mode,
+                plan.benchmark_mode ?? "unknown",
               )}
-              detail={plan.experiment_name}
+              detail={
+                plan.experiment_name ??
+                "Historical plan"
+              }
               icon={
                 plan.benchmark_mode ===
                 "web_search"

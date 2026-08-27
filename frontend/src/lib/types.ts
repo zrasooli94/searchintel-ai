@@ -747,21 +747,23 @@ export type SiteRAGActionBridgeSummary = {
 export type ActionPlanSummary = {
   project_id: number;
 
-  plan_id: number;
+  has_historical_plan: boolean;
 
-  experiment_id: number;
-  experiment_name: string;
-  experiment_phase: string;
-  experiment_status: string;
-  benchmark_mode: string;
+  plan_id: number | null;
 
-  target_brand_id: number;
-  target_brand: string;
+  experiment_id: number | null;
+  experiment_name: string | null;
+  experiment_phase: string | null;
+  experiment_status: string | null;
+  benchmark_mode: string | null;
 
-  plan_status: string;
-  created_at: string;
+  target_brand_id: number | null;
+  target_brand: string | null;
 
-  strategy_summary: string;
+  plan_status: string | null;
+  created_at: string | null;
+
+  strategy_summary: string | null;
 
   baseline_metrics: Record<
     string,
@@ -784,7 +786,7 @@ export type ActionPlanSummary = {
     number
   >;
 
-  provenance_note: string;
+  provenance_note: string | null;
 
   site_rag: SiteRAGActionBridgeSummary | null;
 
