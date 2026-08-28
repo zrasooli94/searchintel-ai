@@ -26,10 +26,10 @@ worker. Vercel owns only the `frontend/` service and communicates with Render
 through its server-side proxy using secret environment variables.
 
 The live dataset was transferred transactionally from the reviewed local
-SearchIntel data. It contains ChargeOps, CXOps, and the separately reviewed
-Facebook validation project. Facebook was imported with a narrow table
-allowlist; obsolete Facebook/Fb test records and raw provider responses were
-excluded. Imports verified target row counts and the schema at
+SearchIntel data. It contains ChargeOps, CXOps, Facebook, Stripe, and HubSpot
+Content. Validation-project imports used narrow table allowlists and
+collision-safe primary-key remapping; obsolete test records and raw provider
+responses were excluded. Imports verified target row counts and the schema at
 `a6f4d9821c30`. No provider credential, environment file, or application
 credential table was transferred.
 
