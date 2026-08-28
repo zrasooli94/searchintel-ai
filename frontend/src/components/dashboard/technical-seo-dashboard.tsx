@@ -16,6 +16,7 @@ import type {
   TechnicalSEOSummary,
   VisibilitySummary,
 } from "@/lib/types";
+import { technicalSEOPageState } from "@/lib/technical-seo-state";
 
 
 type Props = {
@@ -63,6 +64,58 @@ export default function TechnicalSEODashboard({
   visibilitySummary,
   seo,
 }: Props) {
+  if (technicalSEOPageState(seo) === "limited") {
+    return (
+      <DashboardShell
+        summary={visibilitySummary}
+        title="Technical SEO"
+      >
+        <div className="crystal-page mx-auto max-w-[1100px] p-5 lg:p-8 xl:px-10">
+          <section className="crystal-panel rounded-[24px] p-6 lg:p-8">
+            <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
+              <div className="max-w-2xl">
+                <div className="crystal-eyebrow">Bounded crawl measurement</div>
+                <div className="mt-3 inline-flex rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-amber-700">
+                  Limited
+                </div>
+                <h2 className="mt-5 text-2xl font-medium tracking-[-0.035em] text-slate-950">
+                  SearchIntel could not complete a technical audit for {seo.website.domain}
+                </h2>
+                <p className="mt-3 text-sm leading-7 text-slate-600">
+                  {seo.measurement_reason}
+                </p>
+              </div>
+              <div className="crystal-icon h-12 w-12 bg-amber-50 text-amber-600">
+                <TriangleAlert className="h-5 w-5" />
+              </div>
+            </div>
+
+            <div className="mt-7 grid gap-4 md:grid-cols-3">
+              <MetricCard label="Measurement Status" value="LIMITED" detail="No complete technical audit is available" icon={Gauge} />
+              <MetricCard label="Usable Pages" value="0" detail="No pages were available to score" icon={Globe2} />
+              <MetricCard label="Technical Score" value="N/A" detail="SearchIntel does not manufacture a score" icon={SearchCheck} />
+            </div>
+
+            <div className="mt-7 rounded-[20px] border border-amber-200/80 bg-amber-50/60 p-5">
+              <h3 className="font-medium text-slate-950">What this limitation means</h3>
+              <p className="mt-2 text-sm leading-7 text-slate-600">{seo.limitation_note}</p>
+            </div>
+
+            <div className="mt-6 rounded-[20px] border border-slate-200 bg-white/70 p-5">
+              <h3 className="font-medium text-slate-950">Recommended measurement paths</h3>
+              <p className="mt-2 text-sm leading-7 text-slate-600">
+                Use Memory to measure latent model knowledge and Web Search to measure controlled live-web retrieval, source exposure, and citations. These remain separate from SearchIntel&apos;s bounded technical crawl.
+              </p>
+            </div>
+          </section>
+        </div>
+      </DashboardShell>
+    );
+  }
+
+  const audit = seo.audit;
+  if (!audit) return null;
+
   return (
     <DashboardShell
       summary={visibilitySummary}
@@ -95,7 +148,7 @@ export default function TechnicalSEODashboard({
           <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <MetricCard
               label="Site Health"
-              value={`${seo.audit.score}/100`}
+              value={`${audit.score}/100`}
               detail="SearchIntel Technical Audit V1"
               icon={Gauge}
             />
@@ -109,8 +162,8 @@ export default function TechnicalSEODashboard({
 
             <MetricCard
               label="Current Issues"
-              value={`${seo.audit.issue_count}`}
-              detail={`${seo.audit.high_issues} high · ${seo.audit.medium_issues} medium · ${seo.audit.low_issues} low`}
+              value={`${audit.issue_count}`}
+              detail={`${audit.high_issues} high · ${audit.medium_issues} medium · ${audit.low_issues} low`}
               icon={TriangleAlert}
             />
 

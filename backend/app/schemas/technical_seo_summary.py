@@ -74,8 +74,12 @@ class TechnicalSEOWebsiteSummary(BaseModel):
 class TechnicalSEOSummary(BaseModel):
     project_id: int
 
+    measurement_state: str
+    measurement_reason: str | None
+    limitation_note: str | None
+
     website: TechnicalSEOWebsiteSummary
-    audit: TechnicalSEOAuditSummary
+    audit: TechnicalSEOAuditSummary | None
 
     crawled_pages: int
     successful_pages: int

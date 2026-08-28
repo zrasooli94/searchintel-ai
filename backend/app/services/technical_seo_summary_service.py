@@ -176,6 +176,48 @@ class TechnicalSEOSummaryService:
         )
 
         if audit is None:
+            crawl = website.last_crawl_summary or {}
+            blocked_count = int(
+                crawl.get(
+                    "pages_blocked_by_robots",
+                    0,
+                )
+                or 0
+            )
+            if blocked_count > 0:
+                return {
+                    "project_id": project_id,
+                    "measurement_state": "limited",
+                    "measurement_reason": (
+                        "SearchIntelBot was blocked by the "
+                        "website's robots policy during the "
+                        "latest bounded crawl attempt."
+                    ),
+                    "limitation_note": (
+                        "This limitation applies only to "
+                        "SearchIntel's crawler and does not "
+                        "imply that Google or another crawler "
+                        "cannot access the site."
+                    ),
+                    "website": {
+                        "id": website.id,
+                        "brand_id": target_brand.id,
+                        "brand": target_brand.name,
+                        "domain": website.domain,
+                        "base_url": website.base_url,
+                        "is_primary": website.is_primary,
+                    },
+                    "audit": None,
+                    "crawled_pages": 0,
+                    "successful_pages": 0,
+                    "failed_pages": 0,
+                    "total_words": 0,
+                    "average_word_count": 0.0,
+                    "pages": [],
+                    "checks": [],
+                    "recommendation_count": 0,
+                    "recommendations": [],
+                }
             raise HTTPException(
                 status_code=404,
                 detail=(
@@ -276,6 +318,15 @@ class TechnicalSEOSummaryService:
         return {
             "project_id":
                 project_id,
+
+            "measurement_state":
+                "ready",
+
+            "measurement_reason":
+                None,
+
+            "limitation_note":
+                None,
 
             "website": {
                 "id":

@@ -8,6 +8,7 @@ import {
   getLatestCompletedVisibilitySummary,
   getTechnicalSEOSummary,
 } from "@/lib/api";
+import { technicalSEOPageState } from "@/lib/technical-seo-state";
 
 
 export const dynamic = "force-dynamic";
@@ -31,23 +32,22 @@ export default async function Page({
     rawProjectId,
   );
 
-  const [
-    visibilitySummary,
-    seo,
-  ] = await Promise.all([
-    getLatestCompletedVisibilitySummary(
-      projectId,
-    ),
-    getTechnicalSEOSummary(
-      projectId,
-    ),
-  ]);
+  const seo = await getTechnicalSEOSummary(
+    projectId,
+  );
 
-  if (!seo) {
+  if (technicalSEOPageState(seo) === "setup") {
     redirect(
       `/projects/${projectId}/setup`,
     );
   }
+
+  if (!seo) return null;
+
+  const visibilitySummary =
+    await getLatestCompletedVisibilitySummary(
+      projectId,
+    );
 
   return (
     <TechnicalSEODashboard

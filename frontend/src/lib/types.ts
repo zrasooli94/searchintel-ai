@@ -123,6 +123,10 @@ export type TechnicalSEORecommendation = {
 export type TechnicalSEOSummary = {
   project_id: number;
 
+  measurement_state: "ready" | "limited";
+  measurement_reason: string | null;
+  limitation_note: string | null;
+
   website: {
     id: number;
 
@@ -147,7 +151,7 @@ export type TechnicalSEOSummary = {
     low_issues: number;
 
     created_at: string;
-  };
+  } | null;
 
   crawled_pages: number;
   successful_pages: number;
