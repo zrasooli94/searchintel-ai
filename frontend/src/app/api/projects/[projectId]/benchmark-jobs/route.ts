@@ -2,6 +2,7 @@ import {
   searchIntelApiBaseUrl,
   searchIntelFetch,
 } from "@/lib/server-api";
+import { operatorBackendHeaders, operatorMutationGuard } from "@/lib/operator-session";
 
 export async function GET(
   _request: Request,
@@ -46,6 +47,8 @@ export async function POST(
     }>;
   },
 ) {
+  const denied = await operatorMutationGuard();
+  if (denied) return denied;
   const {
     projectId,
   } = await context.params;
@@ -60,6 +63,7 @@ export async function POST(
       headers: {
         "Content-Type":
           "application/json",
+        ...await operatorBackendHeaders(),
       },
       body: await request.text(),
       cache: "no-store",

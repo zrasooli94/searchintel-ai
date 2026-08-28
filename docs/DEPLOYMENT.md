@@ -26,11 +26,12 @@ worker. Vercel owns only the `frontend/` service and communicates with Render
 through its server-side proxy using secret environment variables.
 
 The initial live dataset was transferred transactionally from the reviewed
-local SearchIntel data. It contains only the ChargeOps and CXOps projects and
-their relational dependency closure; the unrelated Facebook test project was
-excluded. The import verified target row counts table by table and confirmed
-the schema at `a6f4d9821c30` before live acceptance. No provider credential,
-environment file, or application credential table was transferred.
+local SearchIntel data. It contains the reviewed ChargeOps and CXOps projects.
+The separately reviewed Facebook validation project may be transferred with a
+narrow table allowlist; obsolete Facebook/Fb test records and raw provider
+responses must remain excluded. Imports must verify target row counts and the
+schema at `a6f4d9821c30`. Never transfer a provider credential, environment
+file, or application credential table.
 
 ## Prepared staging architecture
 
@@ -103,10 +104,35 @@ settings and are not returned by health responses.
 | --- | --- | --- |
 | `SEARCHINTEL_API_BASE_URL` | Production | Backend URL including `/api/v1`, for example `https://api.example.com/api/v1`. |
 | `SEARCHINTEL_API_TOKEN` | Production | Must exactly match backend `API_TOKEN`; used only by server code. |
+| `SEARCHINTEL_OPERATOR_SECRET` | Production operations | High-entropy operator passphrase used only by the Next.js server to issue an eight-hour HttpOnly operator session. |
 
 The production frontend fails fast when either variable is absent. Local
 development alone falls back to `http://127.0.0.1:8000/api/v1`. Neither
 variable is public browser configuration.
+
+## Public demo and operator access
+
+The live dashboard is intentionally readable as a public portfolio demo.
+Browser-origin mutations are guarded by the Next.js operator session, and paid
+backend routes additionally require `X-SearchIntel-Operator`. Next.js injects
+that header server-side only after validating the signed HttpOnly operator
+cookie. Its value is the existing server-only `SEARCHINTEL_API_TOKEN`, matching
+backend `API_TOKEN`; it is never sent to browser JavaScript.
+
+Create `SEARCHINTEL_OPERATOR_SECRET` as a protected Vercel environment value.
+Do not use a `NEXT_PUBLIC_` prefix. Agency operators unlock controls from the
+Setup page; viewers can continue to inspect all historical dashboards. The
+following actions require operator access:
+
+- benchmark launch and other paid AI generation/validation actions;
+- onboarding, crawl, audit, experiment, prompt, competitor, and first-party
+  identity mutations exposed through the frontend;
+- deterministic configuration reanalysis, because it changes stored project
+  state even though it does not call OpenAI.
+
+Read-only summaries, readiness, benchmark status, and historical results remain
+public. Backend-to-backend integrations must keep using the service bearer
+token and include the operator header only for an authorized paid mutation.
 
 ## Database and migrations
 
@@ -207,9 +233,9 @@ real token into tickets or logs.
 
 ## Known V1 limitations
 
-- Authentication is a single shared service token, not user accounts, roles,
-  or project-level authorization. Put the portfolio deployment behind an
-  access gateway if it is exposed broadly.
+- Operator access is a single-agency V1 gate, not user accounts, organizations,
+  audit identities, or project-level RBAC. The public demo is read-only through
+  its browser UI, while direct backend access remains protected by `API_TOKEN`.
 - Background benchmark work runs in the backend process rather than a durable
   external queue. Use one worker for benchmark-capable deployments unless the
   execution model is deliberately redesigned.

@@ -2,6 +2,7 @@ import {
   searchIntelApiBaseUrl,
   searchIntelFetch,
 } from "@/lib/server-api";
+import { operatorMutationGuard } from "@/lib/operator-session";
 
 export async function PUT(
   request: Request,
@@ -12,6 +13,8 @@ export async function PUT(
     }>;
   },
 ) {
+  const denied = await operatorMutationGuard();
+  if (denied) return denied;
   const {
     projectId,
     promptId,

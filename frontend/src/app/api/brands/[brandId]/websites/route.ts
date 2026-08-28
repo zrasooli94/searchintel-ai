@@ -2,6 +2,7 @@ import {
   searchIntelApiBaseUrl,
   searchIntelFetch,
 } from "@/lib/server-api";
+import { operatorMutationGuard } from "@/lib/operator-session";
 
 
 export async function POST(
@@ -12,6 +13,8 @@ export async function POST(
     }>;
   },
 ) {
+  const denied = await operatorMutationGuard();
+  if (denied) return denied;
   const { brandId } = await context.params;
   const body = await request.text();
   const response = await searchIntelFetch(

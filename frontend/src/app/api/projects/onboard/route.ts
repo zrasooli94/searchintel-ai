@@ -2,10 +2,13 @@ import {
   searchIntelApiBaseUrl,
   searchIntelFetch,
 } from "@/lib/server-api";
+import { operatorMutationGuard } from "@/lib/operator-session";
 
 export async function POST(
   request: Request,
 ) {
+  const denied = await operatorMutationGuard();
+  if (denied) return denied;
   const apiBase =
     searchIntelApiBaseUrl();
 

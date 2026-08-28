@@ -1,4 +1,5 @@
 .env
+.operator-passphrase
 .venv/
 __pycache__/
 *.pyc

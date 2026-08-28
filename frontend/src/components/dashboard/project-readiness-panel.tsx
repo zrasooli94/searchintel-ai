@@ -107,8 +107,10 @@ function ModeCard({ item }: { item: MeasurementEligibility }) {
 
 export default function ProjectReadinessPanel({
   readiness,
+  operatorAuthorized,
 }: {
   readiness: ProjectReadiness;
+  operatorAuthorized: boolean;
 }) {
   const router = useRouter();
   const [dismissed, setDismissed] = useState<string[]>([]);
@@ -120,6 +122,10 @@ export default function ProjectReadinessPanel({
   );
 
   async function approve(suggestion: ReadinessSuggestion) {
+    if (!operatorAuthorized) {
+      setError("Unlock operator controls before approving configuration changes.");
+      return;
+    }
     if (suggestion.kind === "prompt_category") {
       document.getElementById("prompt-set")?.scrollIntoView({
         behavior: "smooth",
@@ -224,9 +230,9 @@ export default function ProjectReadinessPanel({
                       <button type="button" onClick={() => setDismissed((items) => [...items, suggestion.key])} className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50">
                         Ignore
                       </button>
-                      <button type="button" disabled={pending !== null} onClick={() => approve(suggestion)} className="crystal-primary-button px-3 py-2 text-xs">
+                      <button type="button" disabled={pending !== null || !operatorAuthorized} onClick={() => approve(suggestion)} className="crystal-primary-button px-3 py-2 text-xs disabled:cursor-not-allowed disabled:opacity-50">
                         {pending === suggestion.key && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                        {suggestion.kind === "prompt_category" ? "Review" : "Approve"}
+                        {!operatorAuthorized ? "Operator only" : suggestion.kind === "prompt_category" ? "Review" : "Approve"}
                       </button>
                     </div>
                   </div>

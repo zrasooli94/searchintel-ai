@@ -880,6 +880,7 @@ export type ProjectReadiness = {
     prompt_categories: string[];
     usable_page_count: number;
     usable_word_count: number;
+    execution_model: string | null;
   };
   issues: ReadinessIssue[];
   warnings: ReadinessIssue[];

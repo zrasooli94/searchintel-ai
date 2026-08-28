@@ -15,6 +15,8 @@ import SetupCompetitorsStep from "@/components/dashboard/setup-competitors-step"
 import SetupPromptsStep from "@/components/dashboard/setup-prompts-step";
 import SetupTechnicalStep from "@/components/dashboard/setup-technical-step";
 import ProjectReadinessPanel from "@/components/dashboard/project-readiness-panel";
+import OperatorAccessPanel from "@/components/dashboard/operator-access-panel";
+import { isOperatorSession } from "@/lib/operator-session";
 
 import {
   getProjectCompetitors,
@@ -55,6 +57,7 @@ export default async function Page({
     readiness,
     competitors,
     prompts,
+    operatorAuthorized,
   ] = await Promise.all([
     getProjectReadiness(projectId),
     getProjectCompetitors(
@@ -63,6 +66,7 @@ export default async function Page({
     getProjectPrompts(
       projectId,
     ),
+    isOperatorSession(),
   ]);
 
   const setupState =
@@ -185,7 +189,9 @@ export default async function Page({
         </section>
 
         <div className="mt-10 space-y-6">
-          <ProjectReadinessPanel readiness={readiness} />
+          <OperatorAccessPanel initialAuthorized={operatorAuthorized} />
+
+          <ProjectReadinessPanel readiness={readiness} operatorAuthorized={operatorAuthorized} />
 
           {workspace.website_id !== null && setupState ? (
             <SetupTechnicalStep
@@ -242,6 +248,8 @@ export default async function Page({
               ).length
             }
             eligibility={readiness.measurements}
+            operatorAuthorized={operatorAuthorized}
+            modelLabel={readiness.configuration.execution_model ?? "Auto-select configured model"}
           />
 
           <SetupOptimizationStep

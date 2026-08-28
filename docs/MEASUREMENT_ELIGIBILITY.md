@@ -19,6 +19,11 @@ States are `ready`, `needs_review`, `limited`, `blocked`, and
 `not_applicable`. Execution availability is reported separately so a project
 can be correctly configured while the backend lacks an AI execution key.
 Historical results remain visible even when a future run is blocked.
+For AI modes, readiness also reports the resolved execution model when one is
+configured. This describes backend execution availability; it does not grant a
+viewer permission to launch a paid run. The Setup page shows configuration and
+execution separately and requires an authorized operator session plus an
+explicit run-size confirmation before benchmark creation.
 
 ## Approval boundary
 

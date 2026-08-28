@@ -28,6 +28,7 @@ import type {
 import {
   canRunMeasurement,
 } from "@/lib/readiness";
+import { benchmarkConfirmation } from "@/lib/benchmark-confirmation";
 
 
 type Props = {
@@ -37,6 +38,8 @@ type Props = {
     "technical_seo" | "memory" | "web_search" | "site_rag",
     MeasurementEligibility
   >;
+  operatorAuthorized: boolean;
+  modelLabel: string;
 };
 
 
@@ -77,6 +80,8 @@ export default function SetupBaselineStep({
   projectId,
   activePromptCount,
   eligibility,
+  operatorAuthorized,
+  modelLabel,
 }: Props) {
   const router =
     useRouter();
@@ -111,6 +116,8 @@ export default function SetupBaselineStep({
   ] = useState<
     string | null
   >(null);
+
+  const [confirming, setConfirming] = useState(false);
 
   const timer =
     useRef<
@@ -181,6 +188,13 @@ export default function SetupBaselineStep({
 
 
   async function start() {
+    if (starting) return;
+    setConfirming(false);
+
+    if (!operatorAuthorized) {
+      setError("Unlock operator controls before starting a paid benchmark.");
+      return;
+    }
     if (
       activePromptCount === 0
     ) {
@@ -488,8 +502,14 @@ export default function SetupBaselineStep({
     );
 
   const selectedEligibility = eligibility[mode];
+  const confirmation = benchmarkConfirmation(
+    mode,
+    modelLabel,
+    activePromptCount,
+  );
   const runBlocked =
-    !canRunMeasurement(selectedEligibility);
+    !canRunMeasurement(selectedEligibility)
+    || !operatorAuthorized;
 
 
   return (
@@ -647,7 +667,7 @@ export default function SetupBaselineStep({
                 ) === "string"
                 ? job.config_snapshot
                     .provider_model_id
-                : "Auto-select configured model"}
+                : modelLabel}
             </span>
           </div>
         </div>
@@ -665,7 +685,9 @@ export default function SetupBaselineStep({
           </div>
           <p className="mt-1 leading-6">{selectedEligibility.reason}</p>
           <p className="mt-1 text-xs leading-5 opacity-80">
-            {runBlocked
+            {!operatorAuthorized
+              ? "Unlock operator controls to start paid execution."
+              : runBlocked
               ? selectedEligibility.execution_available
                 ? selectedEligibility.recommended_action
                 : selectedEligibility.execution_note
@@ -750,7 +772,7 @@ export default function SetupBaselineStep({
               || activePromptCount === 0
               || runBlocked
             }
-            onClick={start}
+            onClick={() => setConfirming(true)}
             className="crystal-primary-button mt-5 w-full px-4 py-3 text-sm"
           >
             {starting ? (
@@ -770,6 +792,39 @@ export default function SetupBaselineStep({
               </>
             )}
           </button>
+        )}
+
+        {confirming && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/35 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="benchmark-confirmation-title">
+            <div className="w-full max-w-md rounded-[22px] border border-white/80 bg-white p-6 shadow-2xl">
+              <h3 id="benchmark-confirmation-title" className="text-lg font-semibold text-slate-950">
+                Confirm paid benchmark
+              </h3>
+              <p className="mt-2 text-sm leading-6 text-slate-500">
+                Review the expected execution before creating the experiment and AI runs.
+              </p>
+              <dl className="mt-5 space-y-3 rounded-xl bg-slate-50 p-4 text-sm">
+                <div className="flex justify-between gap-4">
+                  <dt className="text-slate-500">Measurement mode</dt>
+                  <dd className="font-medium text-slate-900">{confirmation.measurementMode}</dd>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <dt className="text-slate-500">Model</dt>
+                  <dd className="text-right font-medium text-slate-900">{confirmation.model}</dd>
+                </div>
+                <div className="flex justify-between gap-4"><dt className="text-slate-500">Prompts</dt><dd className="font-medium text-slate-900">{confirmation.promptCount}</dd></div>
+                <div className="flex justify-between gap-4"><dt className="text-slate-500">Expected AI runs</dt><dd className="font-medium text-slate-900">{confirmation.expectedAiRuns}</dd></div>
+                <div className="flex justify-between gap-4"><dt className="text-slate-500">Web Search</dt><dd className="font-medium text-slate-900">{confirmation.webSearchEnabled ? "Enabled" : "Disabled"}</dd></div>
+              </dl>
+              <div className="mt-6 flex justify-end gap-3">
+                <button type="button" onClick={() => setConfirming(false)} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50">Cancel</button>
+                <button type="button" disabled={starting} onClick={start} className="crystal-primary-button px-4 py-2.5 text-sm disabled:opacity-50">
+                  {starting && <Loader2 className="h-4 w-4 animate-spin" />}
+                  Run Benchmark
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </section>
