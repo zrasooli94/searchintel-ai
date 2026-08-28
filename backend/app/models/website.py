@@ -4,6 +4,7 @@ from sqlalchemy import (
     Boolean,
     DateTime,
     ForeignKey,
+    JSON,
     String,
     UniqueConstraint,
     func,
@@ -60,6 +61,11 @@ class Website(Base):
         server_default=func.now(),
         onupdate=func.now(),
         nullable=False,
+    )
+
+    last_crawl_summary: Mapped[dict | None] = mapped_column(
+        JSON,
+        nullable=True,
     )
 
     brand = relationship(

@@ -354,8 +354,6 @@ class CrawlerService:
                 except httpx.HTTPError:
                     pages_failed += 1
 
-            db.commit()
-
         limitations = []
 
         if pages_blocked_by_robots:
@@ -366,8 +364,7 @@ class CrawlerService:
                 "the pages the site allowed the crawler to read."
             )
 
-        return {
-            "website_id": website.id,
+        crawl_summary = {
             "pages_crawled": pages_crawled,
             "pages_discovered": len(discovered),
             "pages_failed": pages_failed,
@@ -375,4 +372,20 @@ class CrawlerService:
                 pages_blocked_by_robots,
             "crawl_limited": bool(limitations),
             "limitations": limitations,
+            "recorded_at": datetime.now(
+                timezone.utc
+            ).isoformat(),
+        }
+
+        website.last_crawl_summary = crawl_summary
+        db.commit()
+
+        return {
+            "website_id": website.id,
+            **{
+                key: value
+                for key, value
+                in crawl_summary.items()
+                if key != "recorded_at"
+            },
         }

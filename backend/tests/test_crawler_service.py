@@ -67,10 +67,12 @@ class CrawlerServiceTests(unittest.TestCase):
         get_website,
         upsert_page,
     ):
-        get_website.return_value = SimpleNamespace(
+        website = SimpleNamespace(
             id=17,
             base_url="https://example.com/",
+            last_crawl_summary=None,
         )
+        get_website.return_value = website
         db = Mock()
 
         result = CrawlerService.crawl(
@@ -91,6 +93,12 @@ class CrawlerServiceTests(unittest.TestCase):
         )
         upsert_page.assert_not_called()
         db.commit.assert_called_once_with()
+        self.assertEqual(
+            website.last_crawl_summary[
+                "pages_blocked_by_robots"
+            ],
+            1,
+        )
 
 
 if __name__ == "__main__":

@@ -10,6 +10,7 @@ from app.schemas.project_onboarding import (
 from app.schemas.project_workspace import (
     ProjectWorkspaceRead,
 )
+from app.schemas.project_readiness import ProjectReadinessRead
 from app.schemas.project_competitor import (
     ProjectCompetitorCreate,
     ProjectCompetitorRead,
@@ -36,6 +37,7 @@ from app.services.project_onboarding_service import (
 from app.services.project_workspace_service import (
     ProjectWorkspaceService,
 )
+from app.services.project_readiness_service import ProjectReadinessService
 
 
 router = APIRouter(
@@ -107,6 +109,20 @@ def get_project(
     return ProjectService.get(
         db,
         project_id,
+    )
+
+
+@router.get(
+    "/{project_id}/readiness",
+    response_model=ProjectReadinessRead,
+)
+def get_project_readiness(
+    project_id: int,
+    db: Session = Depends(get_db),
+):
+    return ProjectReadinessService.build(
+        db=db,
+        project_id=project_id,
     )
 
 
