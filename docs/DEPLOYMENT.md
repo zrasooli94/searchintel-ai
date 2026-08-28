@@ -25,13 +25,13 @@ Neon pooled TLS connection string and runs Alembic before starting one Uvicorn
 worker. Vercel owns only the `frontend/` service and communicates with Render
 through its server-side proxy using secret environment variables.
 
-The initial live dataset was transferred transactionally from the reviewed
-local SearchIntel data. It contains the reviewed ChargeOps and CXOps projects.
-The separately reviewed Facebook validation project may be transferred with a
-narrow table allowlist; obsolete Facebook/Fb test records and raw provider
-responses must remain excluded. Imports must verify target row counts and the
-schema at `a6f4d9821c30`. Never transfer a provider credential, environment
-file, or application credential table.
+The live dataset was transferred transactionally from the reviewed local
+SearchIntel data. It contains ChargeOps, CXOps, and the separately reviewed
+Facebook validation project. Facebook was imported with a narrow table
+allowlist; obsolete Facebook/Fb test records and raw provider responses were
+excluded. Imports verified target row counts and the schema at
+`a6f4d9821c30`. No provider credential, environment file, or application
+credential table was transferred.
 
 ## Prepared staging architecture
 
