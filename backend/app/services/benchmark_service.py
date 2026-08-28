@@ -117,6 +117,25 @@ class BenchmarkService:
                 ),
             )
 
+        active_equivalent = (
+            BenchmarkRepository
+            .find_active_equivalent(
+                db=db,
+                project_id=project_id,
+                experiment_id=experiment_id,
+                benchmark_mode=benchmark_mode,
+            )
+        )
+
+        if active_equivalent is not None:
+            raise HTTPException(
+                status_code=409,
+                detail=(
+                    "An equivalent benchmark is already "
+                    "pending or running."
+                ),
+            )
+
         if experiment_id is not None:
             experiment = (
                 GeoExperimentRepository.get(

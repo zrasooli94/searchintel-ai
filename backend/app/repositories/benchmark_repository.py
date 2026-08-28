@@ -8,6 +8,37 @@ from app.models.benchmark_job_item import BenchmarkJobItem
 class BenchmarkRepository:
 
     @staticmethod
+    def find_active_equivalent(
+        db: Session,
+        project_id: int,
+        experiment_id: int | None,
+        benchmark_mode: str,
+    ) -> BenchmarkJob | None:
+        statement = select(BenchmarkJob).where(
+            BenchmarkJob.project_id == project_id,
+            BenchmarkJob.benchmark_mode == benchmark_mode,
+            BenchmarkJob.status.in_([
+                "pending",
+                "running",
+            ]),
+        )
+
+        if experiment_id is None:
+            statement = statement.where(
+                BenchmarkJob.experiment_id.is_(None)
+            )
+        else:
+            statement = statement.where(
+                BenchmarkJob.experiment_id == experiment_id
+            )
+
+        return db.scalar(
+            statement.order_by(
+                BenchmarkJob.id.desc()
+            ).limit(1)
+        )
+
+    @staticmethod
     def create_job(
         db: Session,
         project_id: int,

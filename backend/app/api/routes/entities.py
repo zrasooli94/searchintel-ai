@@ -23,6 +23,7 @@ from app.services.entity_classification_service import (
 from app.services.entity_resolution_service import (
     EntityResolutionService,
 )
+from app.api.operator import require_operator
 
 
 router = APIRouter(
@@ -52,6 +53,7 @@ def classify_entity_candidates(
     project_id: int,
     data: EntityClassificationRequest,
     db: Session = Depends(get_db),
+    _operator: None = Depends(require_operator),
 ):
     return EntityClassificationService.classify(
         db=db,

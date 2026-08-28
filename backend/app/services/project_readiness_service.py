@@ -18,6 +18,7 @@ from app.repositories.project_repository import ProjectRepository
 from app.repositories.prompt_repository import PromptRepository
 from app.repositories.technical_audit_repository import TechnicalAuditRepository
 from app.repositories.website_repository import WebsiteRepository
+from app.services.ai_model_service import AIModelService
 
 
 class ProjectReadinessService:
@@ -222,6 +223,15 @@ class ProjectReadinessService:
             primary and TechnicalAuditRepository.get_latest(db, primary.id)
         )
         ai_available = settings.openai_api_key is not None
+        try:
+            execution_model = (
+                AIModelService.resolve_execution_model(
+                    db,
+                    None,
+                ).provider_model_id
+            )
+        except HTTPException:
+            execution_model = None
 
         issues: list[dict] = []
         warnings: list[dict] = []
@@ -414,6 +424,7 @@ class ProjectReadinessService:
                 "prompt_categories": categories,
                 "usable_page_count": len(usable_pages),
                 "usable_word_count": usable_words,
+                "execution_model": execution_model,
             },
             "issues": issues,
             "warnings": warnings,

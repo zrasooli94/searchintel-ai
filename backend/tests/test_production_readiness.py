@@ -1,10 +1,12 @@
 import unittest
 from unittest.mock import Mock, patch
 
+from fastapi import HTTPException
 from fastapi.responses import JSONResponse
 from pydantic import SecretStr, ValidationError
 
 from app.core.config import Settings
+from app.api.operator import require_operator
 from app.main import (
     APP_VERSION,
     liveness,
@@ -132,6 +134,33 @@ class HealthEndpointTests(unittest.TestCase):
         )
         logger.exception.assert_called_once_with(
             "Database readiness check failed."
+        )
+
+
+class OperatorAuthorizationTests(unittest.TestCase):
+    def setUp(self):
+        from app.api import operator
+
+        self.operator_settings = operator.settings
+        self.original_token = self.operator_settings.api_token
+        self.operator_settings.api_token = SecretStr("test-token")
+
+    def tearDown(self):
+        self.operator_settings.api_token = self.original_token
+
+    def test_unauthorized_paid_action_is_rejected(self):
+        with self.assertRaises(HTTPException) as context:
+            require_operator("wrong-token")
+
+        self.assertEqual(context.exception.status_code, 403)
+        self.assertNotIn(
+            "test-token",
+            context.exception.detail,
+        )
+
+    def test_authorized_operator_is_allowed(self):
+        self.assertIsNone(
+            require_operator("test-token")
         )
 
 

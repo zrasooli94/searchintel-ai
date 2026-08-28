@@ -86,6 +86,12 @@ class ProjectReadinessServiceTests(unittest.TestCase):
                 "app.services.project_readiness_service.TechnicalAuditRepository.get_latest",
                 return_value=None,
             ))
+            stack.enter_context(patch(
+                "app.services.project_readiness_service.AIModelService.resolve_execution_model",
+                return_value=SimpleNamespace(
+                    provider_model_id="gpt-test",
+                ),
+            ))
             stack.enter_context(patch.object(
                 ProjectReadinessService,
                 "_historical_modes",

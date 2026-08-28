@@ -7,6 +7,7 @@ from fastapi import (
 from sqlalchemy.orm import Session
 
 from app.db.deps import get_db
+from app.api.operator import require_operator
 from app.schemas.benchmark import (
     BenchmarkJobItemRead,
     BenchmarkJobRead,
@@ -46,6 +47,7 @@ def start_benchmark(
     data: BenchmarkStartRequest,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
+    _operator: None = Depends(require_operator),
 ):
     job = BenchmarkService.create(
         db=db,

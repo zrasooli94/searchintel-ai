@@ -12,6 +12,13 @@ class BenchmarkServicePromptSnapshotTests(unittest.TestCase):
     def setUp(self):
         self.db = Mock()
         self.project = SimpleNamespace(id=4)
+        self.active_job_patch = patch(
+            "app.services.benchmark_service."
+            "BenchmarkRepository.find_active_equivalent",
+            return_value=None,
+        )
+        self.find_active_job = self.active_job_patch.start()
+        self.addCleanup(self.active_job_patch.stop)
 
     @staticmethod
     def make_job(**overrides):
@@ -263,6 +270,35 @@ class BenchmarkServicePromptSnapshotTests(unittest.TestCase):
             context.exception.detail,
             "Use either source_benchmark_job_id or "
             "prompt_source_benchmark_job_id, not both.",
+        )
+        self.db.commit.assert_not_called()
+
+    @patch(
+        "app.services.benchmark_service."
+        "ProjectRepository.get_by_id"
+    )
+    def test_rejects_equivalent_pending_benchmark(
+        self,
+        get_project,
+    ):
+        get_project.return_value = self.project
+        self.find_active_job.return_value = self.make_job(
+            status="pending",
+        )
+
+        with self.assertRaises(HTTPException) as context:
+            BenchmarkService.create(
+                db=self.db,
+                project_id=4,
+                model_id=2,
+                experiment_id=10,
+                benchmark_mode="site_rag",
+            )
+
+        self.assertEqual(context.exception.status_code, 409)
+        self.assertEqual(
+            context.exception.detail,
+            "An equivalent benchmark is already pending or running.",
         )
         self.db.commit.assert_not_called()
 

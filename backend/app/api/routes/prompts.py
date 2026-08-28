@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from app.db.deps import get_db
+from app.api.operator import require_operator
 from app.schemas.prompt import PromptCreate, PromptRead
 from app.schemas.prompt_update import (
     PromptUpdateRequest,
@@ -62,6 +63,7 @@ def generate_starter_prompts(
     project_id: int,
     data: StarterPromptGenerateRequest,
     db: Session = Depends(get_db),
+    _operator: None = Depends(require_operator),
 ):
     return StarterPromptGenerationService.generate(
         db=db,

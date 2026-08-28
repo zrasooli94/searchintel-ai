@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.db.deps import get_db
+from app.api.operator import require_operator
 from app.schemas.candidate_validation import (
     CandidateValidationRequest,
     CandidateValidationResult,
@@ -46,6 +47,7 @@ def validate_competitor_candidates(
     project_id: int,
     data: CandidateValidationRequest,
     db: Session = Depends(get_db),
+    _operator: None = Depends(require_operator),
 ):
     return CandidateValidationService.validate(
         db=db,

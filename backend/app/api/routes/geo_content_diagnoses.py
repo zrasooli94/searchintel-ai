@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.db.deps import get_db
+from app.api.operator import require_operator
 from app.schemas.geo_content_diagnosis import (
     GeoContentDiagnosisRead,
     GeoContentDiagnosisRequest,
@@ -29,6 +30,7 @@ def diagnose_opportunity(
     opportunity_id: int,
     data: GeoContentDiagnosisRequest,
     db: Session = Depends(get_db),
+    _operator: None = Depends(require_operator),
 ):
     return GeoContentDiagnosisService.diagnose(
         db=db,
@@ -60,6 +62,7 @@ def refresh_experiment_diagnoses(
     experiment_id: int,
     data: GeoDiagnosisBatchRequest,
     db: Session = Depends(get_db),
+    _operator: None = Depends(require_operator),
 ):
     return GeoDiagnosisBatchService.run(
         db=db,

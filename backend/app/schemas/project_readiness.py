@@ -49,6 +49,7 @@ class ConfigurationSummary(BaseModel):
     prompt_categories: list[str]
     usable_page_count: int
     usable_word_count: int
+    execution_model: str | None
 
 
 class ReadinessSuggestion(BaseModel):

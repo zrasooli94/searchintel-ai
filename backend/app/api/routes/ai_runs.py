@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from app.db.deps import get_db
+from app.api.operator import require_operator
 from app.schemas.ai_run import (
     AIRunCreate,
     AIRunRead,
@@ -73,6 +74,7 @@ def list_runs(
 def execute_run(
     run_id: int,
     db: Session = Depends(get_db),
+    _operator: None = Depends(require_operator),
 ):
     return AIRunService.execute(
         db,

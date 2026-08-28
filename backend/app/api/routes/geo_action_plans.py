@@ -17,6 +17,7 @@ from app.services.action_plan_summary_service import (
 from app.services.geo_action_plan_service import (
     GeoActionPlanService,
 )
+from app.api.operator import require_operator
 
 
 router = APIRouter(
@@ -46,6 +47,7 @@ def create_action_plan(
     experiment_id: int,
     data: GeoActionPlanRequest,
     db: Session = Depends(get_db),
+    _operator: None = Depends(require_operator),
 ):
     return GeoActionPlanService.generate(
         db=db,
