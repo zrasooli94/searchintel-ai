@@ -199,7 +199,7 @@ export default function SetupCompetitorsStep({
 
             <input
               required
-              minLength={2}
+              minLength={1}
               name="name"
               placeholder="Example competitor"
               className="crystal-field mt-2 px-4 py-3 text-sm"

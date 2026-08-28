@@ -302,7 +302,7 @@ export default function SetupPromptsStep({
 
 
   return (
-    <section className="mt-8 crystal-panel rounded-[22px]">
+    <section id="prompt-set" className="mt-8 scroll-mt-6 crystal-panel rounded-[22px]">
       <div className="border-b border-slate-200/80 p-6">
         <div className="flex items-start justify-between gap-5">
           <div className="flex gap-4">

@@ -29,7 +29,7 @@ The initial live dataset was transferred transactionally from the reviewed
 local SearchIntel data. It contains only the ChargeOps and CXOps projects and
 their relational dependency closure; the unrelated Facebook test project was
 excluded. The import verified target row counts table by table and confirmed
-the schema at `c31d8f2a4b70` before live acceptance. No provider credential,
+the schema at `a6f4d9821c30` before live acceptance. No provider credential,
 environment file, or application credential table was transferred.
 
 ## Prepared staging architecture
@@ -111,7 +111,7 @@ variable is public browser configuration.
 ## Database and migrations
 
 The migration chain has one head. For V1 the expected revision is
-`c31d8f2a4b70`.
+`a6f4d9821c30`.
 
 Before a release:
 

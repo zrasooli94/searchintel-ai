@@ -22,13 +22,21 @@ import {
 
 import type {
   BenchmarkJob,
+  MeasurementEligibility,
   SetupExperiment,
 } from "@/lib/types";
+import {
+  canRunMeasurement,
+} from "@/lib/readiness";
 
 
 type Props = {
   projectId: number;
   activePromptCount: number;
+  eligibility: Record<
+    "technical_seo" | "memory" | "web_search" | "site_rag",
+    MeasurementEligibility
+  >;
 };
 
 
@@ -68,6 +76,7 @@ function getError(
 export default function SetupBaselineStep({
   projectId,
   activePromptCount,
+  eligibility,
 }: Props) {
   const router =
     useRouter();
@@ -178,6 +187,16 @@ export default function SetupBaselineStep({
       setError(
         "No active prompts are configured."
       );
+      return;
+    }
+
+    const selectedEligibility = eligibility[mode];
+    if (selectedEligibility.state === "blocked") {
+      setError(selectedEligibility.reason);
+      return;
+    }
+    if (!selectedEligibility.execution_available) {
+      setError(selectedEligibility.execution_note);
       return;
     }
 
@@ -468,6 +487,10 @@ export default function SetupBaselineStep({
       job.status,
     );
 
+  const selectedEligibility = eligibility[mode];
+  const runBlocked =
+    !canRunMeasurement(selectedEligibility);
+
 
   return (
     <section className="mt-8 crystal-panel rounded-[22px]">
@@ -629,6 +652,27 @@ export default function SetupBaselineStep({
           </div>
         </div>
 
+        <div className={[
+          "mt-5 rounded-xl border p-4 text-sm",
+          selectedEligibility.state === "ready"
+            ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+            : selectedEligibility.state === "blocked"
+              ? "border-red-200 bg-red-50 text-red-800"
+              : "border-amber-200 bg-amber-50 text-amber-800",
+        ].join(" ")}>
+          <div className="font-medium uppercase tracking-wide text-xs">
+            {selectedEligibility.state.replace("_", " ")}
+          </div>
+          <p className="mt-1 leading-6">{selectedEligibility.reason}</p>
+          <p className="mt-1 text-xs leading-5 opacity-80">
+            {runBlocked
+              ? selectedEligibility.execution_available
+                ? selectedEligibility.recommended_action
+                : selectedEligibility.execution_note
+              : selectedEligibility.recommended_action}
+          </p>
+        </div>
+
         {job && (
           <div className="mt-5 rounded-xl border border-slate-200/80 bg-[#fbfcff] p-5">
             <div className="flex items-center justify-between gap-5">
@@ -704,6 +748,7 @@ export default function SetupBaselineStep({
             disabled={
               starting
               || activePromptCount === 0
+              || runBlocked
             }
             onClick={start}
             className="crystal-primary-button mt-5 w-full px-4 py-3 text-sm"

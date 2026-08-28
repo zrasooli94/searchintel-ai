@@ -9,6 +9,7 @@ import type {
   ProjectCompetitor,
   ProjectPrompt,
   ProjectWorkspace,
+  ProjectReadiness,
   TechnicalAuditSetupState,
   TechnicalSEOSummary,
   VisibilitySummary,
@@ -105,6 +106,15 @@ export async function getProjectWorkspace(
   }
 
   return workspace;
+}
+
+
+export async function getProjectReadiness(
+  projectId: number,
+): Promise<ProjectReadiness> {
+  return fetchJson<ProjectReadiness>(
+    `${searchIntelApiBaseUrl()}/projects/${projectId}/readiness`,
+  );
 }
 
 

@@ -821,6 +821,76 @@ export type ProjectWorkspace = {
     | null;
 };
 
+export type ReadinessState =
+  | "ready"
+  | "needs_review"
+  | "limited"
+  | "blocked"
+  | "not_applicable";
+
+export type ReadinessIssue = {
+  code: string;
+  message: string;
+  evidence: string[];
+  recommended_action: string | null;
+};
+
+export type MeasurementEligibility = {
+  mode:
+    | "technical_seo"
+    | "memory"
+    | "web_search"
+    | "site_rag";
+  state: ReadinessState;
+  reason: string;
+  evidence: string[];
+  blocking_issues: ReadinessIssue[];
+  warnings: ReadinessIssue[];
+  recommended_action: string;
+  execution_available: boolean;
+  execution_note: string;
+  has_historical_results: boolean;
+};
+
+export type ReadinessSuggestion = {
+  key: string;
+  kind:
+    | "first_party_domain"
+    | "competitor"
+    | "prompt_category";
+  value: string;
+  reason: string;
+  evidence: string[];
+  approval_required: boolean;
+};
+
+export type ProjectReadiness = {
+  project_id: number;
+  project_name: string;
+  overall_state: ReadinessState;
+  configuration: {
+    target_brand_id: number | null;
+    target_brand: string | null;
+    target_brand_count: number;
+    primary_website_id: number | null;
+    primary_domain: string | null;
+    first_party_domains: string[];
+    competitor_count: number;
+    active_prompt_count: number;
+    prompt_categories: string[];
+    usable_page_count: number;
+    usable_word_count: number;
+  };
+  issues: ReadinessIssue[];
+  warnings: ReadinessIssue[];
+  suggestions: ReadinessSuggestion[];
+  measurements: Record<
+    "technical_seo" | "memory" | "web_search" | "site_rag",
+    MeasurementEligibility
+  >;
+  provenance_note: string;
+};
+
 export type ProjectOnboardResponse = {
   project_id: number;
   project_name: string;

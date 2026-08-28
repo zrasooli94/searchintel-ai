@@ -14,10 +14,12 @@ import SetupOptimizationStep from "@/components/dashboard/setup-optimization-ste
 import SetupCompetitorsStep from "@/components/dashboard/setup-competitors-step";
 import SetupPromptsStep from "@/components/dashboard/setup-prompts-step";
 import SetupTechnicalStep from "@/components/dashboard/setup-technical-step";
+import ProjectReadinessPanel from "@/components/dashboard/project-readiness-panel";
 
 import {
   getProjectCompetitors,
   getProjectPrompts,
+  getProjectReadiness,
   getProjectWorkspace,
   getWebsiteSetupState,
 } from "@/lib/api";
@@ -49,23 +51,12 @@ export default async function Page({
       projectId,
     );
 
-  if (
-    workspace.website_id
-    === null
-  ) {
-    throw new Error(
-      "Project does not have a primary website.",
-    );
-  }
-
   const [
-    setupState,
+    readiness,
     competitors,
     prompts,
   ] = await Promise.all([
-    getWebsiteSetupState(
-      workspace.website_id,
-    ),
+    getProjectReadiness(projectId),
     getProjectCompetitors(
       projectId,
     ),
@@ -73,6 +64,13 @@ export default async function Page({
       projectId,
     ),
   ]);
+
+  const setupState =
+    workspace.website_id === null
+      ? null
+      : await getWebsiteSetupState(
+          workspace.website_id,
+        );
 
   return (
     <main className="crystal-page min-h-screen">
@@ -108,12 +106,16 @@ export default async function Page({
               </div>
 
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50">
-                <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                {workspace.target_brand ? (
+                  <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                ) : (
+                  <Globe2 className="h-4 w-4 text-amber-500" />
+                )}
               </div>
             </div>
 
             <div className="mt-5 text-lg font-medium text-slate-950">
-              {workspace.target_brand}
+              {workspace.target_brand ?? "Needs configuration"}
             </div>
 
             <div className="mt-1 text-xs text-slate-400">
@@ -133,7 +135,7 @@ export default async function Page({
             </div>
 
             <div className="mt-5 truncate text-lg font-medium text-slate-950">
-              {workspace.domain}
+              {workspace.domain ?? "Needs configuration"}
             </div>
 
             <div className="mt-1 text-xs text-slate-400">
@@ -183,17 +185,27 @@ export default async function Page({
         </section>
 
         <div className="mt-10 space-y-6">
-          <SetupTechnicalStep
-            websiteId={
-              workspace.website_id
-            }
-            initialPageCount={
-              setupState.page_count
-            }
-            initialAudit={
-              setupState.latest_audit
-            }
-          />
+          <ProjectReadinessPanel readiness={readiness} />
+
+          {workspace.website_id !== null && setupState ? (
+            <SetupTechnicalStep
+              websiteId={workspace.website_id}
+              initialPageCount={setupState.page_count}
+              initialAudit={setupState.latest_audit}
+            />
+          ) : (
+            <section className="crystal-panel rounded-[22px] p-6">
+              <div className="flex gap-4">
+                <div className="crystal-step-badge">2</div>
+                <div>
+                  <h2 className="font-semibold text-slate-950">Website & Technical Crawl</h2>
+                  <p className="mt-1 text-sm leading-6 text-amber-700">
+                    Confirm a target brand and primary first-party website before running a bounded crawl.
+                  </p>
+                </div>
+              </div>
+            </section>
+          )}
 
           <SetupCompetitorsStep
             projectId={projectId}
@@ -229,6 +241,7 @@ export default async function Page({
                   prompt.is_active,
               ).length
             }
+            eligibility={readiness.measurements}
           />
 
           <SetupOptimizationStep
