@@ -1098,6 +1098,30 @@ export type StarterPromptGenerationResult = {
       reason: string | null;
       evidence: string[];
     };
+    automatic_rebalance?: {
+      triggered: boolean;
+      status: "not_needed" | "completed" | "failed";
+      generator_version: string;
+      initial_validation: {
+        coverage_status: "balanced" | "needs_review" | "focused";
+        largest_topic_share: number;
+        largest_topic_family_share: number;
+        largest_super_theme_share: number;
+        warnings: string[];
+      };
+      reason: string | null;
+      overrepresented_themes: { name: string; count: number; share: number; limit: number }[];
+      underrepresented_themes: { name: string; count: number; share: number }[];
+      retained_count: number;
+      replaced_count: number;
+      final_validation: {
+        coverage_status: "balanced" | "needs_review" | "focused";
+        largest_topic_share: number;
+        largest_topic_family_share: number;
+        largest_super_theme_share: number;
+        warnings: string[];
+      };
+    };
   };
   warnings: string[];
   created_at: string;

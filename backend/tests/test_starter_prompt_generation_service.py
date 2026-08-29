@@ -287,6 +287,117 @@ class StarterPromptGenerationServiceTests(unittest.TestCase):
         self.assertEqual(result["topic_clusters"][0]["topic_family"], "Deployment")
         self.assertEqual(result["coverage_blueprint"]["largest_topic_family_share"], 1.0)
 
+    @staticmethod
+    def repair_fixture(ai_count=14, include_commercial=True):
+        categories = ["brand", "informational", "problem_solution", "recommendation", "comparison"]
+        if include_commercial:
+            categories.append("commercial")
+        prompts = []
+        ai_topics = ["AI Runtime", "AI Gateway", "Agent Tools", "Model Access"]
+        web_topics = ["Web Delivery", "Developer Workflow"]
+        trust_topics = ["Security", "Observability"]
+        remaining = 19 - ai_count
+        web_count = (remaining + 1) // 2
+        for index in range(19):
+            if index < ai_count:
+                topic = ai_topics[index % len(ai_topics)]
+            elif index < ai_count + web_count:
+                topic = web_topics[(index - ai_count) % len(web_topics)]
+            else:
+                topic = trust_topics[(index - ai_count - web_count) % len(trust_topics)]
+            prompts.append({
+                "text": f"Useful question {index} about {topic}",
+                "topic_cluster": topic,
+                "category": categories[index % len(categories)],
+                "rationale": None,
+            })
+        clusters = [
+            {"name": name, "topic_family": "Agent Runtime" if index < 2 else "AI Services",
+             "super_theme": "AI Ecosystem", "is_major_family": True, "is_major_super_theme": True}
+            for index, name in enumerate(ai_topics)
+        ] + [
+            {"name": name, "topic_family": "Application Delivery",
+             "super_theme": "Web Platform", "is_major_family": True, "is_major_super_theme": True}
+            for index, name in enumerate(web_topics)
+        ] + [
+            {"name": name, "topic_family": name, "super_theme": "Trust and Operations",
+             "is_major_family": True, "is_major_super_theme": True}
+            for name in trust_topics
+        ]
+        core = {"name": "Application Platform", "topic_family": "Application Delivery",
+                "super_theme": "Web Platform", "target_terms": ["Example"], "market_structure": "multi_theme"}
+        return prompts, clusters, core
+
+    def test_balanced_initial_proposal_does_not_create_repair_brief(self):
+        prompts, clusters, core = self.repair_fixture(ai_count=8)
+        blueprint, warnings = StarterPromptGenerationService.coverage(prompts, "brand_wide", clusters, core)
+
+        brief = StarterPromptGenerationService.build_repair_brief(prompts, clusters, blueprint, warnings)
+
+        self.assertEqual(blueprint["concentration_status"], "balanced")
+        self.assertIsNone(brief)
+
+    def test_related_ai_family_dominance_creates_deterministic_repair_brief(self):
+        prompts, clusters, core = self.repair_fixture()
+        blueprint, warnings = StarterPromptGenerationService.coverage(prompts, "brand_wide", clusters, core)
+
+        first = StarterPromptGenerationService.build_repair_brief(prompts, clusters, blueprint, warnings)
+        second = StarterPromptGenerationService.build_repair_brief(prompts, clusters, blueprint, warnings)
+
+        self.assertEqual(first, second)
+        self.assertEqual(first["replacement_count"], 6)
+        self.assertEqual(first["retained_count"], 13)
+        self.assertEqual(first["overrepresented_themes"][0]["count"], 14)
+        self.assertEqual(first["overrepresented_themes"][0]["limit"], 0.45)
+        self.assertTrue(all(item["topic_cluster"] in {"AI Runtime", "AI Gateway", "Agent Tools", "Model Access"}
+                            for item in first["replacement_candidates"]))
+
+    def test_missing_commercial_intent_is_a_repair_deficit(self):
+        prompts, clusters, core = self.repair_fixture(ai_count=8, include_commercial=False)
+        blueprint, warnings = StarterPromptGenerationService.coverage(prompts, "brand_wide", clusters, core)
+
+        brief = StarterPromptGenerationService.build_repair_brief(prompts, clusters, blueprint, warnings)
+
+        self.assertIn("commercial", brief["missing_intents"])
+        self.assertGreaterEqual(brief["replacement_count"], 1)
+
+    def test_focused_and_evidence_justified_single_theme_sets_do_not_repair(self):
+        prompts, clusters, _core = self.repair_fixture(ai_count=19)
+        focused_blueprint, focused_warnings = StarterPromptGenerationService.coverage(
+            prompts, "focused", clusters, None
+        )
+        single_topics = ["Payments", "Billing", "Invoices", "Collections", "Revenue", "Reporting"]
+        single_prompts = [
+            {"text": f"Single market question {index}", "topic_cluster": single_topics[index % 6],
+             "category": list(StarterPromptGenerationService.REQUIRED_INTENTS)[index % 6], "rationale": None}
+            for index in range(18)
+        ]
+        single_theme_clusters = [
+            {"name": name, "topic_family": name, "super_theme": "Payments",
+             "is_major_family": True, "is_major_super_theme": True, "dominance_justified": True}
+            for name in single_topics
+        ]
+        core = {"name": "Payments", "topic_family": "Payments", "super_theme": "Payments",
+                "target_terms": ["Example"], "market_structure": "single_theme"}
+        single_blueprint, single_warnings = StarterPromptGenerationService.coverage(
+            single_prompts, "brand_wide", single_theme_clusters, core
+        )
+
+        self.assertIsNone(StarterPromptGenerationService.build_repair_brief(
+            prompts, clusters, focused_blueprint, focused_warnings
+        ))
+        self.assertIsNone(StarterPromptGenerationService.build_repair_brief(
+            single_prompts, single_theme_clusters, single_blueprint, single_warnings
+        ))
+
+    def test_repaired_result_remains_needs_review_when_still_over_limit(self):
+        prompts, clusters, core = self.repair_fixture(ai_count=10)
+
+        blueprint, warnings = StarterPromptGenerationService.coverage(prompts, "brand_wide", clusters, core)
+
+        self.assertEqual(blueprint["concentration_status"], "needs_review")
+        self.assertTrue(any("super-theme guard" in warning for warning in warnings))
+
 
 if __name__ == "__main__":
     unittest.main()

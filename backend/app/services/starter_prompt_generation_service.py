@@ -1,4 +1,5 @@
 import json
+import math
 import re
 from collections import Counter
 from difflib import SequenceMatcher
@@ -20,7 +21,8 @@ from app.services.ai_model_service import AIModelService
 
 
 class StarterPromptGenerationService:
-    GENERATOR_VERSION = "market-anchor-v4"
+    GENERATOR_VERSION = "automatic-rebalance-v5"
+    REPAIR_GENERATOR_VERSION = "coverage-repair-v1"
     MAX_TOPIC_SHARE = 0.35
     MAX_FAMILY_SHARE = 0.40
     MAX_SUPER_THEME_SHARE = 0.45
@@ -46,6 +48,20 @@ class StarterPromptGenerationService:
         if terms & cls.AI_AGENT_THEME_TERMS:
             return "ai_agent_ecosystem"
         return " ".join(sorted(terms))
+
+    @classmethod
+    def grouped_theme_names(cls, topic_clusters: list[dict]) -> dict[str, str]:
+        raw_names = {
+            item.get("super_theme") or item.get("topic_family") or item["name"]
+            for item in topic_clusters
+        }
+        return {
+            name: " / ".join(sorted(
+                candidate for candidate in raw_names
+                if cls.semantic_theme_signature(candidate) == cls.semantic_theme_signature(name)
+            ))
+            for name in raw_names
+        }
 
     @classmethod
     def is_near_duplicate(cls, value: str, existing: list[str]) -> bool:
@@ -164,14 +180,7 @@ class StarterPromptGenerationService:
             item["name"]: item.get("super_theme") or item.get("topic_family") or item["name"]
             for item in (topic_clusters or [])
         }
-        raw_theme_names = set(raw_theme_by_cluster.values())
-        grouped_theme_names = {
-            name: " / ".join(sorted(
-                candidate for candidate in raw_theme_names
-                if cls.semantic_theme_signature(candidate) == cls.semantic_theme_signature(name)
-            ))
-            for name in raw_theme_names
-        }
+        grouped_theme_names = cls.grouped_theme_names(topic_clusters or [])
         theme_by_cluster = {
             cluster: grouped_theme_names[theme]
             for cluster, theme in raw_theme_by_cluster.items()
@@ -267,6 +276,79 @@ class StarterPromptGenerationService:
         }, warnings
 
     @classmethod
+    def build_repair_brief(
+        cls,
+        prompts: list[dict],
+        topic_clusters: list[dict],
+        blueprint: dict,
+        warnings: list[str],
+    ) -> dict | None:
+        if blueprint.get("concentration_status") != "needs_review":
+            return None
+        distributions = blueprint.get("super_theme_distribution", {})
+        dominant_theme, dominant_count = max(distributions.items(), key=lambda item: item[1], default=(None, 0))
+        missing_intents = sorted(cls.REQUIRED_INTENTS - set(blueprint.get("intent_distribution", {})))
+        missing_checks = sorted(
+            name for name, passed in blueprint.get("brand_wide_checklist", {}).items() if not passed
+        )
+        over_limit = bool(dominant_theme and blueprint.get("largest_super_theme_share", 0) > cls.MAX_SUPER_THEME_SHARE)
+        if not over_limit and not missing_intents and not missing_checks:
+            return None
+
+        grouped = cls.grouped_theme_names(topic_clusters)
+        cluster_meta = {item["name"]: item for item in topic_clusters}
+        dominant_clusters = {
+            name for name, item in cluster_meta.items()
+            if grouped.get(item.get("super_theme") or item.get("topic_family") or name) == dominant_theme
+        }
+        allowed_count = math.floor(len(prompts) * cls.MAX_SUPER_THEME_SHARE)
+        replacement_count = max(0, dominant_count - allowed_count) if over_limit else 0
+        replacement_count = min(len(prompts), max(replacement_count, len(missing_intents), len(missing_checks)))
+
+        combo_counts = Counter((item["topic_cluster"], item["category"]) for item in prompts)
+        cluster_counts = Counter(item["topic_cluster"] for item in prompts)
+        core = blueprint.get("core_category") or {}
+        core_family = core.get("topic_family")
+        preserve_intents = {"brand", "recommendation", "comparison", "commercial"}
+
+        candidates = []
+        for index, item in enumerate(prompts):
+            meta = cluster_meta.get(item["topic_cluster"], {})
+            in_dominant = item["topic_cluster"] in dominant_clusters
+            replace_score = 0
+            replace_score += 100 if in_dominant else 0
+            replace_score += 20 if combo_counts[(item["topic_cluster"], item["category"])] > 1 else 0
+            replace_score += 10 if cluster_counts[item["topic_cluster"]] > 1 else 0
+            replace_score -= 40 if meta.get("topic_family") == core_family else 0
+            replace_score -= 25 if item["category"] in preserve_intents else 0
+            candidates.append((replace_score, index, item))
+        selected = sorted(candidates, key=lambda entry: (-entry[0], -entry[1]))[:replacement_count]
+        replace_indices = {index for _score, index, _item in selected}
+        retained = [item for index, item in enumerate(prompts) if index not in replace_indices]
+        replaced = [item for index, item in enumerate(prompts) if index in replace_indices]
+        underrepresented = [
+            {"name": name, "count": count, "share": round(count / max(1, len(prompts)), 4)}
+            for name, count in sorted(distributions.items(), key=lambda item: (item[1], item[0]))
+            if name != dominant_theme
+        ]
+        return {
+            "reason": "; ".join(warnings),
+            "overrepresented_themes": ([{
+                "name": dominant_theme,
+                "count": dominant_count,
+                "share": round(dominant_count / max(1, len(prompts)), 4),
+                "limit": cls.MAX_SUPER_THEME_SHARE,
+            }] if over_limit else []),
+            "underrepresented_themes": underrepresented,
+            "missing_intents": missing_intents,
+            "missing_checklist_items": missing_checks,
+            "retained_prompts": retained,
+            "replacement_candidates": replaced,
+            "retained_count": len(retained),
+            "replacement_count": len(replaced),
+        }
+
+    @classmethod
     def _serialize(cls, proposal: PromptSetProposal, context: dict | None = None) -> dict:
         context = context or {}
         clusters = [
@@ -290,7 +372,8 @@ class StarterPromptGenerationService:
         blueprint.setdefault("brand_wide_checklist", {})
         blueprint.setdefault("crawl_sample_bias", {"detected": False, "reason": None, "evidence": []})
         warnings = list(proposal.warnings)
-        if proposal.generator_version == cls.GENERATOR_VERSION:
+        if proposal.generator_version in {cls.GENERATOR_VERSION, "market-anchor-v4"}:
+            automatic_rebalance = blueprint.get("automatic_rebalance")
             blueprint, computed_warnings = cls.coverage(
                 proposal.prompts,
                 proposal.measurement_scope,
@@ -298,6 +381,8 @@ class StarterPromptGenerationService:
                 blueprint.get("core_category"),
                 blueprint.get("crawl_sample_bias"),
             )
+            if automatic_rebalance:
+                blueprint["automatic_rebalance"] = automatic_rebalance
             warnings = list(dict.fromkeys([*warnings, *computed_warnings]))
         return {
             "id": proposal.id, "project_id": proposal.project_id, "status": proposal.status,
@@ -325,6 +410,106 @@ class StarterPromptGenerationService:
             PromptSetProposal.project_id == project_id
         ).order_by(PromptSetProposal.created_at.desc(), PromptSetProposal.id.desc()))
         return cls._serialize(proposal) if proposal else None
+
+    @classmethod
+    def _validate_provider_payload(
+        cls, payload: dict, pages: list, terms: list[str], target_name: str,
+        count: int, deterministic_bias: dict,
+    ) -> tuple[dict, dict, list[dict], list[dict]]:
+        raw_core_category = payload.get("core_category")
+        raw_bias = payload.get("crawl_sample_bias")
+        raw_super_themes = payload.get("super_themes")
+        raw_families = payload.get("topic_families")
+        raw_clusters = payload.get("topic_clusters")
+        raw_prompts = payload.get("prompts")
+        if (not isinstance(raw_core_category, dict) or not isinstance(raw_bias, dict)
+                or not isinstance(raw_super_themes, list) or not isinstance(raw_families, list)
+                or not isinstance(raw_clusters, list) or not isinstance(raw_prompts, list)):
+            raise HTTPException(status_code=502, detail="Generator response omitted the coverage blueprint.")
+        evidence_blob = " ".join(terms + [page.url.lower() for page in pages])
+
+        def grounded(values: list) -> bool:
+            return bool(values) and any(str(value).strip().lower() in evidence_blob for value in values)
+
+        super_theme_names = set()
+        super_themes = []
+        for item in raw_super_themes:
+            name = str(item.get("name", "")).strip()
+            evidence = [str(value).strip() for value in item.get("evidence", []) if str(value).strip()]
+            if not name or not grounded(evidence):
+                continue
+            super_theme_names.add(name)
+            super_themes.append({
+                "name": name, "evidence": evidence[:4], "is_major": bool(item.get("is_major")),
+                "dominance_justified": bool(item.get("dominance_justified")),
+            })
+        family_names = set()
+        families = []
+        for item in raw_families:
+            name = str(item.get("name", "")).strip()
+            super_theme = str(item.get("super_theme", "")).strip()
+            evidence = [str(value).strip() for value in item.get("evidence", []) if str(value).strip()]
+            if not name or super_theme not in super_theme_names or not grounded(evidence):
+                continue
+            family_names.add(name)
+            families.append({"name": name, "super_theme": super_theme,
+                             "evidence": evidence[:4], "is_major": bool(item.get("is_major"))})
+        core_name = str(raw_core_category.get("name", "")).strip()
+        core_family = str(raw_core_category.get("topic_family", "")).strip()
+        core_super_theme = str(raw_core_category.get("super_theme", "")).strip()
+        core_evidence = [str(value).strip() for value in raw_core_category.get("evidence", []) if str(value).strip()]
+        if (not core_name or core_family not in family_names or core_super_theme not in super_theme_names
+                or not grounded(core_evidence)):
+            raise HTTPException(status_code=502, detail="Generator returned an ungrounded core market category.")
+        core_category = {
+            "name": core_name, "topic_family": core_family, "super_theme": core_super_theme,
+            "evidence": core_evidence[:4],
+            "market_structure": "single_theme" if raw_core_category.get("market_structure") == "single_theme" else "multi_theme",
+            "weighting_note": str(raw_core_category.get("weighting_note", "")).strip() or None,
+            "target_terms": [target_name],
+        }
+        bias_evidence = [str(value).strip() for value in raw_bias.get("evidence", []) if str(value).strip()]
+        bias_detected = deterministic_bias["detected"] or (bool(raw_bias.get("detected")) and grounded(bias_evidence))
+        crawl_sample_bias = {
+            "detected": bias_detected,
+            "reason": deterministic_bias["reason"] if deterministic_bias["detected"] else str(raw_bias.get("reason", "")).strip() or None,
+            "evidence": deterministic_bias["evidence"] if deterministic_bias["detected"] else bias_evidence[:4] if bias_detected else [],
+        }
+        clusters = []
+        cluster_names = set()
+        for item in raw_clusters:
+            name = str(item.get("name", "")).strip()
+            family = str(item.get("topic_family", "")).strip()
+            evidence = [str(value).strip() for value in item.get("evidence", []) if str(value).strip()]
+            if not name or family not in family_names or not grounded(evidence):
+                continue
+            cluster_names.add(name)
+            family_meta = next(meta for meta in families if meta["name"] == family)
+            theme_meta = next(meta for meta in super_themes if meta["name"] == family_meta["super_theme"])
+            clusters.append({
+                "name": name, "topic_family": family, "super_theme": family_meta["super_theme"],
+                "evidence": evidence[:4], "is_major_family": family_meta["is_major"],
+                "is_major_super_theme": theme_meta["is_major"],
+                "dominance_justified": theme_meta["dominance_justified"], "allocated_prompts": 0,
+            })
+        output = []
+        for item in raw_prompts:
+            text = str(item.get("text", "")).strip()
+            category = str(item.get("category", "")).strip().lower()
+            topic = str(item.get("topic_cluster", "")).strip()
+            if len(text) < 5 or category not in cls.VALID_CATEGORIES or topic not in cluster_names:
+                continue
+            if cls.is_near_duplicate(text, [entry["text"] for entry in output]):
+                continue
+            output.append({"text": text, "category": category, "topic_cluster": topic,
+                           "rationale": str(item.get("rationale", "")).strip() or None})
+            if len(output) == count:
+                break
+        if len(output) < max(8, count - 2):
+            raise HTTPException(status_code=502, detail="Generator returned too few valid, grounded, unique prompts.")
+        counts = Counter(item["topic_cluster"] for item in output)
+        clusters = [{**item, "allocated_prompts": counts[item["name"]]} for item in clusters if counts[item["name"]]]
+        return core_category, crawl_sample_bias, clusters, output
 
     @classmethod
     def generate(cls, db: Session, project_id: int, count: int, model_id: int | None = None,
@@ -403,114 +588,96 @@ FIRST-PARTY EVIDENCE:
             raise
         except Exception as exc:
             raise HTTPException(status_code=502, detail=f"AI starter prompt generation failed: {exc}") from exc
-        raw_core_category = payload.get("core_category")
-        raw_bias = payload.get("crawl_sample_bias")
-        raw_super_themes = payload.get("super_themes")
-        raw_families = payload.get("topic_families")
-        raw_clusters = payload.get("topic_clusters")
-        raw_prompts = payload.get("prompts")
-        if (not isinstance(raw_core_category, dict) or not isinstance(raw_bias, dict)
-                or not isinstance(raw_super_themes, list) or not isinstance(raw_families, list)
-                or not isinstance(raw_clusters, list) or not isinstance(raw_prompts, list)):
-            raise HTTPException(status_code=502, detail="Generator response omitted the coverage blueprint.")
-        evidence_blob = " ".join(terms + [page.url.lower() for page in pages])
-        def grounded(values: list) -> bool:
-            return bool(values) and any(str(value).strip().lower() in evidence_blob for value in values)
-
-        super_theme_names = set()
-        super_themes = []
-        for item in raw_super_themes:
-            name = str(item.get("name", "")).strip()
-            evidence = [str(value).strip() for value in item.get("evidence", []) if str(value).strip()]
-            if not name or not grounded(evidence):
-                continue
-            super_theme_names.add(name)
-            super_themes.append({
-                "name": name, "evidence": evidence[:4], "is_major": bool(item.get("is_major")),
-                "dominance_justified": bool(item.get("dominance_justified")),
-            })
-        family_names = set()
-        families = []
-        for item in raw_families:
-            name = str(item.get("name", "")).strip()
-            super_theme = str(item.get("super_theme", "")).strip()
-            evidence = [str(value).strip() for value in item.get("evidence", []) if str(value).strip()]
-            if not name or super_theme not in super_theme_names or not grounded(evidence):
-                continue
-            family_names.add(name)
-            families.append({"name": name, "super_theme": super_theme,
-                             "evidence": evidence[:4], "is_major": bool(item.get("is_major"))})
-        core_name = str(raw_core_category.get("name", "")).strip()
-        core_family = str(raw_core_category.get("topic_family", "")).strip()
-        core_super_theme = str(raw_core_category.get("super_theme", "")).strip()
-        core_evidence = [str(value).strip() for value in raw_core_category.get("evidence", []) if str(value).strip()]
-        if (not core_name or core_family not in family_names or core_super_theme not in super_theme_names
-                or not grounded(core_evidence)):
-            raise HTTPException(status_code=502, detail="Generator returned an ungrounded core market category.")
-        core_category = {
-            "name": core_name,
-            "topic_family": core_family,
-            "super_theme": core_super_theme,
-            "evidence": core_evidence[:4],
-            "market_structure": (
-                "single_theme" if raw_core_category.get("market_structure") == "single_theme"
-                else "multi_theme"
-            ),
-            "weighting_note": str(raw_core_category.get("weighting_note", "")).strip() or None,
-            "target_terms": [target.name],
-        }
-        bias_evidence = [str(value).strip() for value in raw_bias.get("evidence", []) if str(value).strip()]
-        bias_detected = deterministic_bias["detected"] or (
-            bool(raw_bias.get("detected")) and grounded(bias_evidence)
+        core_category, crawl_sample_bias, clusters, output = cls._validate_provider_payload(
+            payload, pages, terms, target.name, count, deterministic_bias
         )
-        crawl_sample_bias = {
-            "detected": bias_detected,
-            "reason": (
-                deterministic_bias["reason"] if deterministic_bias["detected"]
-                else str(raw_bias.get("reason", "")).strip() or None
-            ),
-            "evidence": (
-                deterministic_bias["evidence"] if deterministic_bias["detected"]
-                else bias_evidence[:4] if bias_detected else []
-            ),
-        }
-        clusters = []
-        cluster_names = set()
-        for item in raw_clusters:
-            name = str(item.get("name", "")).strip()
-            family = str(item.get("topic_family", "")).strip()
-            evidence = [str(value).strip() for value in item.get("evidence", []) if str(value).strip()]
-            if not name or family not in family_names or not grounded(evidence):
-                continue
-            cluster_names.add(name)
-            family_meta = next(item for item in families if item["name"] == family)
-            theme_meta = next(item for item in super_themes if item["name"] == family_meta["super_theme"])
-            clusters.append({"name": name, "topic_family": family,
-                             "super_theme": family_meta["super_theme"], "evidence": evidence[:4],
-                             "is_major_family": family_meta["is_major"],
-                             "is_major_super_theme": theme_meta["is_major"],
-                             "dominance_justified": theme_meta["dominance_justified"],
-                             "allocated_prompts": 0})
-        output: list[dict] = []
-        for item in raw_prompts:
-            text = str(item.get("text", "")).strip()
-            category = str(item.get("category", "")).strip().lower()
-            topic = str(item.get("topic_cluster", "")).strip()
-            if len(text) < 5 or category not in cls.VALID_CATEGORIES or topic not in cluster_names:
-                continue
-            if cls.is_near_duplicate(text, [entry["text"] for entry in output]):
-                continue
-            output.append({"text": text, "category": category, "topic_cluster": topic,
-                           "rationale": str(item.get("rationale", "")).strip() or None})
-            if len(output) == count:
-                break
-        if len(output) < max(8, count - 2):
-            raise HTTPException(status_code=502, detail="Generator returned too few valid, grounded, unique prompts.")
-        counts = Counter(item["topic_cluster"] for item in output)
-        clusters = [{**item, "allocated_prompts": counts[item["name"]]} for item in clusters if counts[item["name"]]]
         blueprint, warnings = cls.coverage(
             output, measurement_scope, clusters, core_category, crawl_sample_bias
         )
+        initial_validation = {
+            "coverage_status": blueprint["concentration_status"],
+            "largest_topic_share": blueprint["largest_topic_share"],
+            "largest_topic_family_share": blueprint["largest_topic_family_share"],
+            "largest_super_theme_share": blueprint["largest_super_theme_share"],
+            "warnings": list(warnings),
+        }
+        repair_brief = (
+            cls.build_repair_brief(output, clusters, blueprint, warnings)
+            if measurement_scope == "brand_wide" else None
+        )
+        repair_provenance = {
+            "triggered": False,
+            "status": "not_needed",
+            "generator_version": cls.REPAIR_GENERATOR_VERSION,
+            "initial_validation": initial_validation,
+            "reason": None,
+            "overrepresented_themes": [],
+            "underrepresented_themes": [],
+            "retained_count": len(output),
+            "replaced_count": 0,
+            "final_validation": initial_validation,
+        }
+        if repair_brief:
+            repair_prompt = f"""Repair an existing brand-wide AI-search prompt proposal using this structured brief.
+TARGET: {target.name}
+APPROVED COMPETITORS: {', '.join(item.name for item in competitors) or '(none)'}
+CORE MARKET: {json.dumps(core_category)}
+REPAIR BRIEF: {json.dumps(repair_brief)}
+
+Preserve every retained prompt verbatim. Replace only the listed replacement candidates. Fill the documented evidence-backed deficits naturally. Keep exactly {count} prompts and all required intents. Keep the existing semantic theme meanings; do not rename or split related themes to evade the 35%, 40%, or 45% guards. Aim below, not exactly at, the 45% super-theme maximum. Use approved competitors only.
+
+Return the same JSON shape as the initial generator:
+{{"core_category":{{"name":"...","topic_family":"exact family name","super_theme":"exact super-theme name","market_structure":"multi_theme","evidence":["exact supplied term or URL"],"weighting_note":"..."}},"crawl_sample_bias":{{"detected":false,"reason":"...","evidence":["exact supplied term or URL"]}},"super_themes":[{{"name":"...","evidence":["exact supplied term or URL"],"is_major":true,"dominance_justified":false}}],"topic_families":[{{"name":"...","super_theme":"exact super-theme name","evidence":["exact supplied term or URL"],"is_major":true}}],"topic_clusters":[{{"name":"...","topic_family":"exact family name","evidence":["exact supplied term or URL"],"allocated_prompts":3}}],"prompts":[{{"text":"...","category":"comparison","topic_cluster":"exact cluster name","rationale":"..."}}]}}
+
+FIRST-PARTY EVIDENCE:
+{chr(10).join(excerpts)}"""
+            repair_provenance = {
+                **repair_provenance,
+                "triggered": True,
+                "status": "failed",
+                "reason": repair_brief["reason"],
+                "overrepresented_themes": repair_brief["overrepresented_themes"],
+                "underrepresented_themes": repair_brief["underrepresented_themes"],
+                "retained_count": repair_brief["retained_count"],
+                "replaced_count": 0,
+            }
+            try:
+                repair_result = ProviderFactory.create(engine.slug).execute(
+                    prompt=repair_prompt, model_id=model.provider_model_id, mode="memory"
+                )
+                repaired_payload = cls.extract_json(repair_result.response_text)
+                repaired_core, repaired_bias, repaired_clusters, repaired_output = cls._validate_provider_payload(
+                    repaired_payload, pages, terms, target.name, count, deterministic_bias
+                )
+                retained_texts = {item["text"] for item in repair_brief["retained_prompts"]}
+                repaired_texts = {item["text"] for item in repaired_output}
+                if not retained_texts <= repaired_texts:
+                    raise ValueError("required retained prompts were changed")
+                core_category, crawl_sample_bias, clusters, output = (
+                    repaired_core, repaired_bias, repaired_clusters, repaired_output
+                )
+                blueprint, warnings = cls.coverage(
+                    output, measurement_scope, clusters, core_category, crawl_sample_bias
+                )
+                repair_provenance = {
+                    **repair_provenance,
+                    "status": "completed",
+                    "retained_count": len(retained_texts),
+                    "replaced_count": len(output) - len(retained_texts),
+                    "final_validation": {
+                        "coverage_status": blueprint["concentration_status"],
+                        "largest_topic_share": blueprint["largest_topic_share"],
+                        "largest_topic_family_share": blueprint["largest_topic_family_share"],
+                        "largest_super_theme_share": blueprint["largest_super_theme_share"],
+                        "warnings": list(warnings),
+                    },
+                }
+            except Exception:
+                warnings = list(dict.fromkeys([
+                    *warnings,
+                    "Automatic rebalancing could not produce a valid repair; review the initial proposal.",
+                ]))
+        blueprint["automatic_rebalance"] = repair_provenance
         project.measurement_scope = measurement_scope
         project.measurement_focus = focus_label.strip() if focus_label else None
         proposal = PromptSetProposal(

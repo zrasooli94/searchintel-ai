@@ -55,6 +55,7 @@ class CoverageBlueprint(BaseModel):
     core_category: dict | None
     brand_wide_checklist: dict[str, bool]
     crawl_sample_bias: dict
+    automatic_rebalance: dict | None = None
 
 
 class StarterPromptGenerationResult(BaseModel):
