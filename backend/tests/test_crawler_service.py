@@ -50,7 +50,66 @@ class _RobotsBlockedClient:
         )
 
 
+class _HTMLClient:
+    constructor_headers = None
+
+    def __init__(self, *args, **kwargs):
+        type(self).constructor_headers = kwargs.get("headers")
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        return False
+
+    def get(self, url: str):
+        if url.endswith("/robots.txt"):
+            return _Response(url=url, text="")
+        return _Response(
+            url=url,
+            text=(
+                "<html><head><title>Example</title></head>"
+                "<body><h1>Example</h1><p>Useful content</p>"
+                "</body></html>"
+            ),
+            content_type="text/html; charset=utf-8",
+        )
+
+
 class CrawlerServiceTests(unittest.TestCase):
+
+    @patch(
+        "app.services.crawler_service.httpx.Client",
+        _HTMLClient,
+    )
+    @patch(
+        "app.services.crawler_service.PageRepository.upsert",
+    )
+    @patch(
+        "app.services.crawler_service.WebsiteService.get",
+    )
+    def test_crawler_explicitly_requests_html_for_content_negotiation(
+        self,
+        get_website,
+        upsert_page,
+    ):
+        website = SimpleNamespace(
+            id=18,
+            base_url="https://example.com/",
+            last_crawl_summary=None,
+        )
+        get_website.return_value = website
+
+        CrawlerService.crawl(Mock(), website_id=18, max_pages=1)
+
+        self.assertIn(
+            "text/html",
+            _HTMLClient.constructor_headers["Accept"],
+        )
+        data = upsert_page.call_args.kwargs["data"]
+        self.assertEqual(data["title"], "Example")
+        self.assertEqual(data["h1"], "Example")
+        self.assertGreater(data["word_count"], 0)
 
     @patch(
         "app.services.crawler_service.httpx.Client",

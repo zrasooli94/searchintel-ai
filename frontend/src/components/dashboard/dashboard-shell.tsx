@@ -20,9 +20,14 @@ import {
   Search,
 } from "lucide-react";
 
-import type {
-  VisibilitySummary,
-} from "@/lib/types";
+export type DashboardShellSummary = {
+  project_id: number;
+  target: {
+    brand: string;
+  };
+  experiment_name: string;
+  experiment_status: string;
+};
 
 
 const navigation = [
@@ -65,7 +70,7 @@ const navigation = [
 
 
 type Props = {
-  summary: VisibilitySummary;
+  summary: DashboardShellSummary;
   title: string;
   children: ReactNode;
 };

@@ -158,6 +158,24 @@ class ProjectReadinessServiceTests(unittest.TestCase):
             3,
         )
 
+    def test_single_page_is_runnable_with_limited_coverage_warning(self):
+        page = SimpleNamespace(
+            status_code=200,
+            content_text="useful content",
+            word_count=250,
+            canonical_url=None,
+        )
+
+        result = self.build(pages=[page])
+
+        technical = result["measurements"]["technical_seo"]
+        self.assertEqual(technical["state"], "ready")
+        self.assertTrue(technical["execution_available"])
+        self.assertIn(
+            "limited_technical_sample",
+            [item["code"] for item in technical["warnings"]],
+        )
+
     def test_missing_primary_website_blocks_web_site_and_technical_independently(self):
         result = self.build(websites=[])
 

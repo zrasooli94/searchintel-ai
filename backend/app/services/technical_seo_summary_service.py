@@ -199,6 +199,12 @@ class TechnicalSEOSummaryService:
                         "imply that Google or another crawler "
                         "cannot access the site."
                     ),
+                    "coverage_state": "unavailable",
+                    "coverage_label": "LIMITED",
+                    "coverage_reason": (
+                        "No usable pages were available for "
+                        "the latest bounded technical audit."
+                    ),
                     "website": {
                         "id": website.id,
                         "brand_id": target_brand.id,
@@ -215,6 +221,7 @@ class TechnicalSEOSummaryService:
                     "average_word_count": 0.0,
                     "pages": [],
                     "checks": [],
+                    "issues": [],
                     "recommendation_count": 0,
                     "recommendations": [],
                 }
@@ -315,6 +322,34 @@ class TechnicalSEOSummaryService:
             else 0.0
         )
 
+        limited_sample = audit.pages_checked <= 1
+        coverage_state = (
+            "limited_sample"
+            if limited_sample
+            else "bounded_sample"
+        )
+        coverage_label = (
+            "LIMITED SAMPLE"
+            if limited_sample
+            else "BOUNDED SAMPLE"
+        )
+        coverage_reason = (
+            "SearchIntel's bounded crawl currently contains "
+            "one usable page. Technical findings apply to "
+            "the crawled sample and may not represent the "
+            "broader site."
+            if limited_sample
+            else (
+                "Technical findings reflect the "
+                f"{audit.pages_checked} pages analyzed in "
+                "SearchIntel's latest bounded crawl."
+            )
+        )
+        page_urls = {
+            page.id: page.url
+            for page in pages
+        }
+
         return {
             "project_id":
                 project_id,
@@ -327,6 +362,15 @@ class TechnicalSEOSummaryService:
 
             "limitation_note":
                 None,
+
+            "coverage_state":
+                coverage_state,
+
+            "coverage_label":
+                coverage_label,
+
+            "coverage_reason":
+                coverage_reason,
 
             "website": {
                 "id":
@@ -437,6 +481,21 @@ class TechnicalSEOSummaryService:
 
             "checks":
                 checks,
+
+            "issues": [
+                {
+                    "id": issue.id,
+                    "page_id": issue.page_id,
+                    "page_url": page_urls.get(
+                        issue.page_id,
+                        website.base_url,
+                    ),
+                    "code": issue.code,
+                    "severity": issue.severity,
+                    "message": issue.message,
+                }
+                for issue in audit.issues
+            ],
 
             "recommendation_count":
                 len(recommendations),

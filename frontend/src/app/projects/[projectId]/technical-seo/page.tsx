@@ -5,10 +5,13 @@ import {
 } from "next/navigation";
 
 import {
-  getLatestCompletedVisibilitySummary,
+  getLatestCompletedWebVisibilitySummary,
   getTechnicalSEOSummary,
 } from "@/lib/api";
-import { technicalSEOPageState } from "@/lib/technical-seo-state";
+import {
+  technicalSEOPageState,
+  technicalSEOShellSummary,
+} from "@/lib/technical-seo-state";
 
 
 export const dynamic = "force-dynamic";
@@ -44,10 +47,10 @@ export default async function Page({
 
   if (!seo) return null;
 
-  const visibilitySummary =
-    await getLatestCompletedVisibilitySummary(
-      projectId,
-    );
+  const visibilitySummary = technicalSEOShellSummary(
+    seo,
+    await getLatestCompletedWebVisibilitySummary(projectId),
+  );
 
   return (
     <TechnicalSEODashboard

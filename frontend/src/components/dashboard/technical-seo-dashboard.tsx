@@ -11,16 +11,19 @@ import {
 } from "lucide-react";
 
 import DashboardShell from "@/components/dashboard/dashboard-shell";
+import type { DashboardShellSummary } from "@/components/dashboard/dashboard-shell";
 
 import type {
   TechnicalSEOSummary,
-  VisibilitySummary,
 } from "@/lib/types";
-import { technicalSEOPageState } from "@/lib/technical-seo-state";
+import {
+  technicalSEOCoveragePresentation,
+  technicalSEOPageState,
+} from "@/lib/technical-seo-state";
 
 
 type Props = {
-  visibilitySummary: VisibilitySummary;
+  visibilitySummary: DashboardShellSummary;
   seo: TechnicalSEOSummary;
 };
 
@@ -115,6 +118,7 @@ export default function TechnicalSEODashboard({
 
   const audit = seo.audit;
   if (!audit) return null;
+  const coverage = technicalSEOCoveragePresentation(seo);
 
   return (
     <DashboardShell
@@ -147,9 +151,11 @@ export default function TechnicalSEODashboard({
 
           <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <MetricCard
-              label="Site Health"
+              label={coverage.scoreLabel}
               value={`${audit.score}/100`}
-              detail="SearchIntel Technical Audit V1"
+              detail={coverage.showLimitedWarning
+                ? "Technical Audit V1 · crawled sample only"
+                : "SearchIntel Technical Audit V1"}
               icon={Gauge}
             />
 
@@ -173,6 +179,33 @@ export default function TechnicalSEODashboard({
               detail="From latest technical audit"
               icon={SearchCheck}
             />
+          </div>
+
+          <div className={[
+            "mt-5 rounded-[20px] border p-5",
+            coverage.showLimitedWarning
+              ? "border-amber-200/80 bg-amber-50/60"
+              : "border-slate-200 bg-white/70",
+          ].join(" ")}>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <div className="crystal-eyebrow">Coverage</div>
+                <div className="mt-2 font-semibold text-slate-950">
+                  {coverage.coverageLabel}
+                </div>
+                <p className="mt-2 max-w-3xl text-sm leading-7 text-slate-600">
+                  {coverage.coverageReason}
+                </p>
+              </div>
+              <span className={[
+                "shrink-0 rounded-full border px-3 py-1 text-xs font-semibold tracking-[0.08em]",
+                coverage.showLimitedWarning
+                  ? "border-amber-200 bg-amber-50 text-amber-700"
+                  : "border-blue-200 bg-blue-50 text-blue-700",
+              ].join(" ")}>
+                {audit.pages_checked} page{audit.pages_checked === 1 ? "" : "s"} analyzed
+              </span>
+            </div>
           </div>
         </section>
 
@@ -279,6 +312,46 @@ export default function TechnicalSEODashboard({
               </tbody>
             </table>
           </div>
+        </section>
+
+        <section className="crystal-panel rounded-[22px]">
+          <div className="p-5 pb-4 lg:p-6 lg:pb-4">
+            <h2 className="font-semibold text-slate-950">
+              Audit Findings
+            </h2>
+            <p className="mt-1 text-sm text-slate-500">
+              Rule-based findings from the pages in this audited sample.
+            </p>
+          </div>
+
+          {seo.issues.length === 0 ? (
+            <div className="border-t border-slate-200/70 p-6 text-sm text-slate-600">
+              No technical findings were recorded for this sample.
+            </div>
+          ) : (
+            <div className="divide-y divide-slate-200/70 border-t border-slate-200/70">
+              {seo.issues.map((issue) => (
+                <div key={issue.id} className="grid gap-3 p-5 lg:grid-cols-[150px_1fr] lg:px-6">
+                  <div>
+                    <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium uppercase text-slate-600">
+                      {issue.severity}
+                    </span>
+                    <div className="mt-3 text-xs font-medium text-slate-500">
+                      {issue.code.replaceAll("_", " ")}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-sm leading-6 text-slate-800">
+                      {issue.message}
+                    </p>
+                    <a href={issue.page_url} target="_blank" rel="noreferrer" className="mt-2 block break-all text-xs text-violet-700 hover:underline">
+                      {issue.page_url}
+                    </a>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </section>
 
         <section className="grid gap-6 xl:grid-cols-[1fr_1.25fr]">

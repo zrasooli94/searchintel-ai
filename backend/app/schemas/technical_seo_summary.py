@@ -32,6 +32,15 @@ class TechnicalSEOCheck(BaseModel):
     issue_count: int
 
 
+class TechnicalSEOIssueSummary(BaseModel):
+    id: int
+    page_id: int
+    page_url: str
+    code: str
+    severity: str
+    message: str
+
+
 class TechnicalSEORecommendationSummary(BaseModel):
     id: int
     page_id: int
@@ -78,6 +87,10 @@ class TechnicalSEOSummary(BaseModel):
     measurement_reason: str | None
     limitation_note: str | None
 
+    coverage_state: str
+    coverage_label: str
+    coverage_reason: str
+
     website: TechnicalSEOWebsiteSummary
     audit: TechnicalSEOAuditSummary | None
 
@@ -94,6 +107,10 @@ class TechnicalSEOSummary(BaseModel):
 
     checks: list[
         TechnicalSEOCheck
+    ]
+
+    issues: list[
+        TechnicalSEOIssueSummary
     ]
 
     recommendation_count: int

@@ -109,6 +109,9 @@ class CrawlerService:
             follow_redirects=True,
             headers={
                 "User-Agent": cls.USER_AGENT,
+                "Accept": (
+                    "text/html,application/xhtml+xml"
+                ),
             },
         ) as client:
 

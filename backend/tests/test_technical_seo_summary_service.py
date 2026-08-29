@@ -1,4 +1,5 @@
 import unittest
+from datetime import datetime, timezone
 from types import SimpleNamespace
 from unittest.mock import patch
 
@@ -72,6 +73,127 @@ class TechnicalSEOSummaryServiceTests(unittest.TestCase):
         self.assertEqual(result["pages"], [])
         self.assertIn("SearchIntelBot", result["measurement_reason"])
         self.assertIn("does not imply", result["limitation_note"])
+        self.assertEqual(result["coverage_state"], "unavailable")
+        self.assertEqual(result["issues"], [])
+
+    @patch(
+        "app.services.technical_seo_summary_service."
+        "TechnicalRecommendationRepository.list_by_audit",
+        return_value=[],
+    )
+    def test_single_page_audit_preserves_findings_and_marks_limited_sample(
+        self,
+        _recommendations,
+    ):
+        page = SimpleNamespace(
+            id=71,
+            url="https://example.com/",
+            status_code=200,
+            title=None,
+            meta_description=None,
+            h1=None,
+            canonical_url=None,
+            robots_meta=None,
+            word_count=0,
+            internal_link_count=0,
+            external_link_count=0,
+            last_crawled_at=datetime.now(timezone.utc),
+        )
+        issue = SimpleNamespace(
+            id=81,
+            page_id=71,
+            code="MISSING_TITLE",
+            severity="high",
+            message="Page does not have a title tag.",
+        )
+        audit = SimpleNamespace(
+            id=91,
+            score=0,
+            pages_checked=1,
+            issue_count=1,
+            issues=[issue],
+            created_at=datetime.now(timezone.utc),
+        )
+        self.patches[2].stop()
+        self.patches[2] = patch(
+            "app.services.technical_seo_summary_service."
+            "PageRepository.list_by_website",
+            return_value=[page],
+        )
+        self.patches[2].start()
+        self.patches[3].stop()
+        self.patches[3] = patch(
+            "app.services.technical_seo_summary_service."
+            "TechnicalAuditRepository.get_latest",
+            return_value=audit,
+        )
+        self.patches[3].start()
+
+        result = TechnicalSEOSummaryService.build(object(), 8)
+
+        self.assertEqual(result["measurement_state"], "ready")
+        self.assertEqual(result["coverage_state"], "limited_sample")
+        self.assertEqual(result["coverage_label"], "LIMITED SAMPLE")
+        self.assertIn("may not represent the broader site", result["coverage_reason"])
+        self.assertEqual(result["audit"]["score"], 0)
+        self.assertEqual(result["issues"][0]["code"], "MISSING_TITLE")
+        self.assertEqual(result["issues"][0]["page_url"], page.url)
+
+    @patch(
+        "app.services.technical_seo_summary_service."
+        "TechnicalRecommendationRepository.list_by_audit",
+        return_value=[],
+    )
+    def test_multi_page_audit_preserves_normal_score_context(
+        self,
+        _recommendations,
+    ):
+        pages = [
+            SimpleNamespace(
+                id=index,
+                url=f"https://example.com/{index}",
+                status_code=200,
+                title=f"Page {index}",
+                meta_description="Description",
+                h1="Heading",
+                canonical_url=f"https://example.com/{index}",
+                robots_meta=None,
+                word_count=200,
+                internal_link_count=3,
+                external_link_count=1,
+                last_crawled_at=datetime.now(timezone.utc),
+            )
+            for index in range(1, 11)
+        ]
+        audit = SimpleNamespace(
+            id=92,
+            score=81,
+            pages_checked=10,
+            issue_count=0,
+            issues=[],
+            created_at=datetime.now(timezone.utc),
+        )
+        self.patches[2].stop()
+        self.patches[2] = patch(
+            "app.services.technical_seo_summary_service."
+            "PageRepository.list_by_website",
+            return_value=pages,
+        )
+        self.patches[2].start()
+        self.patches[3].stop()
+        self.patches[3] = patch(
+            "app.services.technical_seo_summary_service."
+            "TechnicalAuditRepository.get_latest",
+            return_value=audit,
+        )
+        self.patches[3].start()
+
+        result = TechnicalSEOSummaryService.build(object(), 6)
+
+        self.assertEqual(result["coverage_state"], "bounded_sample")
+        self.assertEqual(result["coverage_label"], "BOUNDED SAMPLE")
+        self.assertEqual(result["audit"]["score"], 81)
+        self.assertEqual(result["audit"]["pages_checked"], 10)
 
     def test_unattempted_project_still_returns_setup_guidance(self):
         self.website.last_crawl_summary = None

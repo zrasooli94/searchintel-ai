@@ -120,12 +120,25 @@ export type TechnicalSEORecommendation = {
   status: string;
 };
 
+export type TechnicalSEOIssue = {
+  id: number;
+  page_id: number;
+  page_url: string;
+  code: string;
+  severity: string;
+  message: string;
+};
+
 export type TechnicalSEOSummary = {
   project_id: number;
 
   measurement_state: "ready" | "limited";
   measurement_reason: string | null;
   limitation_note: string | null;
+
+  coverage_state: "unavailable" | "limited_sample" | "bounded_sample";
+  coverage_label: string;
+  coverage_reason: string;
 
   website: {
     id: number;
@@ -163,6 +176,7 @@ export type TechnicalSEOSummary = {
   pages: TechnicalSEOPage[];
 
   checks: TechnicalSEOCheck[];
+  issues: TechnicalSEOIssue[];
 
   recommendation_count: number;
 

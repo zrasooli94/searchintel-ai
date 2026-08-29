@@ -370,7 +370,16 @@ class ProjectReadinessService:
             elif not pages:
                 technical = measurement("technical_seo", "needs_review", "No bounded crawl corpus is stored yet.", [], [], [], "Run a bounded crawl to establish technical eligibility.", True, has_technical_history)
             else:
-                technical = measurement("technical_seo", "ready", "Stored pages are available for a bounded technical audit.", [f"{len(pages)} stored page(s).", f"{len(usable_pages)} content-usable page(s)."], [], [], "Run or refresh the technical audit when needed.", True, has_technical_history)
+                coverage_warnings = (
+                    [cls._issue(
+                        "limited_technical_sample",
+                        "The current bounded crawl contains only one stored page.",
+                        "Treat audit findings as sample-specific and review crawl discovery before drawing broader conclusions.",
+                    )]
+                    if len(pages) == 1
+                    else []
+                )
+                technical = measurement("technical_seo", "ready", "Stored pages are available for a bounded technical audit.", [f"{len(pages)} stored page(s).", f"{len(usable_pages)} content-usable page(s)."], [], coverage_warnings, "Run or refresh the technical audit when needed.", True, has_technical_history)
 
         ai_blockers = identity_issues + prompt_issues
         if ai_blockers:
