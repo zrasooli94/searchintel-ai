@@ -56,6 +56,11 @@ class CoverageBlueprint(BaseModel):
     brand_wide_checklist: dict[str, bool]
     crawl_sample_bias: dict
     automatic_rebalance: dict | None = None
+    provider_topic_distribution: dict[str, int] = Field(default_factory=dict)
+    provider_topic_family_distribution: dict[str, int] = Field(default_factory=dict)
+    provider_super_theme_distribution: dict[str, int] = Field(default_factory=dict)
+    effective_classifications: list[dict] = Field(default_factory=list)
+    semantic_reevaluation: dict | None = None
 
 
 class StarterPromptGenerationResult(BaseModel):

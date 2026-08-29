@@ -28,6 +28,8 @@ export default function SetupPromptGenerator(props: Props) {
   const [confirming, setConfirming] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [applying, setApplying] = useState(false);
+  const [reevaluating, setReevaluating] = useState(false);
+  const [semanticConfirming, setSemanticConfirming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const proposal = result?.status === "proposed" ? result : null;
@@ -64,6 +66,18 @@ export default function SetupPromptGenerator(props: Props) {
       router.refresh();
     } catch (caught) { setError(caught instanceof Error ? caught.message : "Proposal approval failed."); }
     finally { setApplying(false); }
+  }
+
+  async function reevaluateProposal() {
+    if (!proposal) return;
+    setReevaluating(true); setError(null);
+    try {
+      const response = await fetch(`/api/projects/${props.projectId}/prompts/starter-proposals/${proposal.id}/semantic-reevaluate`, { method: "POST" });
+      const data = await response.json();
+      if (!response.ok) throw new Error(typeof data?.detail === "string" ? data.detail : "Semantic re-evaluation failed.");
+      setResult(data); setSemanticConfirming(false); router.refresh();
+    } catch (caught) { setError(caught instanceof Error ? caught.message : "Semantic re-evaluation failed."); }
+    finally { setReevaluating(false); }
   }
 
   function editPrompt(index: number, field: "text" | "category", value: string) {
@@ -115,14 +129,15 @@ export default function SetupPromptGenerator(props: Props) {
           <div className="mt-3 grid gap-2 text-xs text-slate-600 sm:grid-cols-2"><div>Initial coverage: <span className="font-medium text-slate-900">{pretty(proposal.coverage_blueprint.automatic_rebalance.initial_validation.coverage_status)}</span></div><div>Final coverage: <span className="font-medium text-slate-900">{pretty(proposal.coverage_blueprint.automatic_rebalance.final_validation.coverage_status)}</span></div><div>Retained: <span className="font-medium text-slate-900">{proposal.coverage_blueprint.automatic_rebalance.retained_count} prompts</span></div><div>Replaced: <span className="font-medium text-slate-900">{proposal.coverage_blueprint.automatic_rebalance.replaced_count} prompts</span></div></div>
           {proposal.coverage_blueprint.automatic_rebalance.triggered && <p className="mt-3 text-xs leading-5 text-slate-500">SearchIntel repaired the detected coverage imbalance once, then reran the existing coverage validation. No benchmark was created.</p>}
         </div>}
+        {props.operatorAuthorized && proposal.generator_version !== "semantic-classification-v6" && <><button type="button" disabled={reevaluating} onClick={() => setSemanticConfirming(true)} className="mt-4 rounded-xl border border-violet-200 bg-white px-4 py-2.5 text-sm font-medium text-violet-700 disabled:opacity-50">Re-evaluate Semantic Coverage</button>{semanticConfirming && <div className="mt-3 rounded-xl border border-violet-200 bg-white p-4 text-xs leading-5 text-slate-600"><div className="font-medium text-slate-950">Re-evaluate this stored proposal?</div><p className="mt-2">Semantic reclassification is deterministic. If it detects a correctable imbalance, SearchIntel may use at most 1 AI repair call. This will not create a benchmark or activate prompts.</p><div className="mt-3 flex gap-2"><button type="button" onClick={() => setSemanticConfirming(false)} className="rounded-lg border px-3 py-2">Cancel</button><button type="button" onClick={reevaluateProposal} disabled={reevaluating} className="crystal-primary-button px-3 py-2">{reevaluating && <Loader2 className="h-3.5 w-3.5 animate-spin" />}Re-evaluate</button></div></div>}</>}
         <div className="mt-4 grid gap-3 lg:grid-cols-2"><div className="rounded-xl bg-white p-4"><div className="text-xs font-medium text-slate-500">Topic coverage</div>{topicEntries.map(([name, count]) => <div key={name} className="mt-2 flex justify-between text-sm"><span>{name}</span><span>{count}</span></div>)}</div>
           <div className="rounded-xl bg-white p-4"><div className="text-xs font-medium text-slate-500">Intent coverage</div>{Object.entries(proposal.coverage_blueprint.intent_distribution).map(([name, count]) => <div key={name} className="mt-2 flex justify-between text-sm"><span>{pretty(name)}</span><span>{count}</span></div>)}</div></div>
         {proposal.measurement_scope === "brand_wide" && <div className="mt-3 rounded-xl border border-violet-100 bg-white p-4">
-          <div className="flex flex-wrap items-center justify-between gap-2"><div><div className="text-xs font-medium uppercase tracking-wide text-violet-600">Brand-wide coverage</div><div className="mt-1 text-sm font-medium text-slate-950">{proposal.coverage_blueprint.core_category?.name ?? "Core market needs review"}</div><div className="mt-1 text-xs text-slate-500">Core market anchor</div></div><span className="rounded-full bg-violet-50 px-3 py-1 text-xs text-violet-700">{pretty(proposal.coverage_blueprint.concentration_status)}</span></div>
+          <div className="flex flex-wrap items-center justify-between gap-2"><div><div className="text-xs font-medium uppercase tracking-wide text-violet-600">Brand-wide coverage</div><div className="mt-1 text-sm font-medium text-slate-950">{proposal.coverage_blueprint.core_category?.core_brand_market?.name ?? proposal.coverage_blueprint.core_category?.name ?? "Core market needs review"}</div><div className="mt-1 text-xs text-slate-500">Core brand market</div>{proposal.coverage_blueprint.core_category?.strategic_emphasis?.name && <><div className="mt-3 text-sm font-medium text-slate-950">{proposal.coverage_blueprint.core_category.strategic_emphasis.name}</div><div className="mt-1 text-xs text-slate-500">Current strategic emphasis</div></>}</div><span className="rounded-full bg-violet-50 px-3 py-1 text-xs text-violet-700">{pretty(proposal.coverage_blueprint.concentration_status)}</span></div>
           {proposal.coverage_blueprint.core_category?.weighting_note && <p className="mt-3 text-xs leading-5 text-slate-500">{proposal.coverage_blueprint.core_category.weighting_note}</p>}
           <div className="mt-4 grid gap-4 lg:grid-cols-2"><div><div className="text-xs font-medium text-slate-500">Topic families</div>{familyEntries.map(([name, count]) => <div key={name} className="mt-2 flex justify-between text-sm"><span>{name}</span><span>{count}</span></div>)}</div>
             <div><div className="text-xs font-medium text-slate-500">Coverage checklist</div>{Object.entries(proposal.coverage_blueprint.brand_wide_checklist).map(([name, passed]) => <div key={name} className="mt-2 flex items-center gap-2 text-sm"><span className={passed ? "text-emerald-600" : "text-amber-600"}>{passed ? "✓" : "!"}</span><span>{pretty(name)}</span></div>)}</div></div>
-          <div className="mt-4 border-t border-slate-100 pt-4"><div className="text-xs font-medium text-slate-500">Super-theme coverage</div>{superThemeEntries.map(([name, count]) => <div key={name} className="mt-2 flex justify-between gap-4 text-sm"><span>{name}</span><span className="whitespace-nowrap">{count} · {((count / proposal.generated_count) * 100).toFixed(1)}%</span></div>)}</div>
+          <div className="mt-4 border-t border-slate-100 pt-4"><div className="text-xs font-medium text-slate-500">Effective super-theme coverage</div>{superThemeEntries.map(([name, count]) => <div key={name} className="mt-2 flex justify-between gap-4 text-sm"><span>{name}</span><span className="whitespace-nowrap">{count} · {((count / proposal.generated_count) * 100).toFixed(1)}%</span></div>)}<p className="mt-3 text-xs text-slate-500">Coverage is calculated from prompt meaning, not generator labels alone.</p></div>
           {proposal.coverage_blueprint.crawl_sample_bias.detected && <div className="mt-4 rounded-lg bg-amber-50 p-3 text-xs leading-5 text-amber-800"><span className="font-medium">Crawl sample bias detected.</span> {proposal.coverage_blueprint.crawl_sample_bias.reason}</div>}
         </div>}
         <p className="mt-3 text-xs text-slate-500">Largest topic share: {(proposal.coverage_blueprint.largest_topic_share * 100).toFixed(1)}%. Largest topic-family share: {(proposal.coverage_blueprint.largest_topic_family_share * 100).toFixed(1)}%. Largest super-theme share: {(proposal.coverage_blueprint.largest_super_theme_share * 100).toFixed(1)}%. The 35% cluster, 40% family, and 45% super-theme guards are SearchIntel benchmark-design constraints, not industry standards.</p>

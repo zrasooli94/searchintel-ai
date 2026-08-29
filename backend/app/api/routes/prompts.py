@@ -88,6 +88,19 @@ def get_starter_prompt_proposal(project_id: int, db: Session = Depends(get_db)):
 
 
 @router.post(
+    "/projects/{project_id}/prompts/starter-proposals/{proposal_id}/semantic-reevaluate",
+    response_model=StarterPromptGenerationResult,
+)
+def reevaluate_starter_prompt_proposal(
+    project_id: int,
+    proposal_id: int,
+    db: Session = Depends(get_db),
+    _operator: None = Depends(require_operator),
+):
+    return StarterPromptGenerationService.reevaluate_and_repair(db, project_id, proposal_id)
+
+
+@router.post(
     "/projects/{project_id}/prompts/starter-proposals/{proposal_id}/apply",
     response_model=PromptProposalApplyResult,
 )

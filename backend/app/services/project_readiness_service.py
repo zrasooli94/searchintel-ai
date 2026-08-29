@@ -210,8 +210,10 @@ class ProjectReadinessService:
         )
         latest_coverage = latest_proposal.coverage_blueprint if latest_proposal else {}
         latest_coverage_warnings = list(latest_proposal.warnings) if latest_proposal else []
-        if (latest_proposal and getattr(latest_proposal, "generator_version", None)
-                == StarterPromptGenerationService.GENERATOR_VERSION):
+        if (latest_proposal and getattr(latest_proposal, "generator_version", None) in {
+                StarterPromptGenerationService.GENERATOR_VERSION,
+                "automatic-rebalance-v5", "market-anchor-v4",
+        }):
             latest_coverage, computed_warnings = StarterPromptGenerationService.coverage(
                 latest_proposal.prompts,
                 latest_proposal.measurement_scope,

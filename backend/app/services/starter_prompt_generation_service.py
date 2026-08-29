@@ -21,7 +21,7 @@ from app.services.ai_model_service import AIModelService
 
 
 class StarterPromptGenerationService:
-    GENERATOR_VERSION = "automatic-rebalance-v5"
+    GENERATOR_VERSION = "semantic-classification-v6"
     REPAIR_GENERATOR_VERSION = "coverage-repair-v1"
     MAX_TOPIC_SHARE = 0.35
     MAX_FAMILY_SHARE = 0.40
@@ -36,6 +36,30 @@ class StarterPromptGenerationService:
     AI_AGENT_THEME_TERMS = {
         "ai", "agent", "agents", "agentic", "llm", "llms", "model", "models",
         "generative", "inference",
+    }
+    SEMANTIC_DOMAINS = {
+        "ai_agent": {
+            "name": "AI / Agent Ecosystem",
+            "phrases": {
+                "agent": 3, "agents": 3, "agentic": 3, "ai application": 3, "ai-generated": 3,
+                "ai generated": 3, "aigenerated": 3, "ai gateway": 4, "ai sdk": 4, "ai model": 3,
+                "model provider": 3, "llm": 3, "generative ai": 3,
+            },
+        },
+        "payments": {
+            "name": "Payments Ecosystem",
+            "phrases": {
+                "payment processing": 4, "payment gateway": 4, "checkout": 3,
+                "payment fraud": 4, "billing": 2, "invoicing": 3, "merchant": 2,
+            },
+        },
+        "marketing_crm": {
+            "name": "Marketing / CRM Ecosystem",
+            "phrases": {
+                "crm": 4, "lead nurturing": 4, "marketing automation": 4,
+                "sales pipeline": 3, "customer relationship": 3, "campaign automation": 3,
+            },
+        },
     }
 
     @staticmethod
@@ -61,6 +85,62 @@ class StarterPromptGenerationService:
                 if cls.semantic_theme_signature(candidate) == cls.semantic_theme_signature(name)
             ))
             for name in raw_names
+        }
+
+    @classmethod
+    def semantic_prompt_classification(cls, prompt: dict, cluster: dict) -> dict:
+        normalized = cls.normalize_text(prompt.get("text", ""))
+        provider_theme = cluster.get("super_theme") or cluster.get("topic_family") or cluster.get("name", "")
+        provider_signature = cls.semantic_theme_signature(provider_theme)
+        scores = {}
+        tokens = set(normalized.split())
+        for key, domain in cls.SEMANTIC_DOMAINS.items():
+            score = sum(
+                weight for phrase, weight in domain["phrases"].items()
+                if (phrase in normalized if " " in phrase or phrase == "aigenerated" else phrase in tokens)
+            )
+            if key == "ai_agent" and provider_signature == "ai_agent_ecosystem":
+                score += 3
+            scores[key] = score
+        ranked = sorted(scores.items(), key=lambda item: (-item[1], item[0]))
+        primary_key, primary_score = ranked[0]
+        secondary = [
+            cls.SEMANTIC_DOMAINS[key]["name"] for key, score in ranked[1:]
+            if score >= 3 and primary_score - score <= 1
+        ]
+        if primary_score < 3:
+            return {
+                "effective_micro_cluster": cluster.get("name") or prompt.get("topic_cluster"),
+                "effective_topic_family": cluster.get("topic_family") or cluster.get("name") or prompt.get("topic_cluster"),
+                "effective_super_theme": provider_theme,
+                "secondary_themes": [],
+                "confidence": "metadata_supported",
+                "reclassified": False,
+            }
+        if primary_key == "ai_agent":
+            if any(value in normalized for value in ("gateway", "sdk", "model provider", "ai model")):
+                micro = "AI model access"
+            elif any(value in normalized for value in ("sandbox", "generated code", "ai generated")):
+                micro = "Secure AI execution"
+            elif any(value in normalized for value in ("connect", "integration", "external service")):
+                micro = "AI application integration"
+            else:
+                micro = "Agent development and orchestration"
+            family = "AI and agent infrastructure"
+        elif primary_key == "payments":
+            micro = "Payment risk and checkout" if any(value in normalized for value in ("fraud", "checkout")) else "Payment operations"
+            family = "Payments"
+        else:
+            micro = "Marketing automation" if "automation" in normalized else "CRM operations"
+            family = "Marketing and CRM"
+        effective_theme = cls.SEMANTIC_DOMAINS[primary_key]["name"]
+        return {
+            "effective_micro_cluster": micro,
+            "effective_topic_family": family,
+            "effective_super_theme": effective_theme,
+            "secondary_themes": secondary,
+            "confidence": "high" if primary_score >= 4 else "medium",
+            "reclassified": cls.semantic_theme_signature(effective_theme) != provider_signature,
         }
 
     @classmethod
@@ -164,18 +244,16 @@ class StarterPromptGenerationService:
         core_category: dict | None = None,
         crawl_sample_bias: dict | None = None,
     ) -> tuple[dict, list[str]]:
-        topics = Counter(item["topic_cluster"] for item in prompts)
+        provider_topics = Counter(item["topic_cluster"] for item in prompts)
         intents = Counter(item["category"] for item in prompts)
-        largest_share = max(topics.values(), default=0) / max(1, len(prompts))
         family_by_cluster = {
             item["name"]: item.get("topic_family") or item["name"]
             for item in (topic_clusters or [])
         }
-        families = Counter(
+        provider_families = Counter(
             family_by_cluster.get(item["topic_cluster"], item["topic_cluster"])
             for item in prompts
         )
-        largest_family_share = max(families.values(), default=0) / max(1, len(prompts))
         raw_theme_by_cluster = {
             item["name"]: item.get("super_theme") or item.get("topic_family") or item["name"]
             for item in (topic_clusters or [])
@@ -185,10 +263,34 @@ class StarterPromptGenerationService:
             cluster: grouped_theme_names[theme]
             for cluster, theme in raw_theme_by_cluster.items()
         }
-        super_themes = Counter(
+        provider_super_themes = Counter(
             theme_by_cluster.get(item["topic_cluster"], item["topic_cluster"])
             for item in prompts
         )
+        cluster_meta = {item["name"]: item for item in (topic_clusters or [])}
+        effective_classifications = []
+        for index, prompt in enumerate(prompts):
+            metadata = cluster_meta.get(prompt["topic_cluster"], {
+                "name": prompt["topic_cluster"],
+                "topic_family": family_by_cluster.get(prompt["topic_cluster"], prompt["topic_cluster"]),
+                "super_theme": theme_by_cluster.get(prompt["topic_cluster"], prompt["topic_cluster"]),
+            })
+            classification = cls.semantic_prompt_classification(prompt, metadata)
+            effective_classifications.append({
+                "prompt_index": index,
+                "provider_topic_cluster": prompt["topic_cluster"],
+                "provider_topic_family": metadata.get("topic_family") or metadata["name"],
+                "provider_super_theme": grouped_theme_names.get(
+                    metadata.get("super_theme") or metadata.get("topic_family") or metadata["name"],
+                    metadata.get("super_theme") or metadata.get("topic_family") or metadata["name"],
+                ),
+                **classification,
+            })
+        topics = Counter(item["effective_micro_cluster"] for item in effective_classifications)
+        families = Counter(item["effective_topic_family"] for item in effective_classifications)
+        super_themes = Counter(item["effective_super_theme"] for item in effective_classifications)
+        largest_share = max(topics.values(), default=0) / max(1, len(prompts))
+        largest_family_share = max(families.values(), default=0) / max(1, len(prompts))
         largest_super_theme_share = max(super_themes.values(), default=0) / max(1, len(prompts))
         target_terms = set((core_category or {}).get("target_terms", []))
         normalized_target_terms = {
@@ -202,8 +304,8 @@ class StarterPromptGenerationService:
         core_family = (core_category or {}).get("topic_family")
         raw_core_super_theme = (core_category or {}).get("super_theme") or core_family
         core_super_theme = grouped_theme_names.get(raw_core_super_theme, raw_core_super_theme)
-        represented_families = set(families)
-        represented_super_themes = set(super_themes)
+        represented_families = set(provider_families)
+        represented_super_themes = set(provider_super_themes)
         major_families = {
             item.get("topic_family")
             for item in (topic_clusters or [])
@@ -244,7 +346,8 @@ class StarterPromptGenerationService:
         if scope == "brand_wide" and largest_super_theme_share > cls.MAX_SUPER_THEME_SHARE:
             dominant_theme, dominant_count = super_themes.most_common(1)[0]
             justified = any(
-                grouped_theme_names.get(item.get("super_theme"), item.get("super_theme")) == dominant_theme
+                cls.semantic_theme_signature(item.get("super_theme") or "")
+                == cls.semantic_theme_signature(dominant_theme)
                 and item.get("dominance_justified")
                 for item in (topic_clusters or [])
             ) and (core_category or {}).get("market_structure") == "single_theme"
@@ -261,10 +364,36 @@ class StarterPromptGenerationService:
             if missing_checks:
                 warnings.append("Brand-wide coverage needs review: " + ", ".join(missing_checks) + ".")
         status = "focused" if scope == "focused" else ("needs_review" if warnings else "balanced")
+        core_category = dict(core_category or {}) or None
+        if core_category:
+            strategic = core_category.get("strategic_emphasis") or {
+                "name": core_category.get("name"), "evidence": core_category.get("evidence", []),
+            }
+            durable = core_category.get("core_brand_market")
+            if not durable:
+                emphasis_signature = cls.semantic_theme_signature(
+                    core_category.get("super_theme") or core_category.get("topic_family") or ""
+                )
+                candidate_family = next((
+                    name for name, _count in provider_families.most_common()
+                    if cls.semantic_theme_signature(name) != emphasis_signature
+                ), core_category.get("name"))
+                candidate_evidence = [
+                    value for item in (topic_clusters or [])
+                    if item.get("topic_family") == candidate_family
+                    for value in item.get("evidence", [])
+                ][:4]
+                durable = {"name": candidate_family, "evidence": candidate_evidence}
+            core_category["core_brand_market"] = durable
+            core_category["strategic_emphasis"] = strategic
         return {
             "topic_distribution": dict(topics),
             "topic_family_distribution": dict(families),
             "super_theme_distribution": dict(super_themes),
+            "provider_topic_distribution": dict(provider_topics),
+            "provider_topic_family_distribution": dict(provider_families),
+            "provider_super_theme_distribution": dict(provider_super_themes),
+            "effective_classifications": effective_classifications,
             "intent_distribution": dict(intents),
             "largest_topic_share": round(largest_share, 4),
             "largest_topic_family_share": round(largest_family_share, 4),
@@ -295,14 +424,20 @@ class StarterPromptGenerationService:
         if not over_limit and not missing_intents and not missing_checks:
             return None
 
-        grouped = cls.grouped_theme_names(topic_clusters)
         cluster_meta = {item["name"]: item for item in topic_clusters}
-        dominant_clusters = {
-            name for name, item in cluster_meta.items()
-            if grouped.get(item.get("super_theme") or item.get("topic_family") or name) == dominant_theme
+        dominant_indices = {
+            item["prompt_index"] for item in blueprint.get("effective_classifications", [])
+            if item["effective_super_theme"] == dominant_theme
         }
         allowed_count = math.floor(len(prompts) * cls.MAX_SUPER_THEME_SHARE)
         replacement_count = max(0, dominant_count - allowed_count) if over_limit else 0
+        dominant_family_count = max(blueprint.get("topic_family_distribution", {}).values(), default=0)
+        dominant_topic_count = max(blueprint.get("topic_distribution", {}).values(), default=0)
+        replacement_count = max(
+            replacement_count,
+            max(0, dominant_family_count - math.floor(len(prompts) * cls.MAX_FAMILY_SHARE)),
+            max(0, dominant_topic_count - math.floor(len(prompts) * cls.MAX_TOPIC_SHARE)),
+        )
         replacement_count = min(len(prompts), max(replacement_count, len(missing_intents), len(missing_checks)))
 
         combo_counts = Counter((item["topic_cluster"], item["category"]) for item in prompts)
@@ -314,7 +449,7 @@ class StarterPromptGenerationService:
         candidates = []
         for index, item in enumerate(prompts):
             meta = cluster_meta.get(item["topic_cluster"], {})
-            in_dominant = item["topic_cluster"] in dominant_clusters
+            in_dominant = index in dominant_indices
             replace_score = 0
             replace_score += 100 if in_dominant else 0
             replace_score += 20 if combo_counts[(item["topic_cluster"], item["category"])] > 1 else 0
@@ -372,8 +507,11 @@ class StarterPromptGenerationService:
         blueprint.setdefault("brand_wide_checklist", {})
         blueprint.setdefault("crawl_sample_bias", {"detected": False, "reason": None, "evidence": []})
         warnings = list(proposal.warnings)
-        if proposal.generator_version in {cls.GENERATOR_VERSION, "market-anchor-v4"}:
+        if proposal.generator_version in {
+            cls.GENERATOR_VERSION, "automatic-rebalance-v5", "market-anchor-v4",
+        }:
             automatic_rebalance = blueprint.get("automatic_rebalance")
+            semantic_reevaluation = blueprint.get("semantic_reevaluation")
             blueprint, computed_warnings = cls.coverage(
                 proposal.prompts,
                 proposal.measurement_scope,
@@ -383,6 +521,8 @@ class StarterPromptGenerationService:
             )
             if automatic_rebalance:
                 blueprint["automatic_rebalance"] = automatic_rebalance
+            if semantic_reevaluation:
+                blueprint["semantic_reevaluation"] = semantic_reevaluation
             warnings = list(dict.fromkeys([*warnings, *computed_warnings]))
         return {
             "id": proposal.id, "project_id": proposal.project_id, "status": proposal.status,
@@ -410,6 +550,136 @@ class StarterPromptGenerationService:
             PromptSetProposal.project_id == project_id
         ).order_by(PromptSetProposal.created_at.desc(), PromptSetProposal.id.desc()))
         return cls._serialize(proposal) if proposal else None
+
+    @classmethod
+    def reevaluate_and_repair(
+        cls, db: Session, project_id: int, proposal_id: int, model_id: int | None = None,
+    ) -> dict:
+        project = ProjectRepository.get_by_id(db, project_id)
+        if project is None:
+            raise HTTPException(status_code=404, detail="Project not found.")
+        proposal = db.scalar(select(PromptSetProposal).where(
+            PromptSetProposal.id == proposal_id,
+            PromptSetProposal.project_id == project_id,
+        ))
+        if proposal is None or proposal.status != "proposed":
+            raise HTTPException(status_code=404, detail="Inactive prompt proposal not found.")
+        original_blueprint = dict(proposal.coverage_blueprint)
+        core = original_blueprint.get("core_category")
+        bias = original_blueprint.get("crawl_sample_bias")
+        blueprint, warnings = cls.coverage(
+            proposal.prompts, proposal.measurement_scope, proposal.topic_clusters, core, bias
+        )
+        reclassified = [item for item in blueprint["effective_classifications"] if item["reclassified"]]
+        semantic_provenance = {
+            "provider_super_theme_distribution": original_blueprint.get(
+                "provider_super_theme_distribution", original_blueprint.get("super_theme_distribution", {})
+            ),
+            "effective_super_theme_distribution": blueprint["super_theme_distribution"],
+            "reclassified_prompt_indices": [item["prompt_index"] for item in reclassified],
+        }
+        brief = (
+            cls.build_repair_brief(proposal.prompts, proposal.topic_clusters, blueprint, warnings)
+            if proposal.measurement_scope == "brand_wide" else None
+        )
+        initial_validation = {
+            "coverage_status": blueprint["concentration_status"],
+            "largest_topic_share": blueprint["largest_topic_share"],
+            "largest_topic_family_share": blueprint["largest_topic_family_share"],
+            "largest_super_theme_share": blueprint["largest_super_theme_share"],
+            "warnings": list(warnings),
+        }
+        rebalance = {
+            "triggered": bool(brief), "status": "not_needed" if not brief else "failed",
+            "generator_version": cls.REPAIR_GENERATOR_VERSION,
+            "initial_validation": initial_validation,
+            "reason": brief["reason"] if brief else None,
+            "overrepresented_themes": brief["overrepresented_themes"] if brief else [],
+            "underrepresented_themes": brief["underrepresented_themes"] if brief else [],
+            "retained_count": brief["retained_count"] if brief else len(proposal.prompts),
+            "replaced_count": 0, "final_validation": initial_validation,
+        }
+        if brief:
+            roles = ProjectBrandRepository.list_brand_roles(db, project_id)
+            targets = [brand for brand, role in roles if role == "target"]
+            if len(targets) != 1:
+                raise HTTPException(status_code=400, detail="Project must have one target brand.")
+            target = targets[0]
+            competitors = [brand for brand, role in roles if role == "competitor"]
+            websites = WebsiteRepository.list_by_brand(db, target.id)
+            website = next((item for item in websites if item.is_primary), websites[0] if websites else None)
+            if website is None:
+                raise HTTPException(status_code=400, detail="A target-brand website is required for semantic repair.")
+            pages = [page for page in PageRepository.list_by_website(db, website.id) if (page.content_text or "").strip()]
+            if not pages:
+                raise HTTPException(status_code=400, detail="Usable first-party crawl evidence is required for semantic repair.")
+            terms = cls.evidence_terms(pages)
+            deterministic_bias = cls.crawl_sample_bias_signal(pages)
+            excerpts = [
+                f"URL: {page.url}\nTitle: {page.title or ''}\nH1: {page.h1 or ''}\nExcerpt: {(page.content_text or '')[:1000]}"
+                for page in pages[:20]
+            ]
+            model = AIModelService.resolve_execution_model(db, model_id)
+            engine = AIEngineRepository.get_by_id(db, model.engine_id)
+            if engine is None:
+                raise HTTPException(status_code=500, detail="AI model engine could not be resolved.")
+            repair_prompt = f"""Repair this existing inactive brand-wide prompt proposal from its semantic coverage brief.
+TARGET: {target.name}
+APPROVED COMPETITORS: {', '.join(item.name for item in competitors) or '(none)'}
+CORE MARKET CONTEXT: {json.dumps(blueprint.get('core_category'))}
+SEMANTIC REPAIR BRIEF: {json.dumps(brief)}
+
+Preserve every retained prompt verbatim. Replace only the listed candidates with genuinely broader evidence-backed prompt texts. Do not repair by relabelling prompts. Keep exactly {len(proposal.prompts)} prompts and all required intents. Do not rename or split semantic themes to evade existing guards.
+
+Return JSON only with exactly this shape:
+{{"core_category":{{"name":"...","topic_family":"exact family name","super_theme":"exact super-theme name","market_structure":"multi_theme","evidence":["exact supplied term or URL"],"weighting_note":"...","core_brand_market":{{"name":"...","evidence":["exact supplied term or URL"]}},"strategic_emphasis":{{"name":"...","evidence":["exact supplied term or URL"]}}}},"crawl_sample_bias":{{"detected":false,"reason":"...","evidence":["exact supplied term or URL"]}},"super_themes":[{{"name":"...","evidence":["exact supplied term or URL"],"is_major":true,"dominance_justified":false}}],"topic_families":[{{"name":"...","super_theme":"exact super-theme name","evidence":["exact supplied term or URL"],"is_major":true}}],"topic_clusters":[{{"name":"...","topic_family":"exact family name","evidence":["exact supplied term or URL"],"allocated_prompts":3}}],"prompts":[{{"text":"...","category":"comparison","topic_cluster":"exact cluster name","rationale":"..."}}]}}
+
+Every item must use evidence terms or URLs from the supplied evidence.
+
+FIRST-PARTY EVIDENCE:
+{chr(10).join(excerpts)}"""
+            try:
+                result = ProviderFactory.create(engine.slug).execute(
+                    prompt=repair_prompt, model_id=model.provider_model_id, mode="memory"
+                )
+                payload = cls.extract_json(result.response_text)
+                repaired_core, repaired_bias, repaired_clusters, repaired_prompts = cls._validate_provider_payload(
+                    payload, pages, terms, target.name, len(proposal.prompts), deterministic_bias
+                )
+                retained_texts = {item["text"] for item in brief["retained_prompts"]}
+                if not retained_texts <= {item["text"] for item in repaired_prompts}:
+                    raise ValueError("required retained prompts were changed")
+                final_blueprint, final_warnings = cls.coverage(
+                    repaired_prompts, proposal.measurement_scope, repaired_clusters,
+                    repaired_core, repaired_bias,
+                )
+                proposal.prompts = repaired_prompts
+                proposal.topic_clusters = repaired_clusters
+                blueprint, warnings = final_blueprint, final_warnings
+                rebalance.update({
+                    "status": "completed", "retained_count": len(retained_texts),
+                    "replaced_count": len(repaired_prompts) - len(retained_texts),
+                    "final_validation": {
+                        "coverage_status": blueprint["concentration_status"],
+                        "largest_topic_share": blueprint["largest_topic_share"],
+                        "largest_topic_family_share": blueprint["largest_topic_family_share"],
+                        "largest_super_theme_share": blueprint["largest_super_theme_share"],
+                        "warnings": list(warnings),
+                    },
+                })
+            except Exception:
+                warnings = list(dict.fromkeys([
+                    *warnings,
+                    "Semantic rebalancing could not produce a valid repair; review the existing proposal.",
+                ]))
+        blueprint["semantic_reevaluation"] = semantic_provenance
+        blueprint["automatic_rebalance"] = rebalance
+        proposal.generator_version = cls.GENERATOR_VERSION
+        proposal.coverage_blueprint = blueprint
+        proposal.warnings = warnings
+        db.commit()
+        db.refresh(proposal)
+        return cls._serialize(proposal)
 
     @classmethod
     def _validate_provider_payload(
@@ -468,6 +738,20 @@ class StarterPromptGenerationService:
             "weighting_note": str(raw_core_category.get("weighting_note", "")).strip() or None,
             "target_terms": [target_name],
         }
+        raw_brand_market = raw_core_category.get("core_brand_market")
+        if isinstance(raw_brand_market, dict):
+            market_evidence = [str(value).strip() for value in raw_brand_market.get("evidence", []) if str(value).strip()]
+            if str(raw_brand_market.get("name", "")).strip() and grounded(market_evidence):
+                core_category["core_brand_market"] = {
+                    "name": str(raw_brand_market["name"]).strip(), "evidence": market_evidence[:4],
+                }
+        raw_emphasis = raw_core_category.get("strategic_emphasis")
+        if isinstance(raw_emphasis, dict):
+            emphasis_evidence = [str(value).strip() for value in raw_emphasis.get("evidence", []) if str(value).strip()]
+            if str(raw_emphasis.get("name", "")).strip() and grounded(emphasis_evidence):
+                core_category["strategic_emphasis"] = {
+                    "name": str(raw_emphasis["name"]).strip(), "evidence": emphasis_evidence[:4],
+                }
         bias_evidence = [str(value).strip() for value in raw_bias.get("evidence", []) if str(value).strip()]
         bias_detected = deterministic_bias["detected"] or (bool(raw_bias.get("detected")) and grounded(bias_evidence))
         crawl_sample_bias = {

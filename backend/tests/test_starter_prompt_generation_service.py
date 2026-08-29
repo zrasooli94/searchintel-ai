@@ -115,10 +115,10 @@ class StarterPromptGenerationServiceTests(unittest.TestCase):
 
         blueprint, warnings = StarterPromptGenerationService.coverage(prompts, "brand_wide", clusters, core)
 
-        self.assertEqual(blueprint["largest_topic_share"], round(1 / 6, 4))
+        self.assertEqual(round(max(blueprint["provider_topic_distribution"].values()) / 6, 4), round(1 / 6, 4))
         self.assertEqual(blueprint["largest_topic_family_share"], 0.5)
         self.assertEqual(blueprint["concentration_status"], "needs_review")
-        self.assertTrue(any("AI Platform" in warning and "50%" in warning for warning in warnings))
+        self.assertTrue(any("AI and agent infrastructure" in warning and "50%" in warning for warning in warnings))
 
     def test_two_families_in_one_super_theme_trigger_super_theme_guard(self):
         prompts = self.broad_prompts()
@@ -134,7 +134,7 @@ class StarterPromptGenerationServiceTests(unittest.TestCase):
 
         blueprint, warnings = StarterPromptGenerationService.coverage(prompts, "brand_wide", clusters, core)
 
-        self.assertEqual(blueprint["largest_topic_family_share"], round(1 / 6, 4))
+        self.assertEqual(round(max(blueprint["provider_topic_family_distribution"].values()) / 6, 4), round(1 / 6, 4))
         self.assertEqual(blueprint["largest_super_theme_share"], round(2 / 6, 4))
         self.assertFalse(any("super-theme guard" in warning for warning in warnings))
 
@@ -142,7 +142,7 @@ class StarterPromptGenerationServiceTests(unittest.TestCase):
             cluster["super_theme"] = "AI Ecosystem"
         blueprint, warnings = StarterPromptGenerationService.coverage(prompts, "brand_wide", clusters, core)
         self.assertEqual(blueprint["largest_super_theme_share"], 0.5)
-        self.assertTrue(any("AI Ecosystem" in warning and "50%" in warning for warning in warnings))
+        self.assertTrue(any("AI / Agent Ecosystem" in warning and "50%" in warning for warning in warnings))
 
     def test_renaming_related_clusters_does_not_evade_super_theme_guard(self):
         prompts = [
@@ -161,8 +161,8 @@ class StarterPromptGenerationServiceTests(unittest.TestCase):
 
         blueprint, warnings = StarterPromptGenerationService.coverage(prompts, "brand_wide", clusters, core)
 
-        self.assertEqual(blueprint["largest_topic_share"], round(1 / 6, 4))
-        self.assertEqual(blueprint["largest_topic_family_share"], round(1 / 6, 4))
+        self.assertEqual(round(max(blueprint["provider_topic_distribution"].values()) / 6, 4), round(1 / 6, 4))
+        self.assertEqual(round(max(blueprint["provider_topic_family_distribution"].values()) / 6, 4), round(1 / 6, 4))
         self.assertEqual(blueprint["largest_super_theme_share"], 0.5)
         self.assertTrue(any("super-theme guard" in warning for warning in warnings))
 
@@ -181,12 +181,17 @@ class StarterPromptGenerationServiceTests(unittest.TestCase):
 
         blueprint, _warnings = StarterPromptGenerationService.coverage(prompts, "brand_wide", clusters, core)
 
-        grouped_name = next(name for name in blueprint["super_theme_distribution"] if "AI application" in name)
-        self.assertIn("Agentic infrastructure", grouped_name)
+        grouped_name = next(name for name in blueprint["super_theme_distribution"] if "AI / Agent" in name)
         self.assertEqual(blueprint["super_theme_distribution"][grouped_name], 2)
 
     def test_genuinely_single_theme_brand_can_justify_dominance(self):
-        prompts = self.broad_prompts()
+        prompts = [
+            {"text": f"Payments question {index}", "topic_cluster": topic, "category": category}
+            for index, (topic, category) in enumerate(zip(
+                ["Gateway", "Agents", "Deployments", "Security", "Analytics", "Core Cloud"],
+                ["brand", "informational", "problem_solution", "recommendation", "comparison", "commercial"],
+            ))
+        ]
         clusters = [
             {"name": topic, "topic_family": topic, "super_theme": "Payments",
              "is_major_family": True, "is_major_super_theme": True, "dominance_justified": True}
@@ -329,7 +334,7 @@ class StarterPromptGenerationServiceTests(unittest.TestCase):
         return prompts, clusters, core
 
     def test_balanced_initial_proposal_does_not_create_repair_brief(self):
-        prompts, clusters, core = self.repair_fixture(ai_count=8)
+        prompts, clusters, core = self.repair_fixture(ai_count=7)
         blueprint, warnings = StarterPromptGenerationService.coverage(prompts, "brand_wide", clusters, core)
 
         brief = StarterPromptGenerationService.build_repair_brief(prompts, clusters, blueprint, warnings)
@@ -345,8 +350,8 @@ class StarterPromptGenerationServiceTests(unittest.TestCase):
         second = StarterPromptGenerationService.build_repair_brief(prompts, clusters, blueprint, warnings)
 
         self.assertEqual(first, second)
-        self.assertEqual(first["replacement_count"], 6)
-        self.assertEqual(first["retained_count"], 13)
+        self.assertEqual(first["replacement_count"], 7)
+        self.assertEqual(first["retained_count"], 12)
         self.assertEqual(first["overrepresented_themes"][0]["count"], 14)
         self.assertEqual(first["overrepresented_themes"][0]["limit"], 0.45)
         self.assertTrue(all(item["topic_cluster"] in {"AI Runtime", "AI Gateway", "Agent Tools", "Model Access"}
@@ -397,6 +402,67 @@ class StarterPromptGenerationServiceTests(unittest.TestCase):
 
         self.assertEqual(blueprint["concentration_status"], "needs_review")
         self.assertTrue(any("super-theme guard" in warning for warning in warnings))
+
+    def test_prompt_meaning_overrides_generic_provider_connectivity_label(self):
+        classification = StarterPromptGenerationService.semantic_prompt_classification(
+            {"text": "How should an AI application connect to external services?", "topic_cluster": "Connectivity"},
+            {"name": "Connectivity", "topic_family": "Web Platform", "super_theme": "Web Delivery"},
+        )
+
+        self.assertEqual(classification["effective_super_theme"], "AI / Agent Ecosystem")
+        self.assertEqual(classification["effective_micro_cluster"], "AI application integration")
+        self.assertTrue(classification["reclassified"])
+
+    def test_mixed_prompt_records_secondary_theme_without_fractional_math(self):
+        classification = StarterPromptGenerationService.semantic_prompt_classification(
+            {"text": "How can an AI application improve payment processing?", "topic_cluster": "Applications"},
+            {"name": "Applications", "topic_family": "Software", "super_theme": "Application Platform"},
+        )
+
+        self.assertEqual(classification["effective_super_theme"], "Payments Ecosystem")
+        self.assertIn("AI / Agent Ecosystem", classification["secondary_themes"])
+
+    def test_payment_and_crm_prompts_group_generically_from_text(self):
+        payment = StarterPromptGenerationService.semantic_prompt_classification(
+            {"text": "How should merchants compare checkout and payment fraud controls?", "topic_cluster": "Risk"},
+            {"name": "Risk", "topic_family": "Commerce", "super_theme": "Business Software"},
+        )
+        crm = StarterPromptGenerationService.semantic_prompt_classification(
+            {"text": "Which CRM automation supports lead nurturing and a sales pipeline?", "topic_cluster": "Automation"},
+            {"name": "Automation", "topic_family": "Software", "super_theme": "Business Software"},
+        )
+
+        self.assertEqual(payment["effective_super_theme"], "Payments Ecosystem")
+        self.assertEqual(crm["effective_super_theme"], "Marketing / CRM Ecosystem")
+
+    def test_core_brand_market_is_separate_from_strategic_emphasis(self):
+        prompts, clusters, core = self.repair_fixture(ai_count=10)
+        core["name"] = "Current AI Initiative"
+        core["topic_family"] = "Agent Runtime"
+        core["super_theme"] = "AI Ecosystem"
+
+        blueprint, _warnings = StarterPromptGenerationService.coverage(
+            prompts, "brand_wide", clusters, core
+        )
+
+        self.assertEqual(blueprint["core_category"]["strategic_emphasis"]["name"], "Current AI Initiative")
+        self.assertEqual(blueprint["core_category"]["core_brand_market"]["name"], "Application Delivery")
+
+    def test_semantic_reclassification_drives_repair_brief(self):
+        prompts, clusters, core = self.repair_fixture(ai_count=7)
+        for index in range(4):
+            prompts[7 + index]["text"] = f"How should AI application integration scenario {index} work?"
+        blueprint, warnings = StarterPromptGenerationService.coverage(
+            prompts, "brand_wide", clusters, core
+        )
+        brief = StarterPromptGenerationService.build_repair_brief(
+            prompts, clusters, blueprint, warnings
+        )
+
+        self.assertEqual(blueprint["concentration_status"], "needs_review")
+        self.assertEqual(blueprint["super_theme_distribution"]["AI / Agent Ecosystem"], 11)
+        self.assertIsNotNone(brief)
+        self.assertEqual(brief["overrepresented_themes"][0]["name"], "AI / Agent Ecosystem")
 
 
 if __name__ == "__main__":

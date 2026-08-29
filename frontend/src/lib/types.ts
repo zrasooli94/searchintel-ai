@@ -1078,6 +1078,26 @@ export type StarterPromptGenerationResult = {
     topic_distribution: Record<string, number>;
     topic_family_distribution: Record<string, number>;
     super_theme_distribution: Record<string, number>;
+    provider_topic_distribution: Record<string, number>;
+    provider_topic_family_distribution: Record<string, number>;
+    provider_super_theme_distribution: Record<string, number>;
+    effective_classifications: {
+      prompt_index: number;
+      provider_topic_cluster: string;
+      provider_topic_family: string;
+      provider_super_theme: string;
+      effective_micro_cluster: string;
+      effective_topic_family: string;
+      effective_super_theme: string;
+      secondary_themes: string[];
+      confidence: "high" | "medium" | "metadata_supported";
+      reclassified: boolean;
+    }[];
+    semantic_reevaluation?: {
+      provider_super_theme_distribution: Record<string, number>;
+      effective_super_theme_distribution: Record<string, number>;
+      reclassified_prompt_indices: number[];
+    };
     intent_distribution: Record<string, number>;
     largest_topic_share: number;
     largest_topic_family_share: number;
@@ -1091,6 +1111,8 @@ export type StarterPromptGenerationResult = {
       market_structure: "single_theme" | "multi_theme";
       weighting_note: string | null;
       target_terms: string[];
+      core_brand_market?: { name: string; evidence: string[] };
+      strategic_emphasis?: { name: string; evidence: string[] };
     } | null;
     brand_wide_checklist: Record<string, boolean>;
     crawl_sample_bias: {
