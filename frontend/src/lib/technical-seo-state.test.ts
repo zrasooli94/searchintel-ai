@@ -62,7 +62,7 @@ test("completed technical audit renders without a web-search experiment", () => 
     audit: { id: 7 },
   } as TechnicalSEOSummary;
 
-  const shell = technicalSEOShellSummary(summary, null);
+  const shell = technicalSEOShellSummary(summary);
 
   assert.equal(shell.project_id, 8);
   assert.equal(shell.target.brand, "Vercel");

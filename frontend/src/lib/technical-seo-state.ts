@@ -35,9 +35,8 @@ export function technicalSEOCoveragePresentation(
 
 export function technicalSEOShellSummary(
   summary: TechnicalSEOSummary,
-  visibility: DashboardShellSummary | null,
 ): DashboardShellSummary {
-  return visibility ?? {
+  return {
     project_id: summary.project_id,
     target: {
       brand: summary.website.brand,

@@ -5,7 +5,6 @@ import {
 } from "next/navigation";
 
 import {
-  getLatestCompletedWebVisibilitySummary,
   getTechnicalSEOSummary,
 } from "@/lib/api";
 import {
@@ -49,7 +48,6 @@ export default async function Page({
 
   const visibilitySummary = technicalSEOShellSummary(
     seo,
-    await getLatestCompletedWebVisibilitySummary(projectId),
   );
 
   return (
