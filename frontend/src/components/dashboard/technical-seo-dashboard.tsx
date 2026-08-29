@@ -423,12 +423,13 @@ export default function TechnicalSEODashboard({
                 <CheckCircle2 className="h-6 w-6 text-emerald-400" />
 
                 <h3 className="mt-4 font-medium text-slate-950">
-                  No active technical recommendations
+                  No generated recommendations stored
                 </h3>
 
                 <p className="mt-2 text-sm leading-7 text-slate-600">
-                  The latest audit produced no rule-based
-                  technical SEO issues.
+                  Review the recorded findings above. This audit
+                  does not currently have separate recommendation
+                  records.
                 </p>
               </div>
             ) : (
