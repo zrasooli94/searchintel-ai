@@ -51,6 +51,8 @@ class ConfigurationSummary(BaseModel):
     active_prompt_count: int
     proposed_prompt_count: int
     prompt_coverage_state: Literal["ready", "needs_review", "blocked"]
+    proposed_prompt_coverage_status: Literal["balanced", "needs_review", "focused"] | None
+    proposed_largest_topic_family_share: float | None
     prompt_categories: list[str]
     usable_page_count: int
     usable_word_count: int

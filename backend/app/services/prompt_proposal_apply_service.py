@@ -28,7 +28,10 @@ class PromptProposalApplyService:
         ) for index, item in enumerate(selected)):
             raise HTTPException(status_code=400, detail="The edited proposal contains duplicate prompts.")
         blueprint, warnings = StarterPromptGenerationService.coverage(
-            selected, proposal.measurement_scope
+            selected,
+            proposal.measurement_scope,
+            proposal.topic_clusters,
+            proposal.coverage_blueprint.get("core_category"),
         )
         existing = list(db.scalars(select(Prompt).where(Prompt.project_id == project_id)).all())
         by_text = {StarterPromptGenerationService.normalize_text(item.text): item for item in existing}

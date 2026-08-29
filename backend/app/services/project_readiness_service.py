@@ -467,6 +467,14 @@ class ProjectReadinessService:
                         latest_proposal and latest_proposal.warnings
                     ) else "ready"
                 ),
+                "proposed_prompt_coverage_status": (
+                    latest_proposal.coverage_blueprint.get("concentration_status")
+                    if latest_proposal and latest_proposal.status == "proposed" else None
+                ),
+                "proposed_largest_topic_family_share": (
+                    latest_proposal.coverage_blueprint.get("largest_topic_family_share")
+                    if latest_proposal and latest_proposal.status == "proposed" else None
+                ),
                 "prompt_categories": categories,
                 "usable_page_count": len(usable_pages),
                 "usable_word_count": usable_words,

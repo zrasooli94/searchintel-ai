@@ -34,15 +34,21 @@ class StarterPromptSuggestion(BaseModel):
 
 class TopicCluster(BaseModel):
     name: str
+    topic_family: str
     evidence: list[str]
+    is_major_family: bool
     allocated_prompts: int
 
 
 class CoverageBlueprint(BaseModel):
     topic_distribution: dict[str, int]
+    topic_family_distribution: dict[str, int]
     intent_distribution: dict[str, int]
     largest_topic_share: float
+    largest_topic_family_share: float
     concentration_status: Literal["balanced", "needs_review", "focused"]
+    core_category: dict | None
+    brand_wide_checklist: dict[str, bool]
 
 
 class StarterPromptGenerationResult(BaseModel):

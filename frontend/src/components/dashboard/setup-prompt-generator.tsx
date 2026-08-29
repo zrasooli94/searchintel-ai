@@ -32,6 +32,7 @@ export default function SetupPromptGenerator(props: Props) {
   const [success, setSuccess] = useState<string | null>(null);
   const proposal = result?.status === "proposed" ? result : null;
   const topicEntries = useMemo(() => Object.entries(proposal?.coverage_blueprint.topic_distribution ?? {}), [proposal]);
+  const familyEntries = useMemo(() => Object.entries(proposal?.coverage_blueprint.topic_family_distribution ?? {}), [proposal]);
 
   async function generate() {
     setGenerating(true); setError(null); setSuccess(null);
@@ -110,7 +111,12 @@ export default function SetupPromptGenerator(props: Props) {
           <span className="rounded-full bg-white px-3 py-1 text-xs text-slate-600">{pretty(proposal.coverage_blueprint.concentration_status)}</span></div>
         <div className="mt-4 grid gap-3 lg:grid-cols-2"><div className="rounded-xl bg-white p-4"><div className="text-xs font-medium text-slate-500">Topic coverage</div>{topicEntries.map(([name, count]) => <div key={name} className="mt-2 flex justify-between text-sm"><span>{name}</span><span>{count}</span></div>)}</div>
           <div className="rounded-xl bg-white p-4"><div className="text-xs font-medium text-slate-500">Intent coverage</div>{Object.entries(proposal.coverage_blueprint.intent_distribution).map(([name, count]) => <div key={name} className="mt-2 flex justify-between text-sm"><span>{pretty(name)}</span><span>{count}</span></div>)}</div></div>
-        <p className="mt-3 text-xs text-slate-500">Largest topic share: {(proposal.coverage_blueprint.largest_topic_share * 100).toFixed(1)}%. The 35% brand-wide guard is a SearchIntel benchmark-design constraint, not an industry standard.</p>
+        {proposal.measurement_scope === "brand_wide" && <div className="mt-3 rounded-xl border border-violet-100 bg-white p-4">
+          <div className="flex flex-wrap items-center justify-between gap-2"><div><div className="text-xs font-medium uppercase tracking-wide text-violet-600">Brand-wide coverage</div><div className="mt-1 text-sm font-medium text-slate-950">{proposal.coverage_blueprint.core_category?.name ?? "Core category needs review"}</div></div><span className="rounded-full bg-violet-50 px-3 py-1 text-xs text-violet-700">{pretty(proposal.coverage_blueprint.concentration_status)}</span></div>
+          <div className="mt-4 grid gap-4 lg:grid-cols-2"><div><div className="text-xs font-medium text-slate-500">Topic families</div>{familyEntries.map(([name, count]) => <div key={name} className="mt-2 flex justify-between text-sm"><span>{name}</span><span>{count}</span></div>)}</div>
+            <div><div className="text-xs font-medium text-slate-500">Coverage checklist</div>{Object.entries(proposal.coverage_blueprint.brand_wide_checklist).map(([name, passed]) => <div key={name} className="mt-2 flex items-center gap-2 text-sm"><span className={passed ? "text-emerald-600" : "text-amber-600"}>{passed ? "✓" : "!"}</span><span>{pretty(name)}</span></div>)}</div></div>
+        </div>}
+        <p className="mt-3 text-xs text-slate-500">Largest topic share: {(proposal.coverage_blueprint.largest_topic_share * 100).toFixed(1)}%. Largest topic-family share: {(proposal.coverage_blueprint.largest_topic_family_share * 100).toFixed(1)}%. The 35% cluster and 40% family guards are SearchIntel benchmark-design constraints, not industry standards.</p>
         {proposal.warnings.map((warning) => <div key={warning} className="mt-2 rounded-lg bg-amber-50 p-3 text-xs text-amber-800">{warning}</div>)}
         <div className="mt-4 space-y-2">{proposal.prompts.map((prompt, index) => <div key={`${proposal.id}-${index}`} className="rounded-xl border border-slate-200 bg-white p-4">
           <label className="text-xs text-slate-500">Prompt {index + 1}<textarea value={prompt.text} onChange={(event) => editPrompt(index, "text", event.target.value)} rows={2} className="mt-1 w-full resize-y rounded-lg border border-slate-200 px-3 py-2 text-sm leading-6 text-slate-800" /></label>

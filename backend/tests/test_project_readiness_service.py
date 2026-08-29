@@ -58,7 +58,9 @@ class ProjectReadinessServiceTests(unittest.TestCase):
         historical_modes=None,
         first_party_suggestions=None,
         pending_competitor_suggestions=0,
+        latest_proposal=None,
     ):
+        self.db.scalar.return_value = latest_proposal
         with ExitStack() as stack:
             stack.enter_context(patch(
                 "app.services.project_readiness_service.ProjectRepository.get_by_id",
@@ -279,6 +281,26 @@ class ProjectReadinessServiceTests(unittest.TestCase):
             result["configuration"]["pending_competitor_suggestion_count"],
             5,
         )
+
+    def test_readiness_reports_macro_prompt_coverage_needs_review(self):
+        proposal = SimpleNamespace(
+            status="proposed",
+            prompts=[{"text": "Prompt"}] * 10,
+            warnings=["AI Platform represents 60% of this brand-wide proposal."],
+            coverage_blueprint={
+                "concentration_status": "needs_review",
+                "largest_topic_family_share": 0.6,
+            },
+        )
+
+        result = self.build(latest_proposal=proposal)
+
+        self.assertEqual(result["configuration"]["prompt_coverage_state"], "needs_review")
+        self.assertEqual(result["configuration"]["proposed_prompt_coverage_status"], "needs_review")
+        self.assertEqual(result["configuration"]["proposed_largest_topic_family_share"], 0.6)
+        self.assertIn("prompt_coverage_needs_review", [item["code"] for item in result["warnings"]])
+        self.db.add.assert_not_called()
+        self.db.commit.assert_not_called()
 
 
 if __name__ == "__main__":

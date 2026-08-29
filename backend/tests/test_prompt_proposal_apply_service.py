@@ -13,7 +13,17 @@ class PromptProposalApplyServiceTests(unittest.TestCase):
             project_id=3,
             status="proposed",
             measurement_scope="brand_wide",
-            coverage_blueprint={},
+            topic_clusters=[{
+                "name": "Deployment", "topic_family": "Cloud Platform",
+                "is_major_family": True, "evidence": ["deployment"],
+                "allocated_prompts": 2,
+            }],
+            coverage_blueprint={
+                "core_category": {
+                    "name": "Cloud Platform", "topic_family": "Cloud Platform",
+                    "target_terms": ["Example"],
+                },
+            },
             warnings=[],
             prompts=[
                 {"text": "Which platforms support preview environments?", "category": "comparison", "topic_cluster": "Deployment", "rationale": None},
