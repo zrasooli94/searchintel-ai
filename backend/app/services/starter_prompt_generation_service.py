@@ -483,6 +483,19 @@ class StarterPromptGenerationService:
             "replacement_count": len(replaced),
         }
 
+    @staticmethod
+    def validate_repair_text_changes(
+        repaired_prompts: list[dict], repair_brief: dict,
+    ) -> tuple[int, int]:
+        repaired_texts = {item["text"] for item in repaired_prompts}
+        retained_texts = {item["text"] for item in repair_brief["retained_prompts"]}
+        candidate_texts = {item["text"] for item in repair_brief["replacement_candidates"]}
+        if not retained_texts <= repaired_texts:
+            raise ValueError("required retained prompts were changed")
+        if candidate_texts & repaired_texts:
+            raise ValueError("replacement candidates were relabelled or reordered instead of replaced")
+        return len(retained_texts), len(repaired_texts - retained_texts)
+
     @classmethod
     def _serialize(cls, proposal: PromptSetProposal, context: dict | None = None) -> dict:
         context = context or {}
@@ -520,6 +533,11 @@ class StarterPromptGenerationService:
                 blueprint.get("crawl_sample_bias"),
             )
             if automatic_rebalance:
+                automatic_rebalance = dict(automatic_rebalance)
+                final_validation = automatic_rebalance.get("final_validation") or {}
+                if (automatic_rebalance.get("status") == "completed"
+                        and final_validation.get("coverage_status") == "needs_review"):
+                    automatic_rebalance["status"] = "insufficient"
                 blueprint["automatic_rebalance"] = automatic_rebalance
             if semantic_reevaluation:
                 blueprint["semantic_reevaluation"] = semantic_reevaluation
@@ -646,9 +664,9 @@ FIRST-PARTY EVIDENCE:
                 repaired_core, repaired_bias, repaired_clusters, repaired_prompts = cls._validate_provider_payload(
                     payload, pages, terms, target.name, len(proposal.prompts), deterministic_bias
                 )
-                retained_texts = {item["text"] for item in brief["retained_prompts"]}
-                if not retained_texts <= {item["text"] for item in repaired_prompts}:
-                    raise ValueError("required retained prompts were changed")
+                retained_count, replaced_count = cls.validate_repair_text_changes(
+                    repaired_prompts, brief
+                )
                 final_blueprint, final_warnings = cls.coverage(
                     repaired_prompts, proposal.measurement_scope, repaired_clusters,
                     repaired_core, repaired_bias,
@@ -657,8 +675,12 @@ FIRST-PARTY EVIDENCE:
                 proposal.topic_clusters = repaired_clusters
                 blueprint, warnings = final_blueprint, final_warnings
                 rebalance.update({
-                    "status": "completed", "retained_count": len(retained_texts),
-                    "replaced_count": len(repaired_prompts) - len(retained_texts),
+                    "status": (
+                        "completed" if blueprint["concentration_status"] == "balanced"
+                        else "insufficient"
+                    ),
+                    "retained_count": retained_count,
+                    "replaced_count": replaced_count,
                     "final_validation": {
                         "coverage_status": blueprint["concentration_status"],
                         "largest_topic_share": blueprint["largest_topic_share"],

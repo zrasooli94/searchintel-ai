@@ -464,6 +464,29 @@ class StarterPromptGenerationServiceTests(unittest.TestCase):
         self.assertIsNotNone(brief)
         self.assertEqual(brief["overrepresented_themes"][0]["name"], "AI / Agent Ecosystem")
 
+    def test_repair_rejects_reordered_replacement_candidates(self):
+        retained = [{"text": "Keep this prompt"}]
+        candidates = [{"text": "Replace this prompt"}]
+        reordered = [{"text": "Replace this prompt"}, {"text": "Keep this prompt"}]
+
+        with self.assertRaisesRegex(ValueError, "relabelled or reordered"):
+            StarterPromptGenerationService.validate_repair_text_changes(
+                reordered,
+                {"retained_prompts": retained, "replacement_candidates": candidates},
+            )
+
+    def test_repair_accepts_genuinely_broader_replacement_text(self):
+        retained = [{"text": "Keep this prompt"}]
+        candidates = [{"text": "Replace this AI prompt"}]
+        repaired = [{"text": "Keep this prompt"}, {"text": "Broader deployment prompt"}]
+
+        counts = StarterPromptGenerationService.validate_repair_text_changes(
+            repaired,
+            {"retained_prompts": retained, "replacement_candidates": candidates},
+        )
+
+        self.assertEqual(counts, (1, 1))
+
 
 if __name__ == "__main__":
     unittest.main()
