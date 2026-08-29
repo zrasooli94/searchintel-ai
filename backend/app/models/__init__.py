@@ -31,6 +31,7 @@ from app.models.technical_issue import TechnicalIssue
 from app.models.technical_recommendation import TechnicalRecommendation
 from app.models.website import Website
 from app.models.competitor_discovery_suggestion import CompetitorDiscoverySuggestion
+from app.models.prompt_set_proposal import PromptSetProposal
 
 __all__ = [
     "SearchEntity",
@@ -66,4 +67,5 @@ __all__ = [
     "TechnicalRecommendation",
     "Website",
     "CompetitorDiscoverySuggestion",
+    "PromptSetProposal",
 ]

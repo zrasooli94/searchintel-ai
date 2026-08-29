@@ -23,6 +23,7 @@ import {
 
 import type {
   ProjectPrompt,
+  StarterPromptGenerationResult,
 } from "@/lib/types";
 
 
@@ -46,6 +47,12 @@ type Props = {
   projectId: number;
   targetBrand: string;
   initialPrompts: ProjectPrompt[];
+  initialProposal: StarterPromptGenerationResult | null;
+  operatorAuthorized: boolean;
+  initialScope: "brand_wide" | "focused";
+  initialFocus: string | null;
+  websitePageCount: number;
+  competitorCount: number;
 };
 
 
@@ -66,6 +73,12 @@ export default function SetupPromptsStep({
   projectId,
   targetBrand,
   initialPrompts,
+  initialProposal,
+  operatorAuthorized,
+  initialScope,
+  initialFocus,
+  websitePageCount,
+  competitorCount,
 }: Props) {
   const router = useRouter();
 
@@ -332,6 +345,14 @@ export default function SetupPromptsStep({
       <div className="p-6 pb-0">
         <SetupPromptGenerator
           projectId={projectId}
+          targetBrand={targetBrand}
+          activePromptCount={prompts.filter((prompt) => prompt.is_active).length}
+          initialProposal={initialProposal}
+          operatorAuthorized={operatorAuthorized}
+          initialScope={initialScope}
+          initialFocus={initialFocus}
+          websitePageCount={websitePageCount}
+          competitorCount={competitorCount}
         />
 
       </div>

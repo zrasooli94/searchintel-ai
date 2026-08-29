@@ -23,6 +23,7 @@ import {
   getCompetitorDiscoverySuggestions,
   getProjectPrompts,
   getProjectReadiness,
+  getStarterPromptProposal,
   getProjectWorkspace,
   getWebsiteSetupState,
 } from "@/lib/api";
@@ -60,6 +61,7 @@ export default async function Page({
     prompts,
     operatorAuthorized,
     discoverySuggestions,
+    starterProposal,
   ] = await Promise.all([
     getProjectReadiness(projectId),
     getProjectCompetitors(
@@ -70,6 +72,7 @@ export default async function Page({
     ),
     isOperatorSession(),
     getCompetitorDiscoverySuggestions(projectId),
+    getStarterPromptProposal(projectId),
   ]);
 
   const setupState =
@@ -244,6 +247,12 @@ export default async function Page({
             initialPrompts={
               prompts
             }
+            initialProposal={starterProposal}
+            operatorAuthorized={operatorAuthorized}
+            initialScope={readiness.configuration.measurement_scope}
+            initialFocus={readiness.configuration.measurement_focus}
+            websitePageCount={readiness.configuration.usable_page_count}
+            competitorCount={readiness.configuration.competitor_count}
           />
 
           <SetupBaselineStep

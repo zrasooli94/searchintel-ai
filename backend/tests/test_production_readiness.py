@@ -184,6 +184,30 @@ class OperatorAuthorizationTests(unittest.TestCase):
             }
             self.assertIn(require_operator, dependency_calls)
 
+    def test_prompt_generation_and_configuration_mutations_require_operator(self):
+        from app.api.routes.prompts import router
+
+        protected_paths = {
+            "/projects/{project_id}/prompts/starter-generate",
+            "/projects/{project_id}/prompts/starter-proposals/{proposal_id}/apply",
+            "/projects/{project_id}/prompts/active-set",
+            "/projects/{project_id}/prompts/bulk",
+            "/projects/{project_id}/prompts",
+            "/projects/{project_id}/prompts/{prompt_id}",
+        }
+        routes = {
+            route.path: route
+            for route in router.routes
+            if getattr(route, "path", None) in protected_paths
+            and "GET" not in getattr(route, "methods", set())
+        }
+        self.assertEqual(set(routes), protected_paths)
+        for route in routes.values():
+            self.assertIn(
+                require_operator,
+                {dependency.call for dependency in route.dependant.dependencies},
+            )
+
 
 class ApiTokenMiddlewareTests(
     unittest.IsolatedAsyncioTestCase

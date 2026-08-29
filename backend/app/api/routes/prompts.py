@@ -16,6 +16,8 @@ from app.schemas.prompt_bulk import (
     PromptBulkResult,
 )
 from app.schemas.starter_prompt_generation import (
+    PromptProposalApplyRequest,
+    PromptProposalApplyResult,
     StarterPromptGenerateRequest,
     StarterPromptGenerationResult,
 )
@@ -32,6 +34,7 @@ from app.services.prompt_bulk_service import (
 from app.services.starter_prompt_generation_service import (
     StarterPromptGenerationService,
 )
+from app.services.prompt_proposal_apply_service import PromptProposalApplyService
 
 
 router = APIRouter(
@@ -47,6 +50,7 @@ def update_prompt_active_set(
     project_id: int,
     data: PromptActiveSetUpdate,
     db: Session = Depends(get_db),
+    _operator: None = Depends(require_operator),
 ):
     return PromptActiveSetService.update(
         db=db,
@@ -70,7 +74,31 @@ def generate_starter_prompts(
         project_id=project_id,
         count=data.count,
         model_id=data.model_id,
+        measurement_scope=data.measurement_scope,
+        focus_label=data.focus_label,
     )
+
+
+@router.get(
+    "/projects/{project_id}/prompts/starter-proposal",
+    response_model=StarterPromptGenerationResult | None,
+)
+def get_starter_prompt_proposal(project_id: int, db: Session = Depends(get_db)):
+    return StarterPromptGenerationService.latest(db, project_id)
+
+
+@router.post(
+    "/projects/{project_id}/prompts/starter-proposals/{proposal_id}/apply",
+    response_model=PromptProposalApplyResult,
+)
+def apply_starter_prompt_proposal(
+    project_id: int,
+    proposal_id: int,
+    data: PromptProposalApplyRequest,
+    db: Session = Depends(get_db),
+    _operator: None = Depends(require_operator),
+):
+    return PromptProposalApplyService.apply(db, project_id, proposal_id, data.prompts)
 
 
 @router.post(
@@ -82,6 +110,7 @@ def create_prompts_bulk(
     project_id: int,
     data: PromptBulkCreate,
     db: Session = Depends(get_db),
+    _operator: None = Depends(require_operator),
 ):
     return PromptBulkService.create(
         db=db,
@@ -99,6 +128,7 @@ def create_prompt(
     project_id: int,
     data: PromptCreate,
     db: Session = Depends(get_db),
+    _operator: None = Depends(require_operator),
 ):
     return PromptService.create(
         db,
@@ -130,6 +160,7 @@ def update_project_prompt(
     prompt_id: int,
     data: PromptUpdateRequest,
     db: Session = Depends(get_db),
+    _operator: None = Depends(require_operator),
 ):
     return PromptUpdateService.update(
         db=db,

@@ -887,6 +887,8 @@ export type ProjectReadiness = {
   project_name: string;
   overall_state: ReadinessState;
   configuration: {
+    measurement_scope: "brand_wide" | "focused";
+    measurement_focus: string | null;
     target_brand_id: number | null;
     target_brand: string | null;
     target_brand_count: number;
@@ -896,6 +898,8 @@ export type ProjectReadiness = {
     competitor_count: number;
     pending_competitor_suggestion_count: number;
     active_prompt_count: number;
+    proposed_prompt_count: number;
+    prompt_coverage_state: "ready" | "needs_review" | "blocked";
     prompt_categories: string[];
     usable_page_count: number;
     usable_word_count: number;
@@ -1031,11 +1035,17 @@ export type PromptBulkResult = {
 export type StarterPromptSuggestion = {
   text: string;
   category: string;
+  topic_cluster: string;
   rationale: string | null;
 };
 
 export type StarterPromptGenerationResult = {
+  id: number;
   project_id: number;
+  status: string;
+  generator_version: string;
+  measurement_scope: "brand_wide" | "focused";
+  focus_label: string | null;
 
   model_id: number;
   model_name: string;
@@ -1049,6 +1059,20 @@ export type StarterPromptGenerationResult = {
 
   requested_count: number;
   generated_count: number;
+
+  topic_clusters: {
+    name: string;
+    evidence: string[];
+    allocated_prompts: number;
+  }[];
+  coverage_blueprint: {
+    topic_distribution: Record<string, number>;
+    intent_distribution: Record<string, number>;
+    largest_topic_share: number;
+    concentration_status: "balanced" | "needs_review" | "focused";
+  };
+  warnings: string[];
+  created_at: string;
 
   prompts: StarterPromptSuggestion[];
 };

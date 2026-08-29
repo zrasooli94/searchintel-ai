@@ -12,6 +12,7 @@ from app.models.benchmark_job import BenchmarkJob
 from app.models.brand import Brand
 from app.models.brand_mention import BrandMention
 from app.models.web_search_source import WebSearchSource
+from app.models.prompt_set_proposal import PromptSetProposal
 from app.repositories.page_repository import PageRepository
 from app.repositories.project_brand_repository import ProjectBrandRepository
 from app.repositories.project_repository import ProjectRepository
@@ -201,6 +202,16 @@ class ProjectReadinessService:
         ) if primary else []
         prompts = PromptRepository.list_by_project(db, project_id)
         active_prompts = [prompt for prompt in prompts if prompt.is_active]
+        latest_proposal = db.scalar(
+            select(PromptSetProposal)
+            .where(PromptSetProposal.project_id == project_id)
+            .order_by(PromptSetProposal.created_at.desc(), PromptSetProposal.id.desc())
+        )
+        proposed_prompt_count = (
+            len(latest_proposal.prompts)
+            if latest_proposal and latest_proposal.status == "proposed"
+            else 0
+        )
         normalized_prompts = [prompt.text.strip().lower() for prompt in active_prompts if prompt.text.strip()]
         duplicate_count = len(normalized_prompts) - len(set(normalized_prompts))
         categories = sorted({
@@ -276,6 +287,13 @@ class ProjectReadinessService:
                 "No active measurement prompts are configured.",
                 "Add a small representative prompt set.",
             ))
+            if proposed_prompt_count:
+                warnings.append(cls._issue(
+                    "prompt_proposal_awaiting_approval",
+                    "A starter prompt proposal is awaiting approval; it is not an active measurement set.",
+                    "Review and explicitly apply the proposal before measurement.",
+                    [f"{proposed_prompt_count} proposed prompt(s)."],
+                ))
         if duplicate_count:
             warnings.append(cls._issue(
                 "duplicate_prompts",
@@ -296,6 +314,12 @@ class ProjectReadinessService:
                 "Review whether another decision-stage category would improve coverage.",
                 categories,
             ))
+        if latest_proposal and latest_proposal.status == "proposed":
+            for message in latest_proposal.warnings:
+                warnings.append(cls._issue(
+                    "prompt_coverage_needs_review", message,
+                    "Review topic and intent coverage before applying the proposal.",
+                ))
 
         suggestions = cls._first_party_suggestions(
             db, project_id, target.id if target else None,
@@ -423,6 +447,8 @@ class ProjectReadinessService:
             "project_name": project.name,
             "overall_state": overall,
             "configuration": {
+                "measurement_scope": getattr(project, "measurement_scope", None) or "brand_wide",
+                "measurement_focus": getattr(project, "measurement_focus", None),
                 "target_brand_id": target.id if target else None,
                 "target_brand": target.name if target else None,
                 "target_brand_count": len(targets),
@@ -434,6 +460,13 @@ class ProjectReadinessService:
                     CompetitorDiscoveryRepository.pending_count(db, project_id)
                 ),
                 "active_prompt_count": len(active_prompts),
+                "proposed_prompt_count": proposed_prompt_count,
+                "prompt_coverage_state": (
+                    "blocked" if not active_prompts and not proposed_prompt_count else
+                    "needs_review" if proposed_prompt_count or (
+                        latest_proposal and latest_proposal.warnings
+                    ) else "ready"
+                ),
                 "prompt_categories": categories,
                 "usable_page_count": len(usable_pages),
                 "usable_word_count": usable_words,

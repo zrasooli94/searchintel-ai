@@ -7,6 +7,7 @@ import type {
   ExperimentsSummary,
   GeoOpportunitySummary,
   SiteRAGGapSummary,
+  StarterPromptGenerationResult,
   ProjectCompetitor,
   ProjectPrompt,
   ProjectWorkspace,
@@ -115,6 +116,14 @@ export async function getProjectReadiness(
 ): Promise<ProjectReadiness> {
   return fetchJson<ProjectReadiness>(
     `${searchIntelApiBaseUrl()}/projects/${projectId}/readiness`,
+  );
+}
+
+export async function getStarterPromptProposal(
+  projectId: number,
+): Promise<StarterPromptGenerationResult | null> {
+  return fetchJson<StarterPromptGenerationResult | null>(
+    `${searchIntelApiBaseUrl()}/projects/${projectId}/prompts/starter-proposal`,
   );
 }
 

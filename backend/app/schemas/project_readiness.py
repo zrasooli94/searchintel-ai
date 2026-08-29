@@ -38,6 +38,8 @@ class MeasurementEligibility(BaseModel):
 
 
 class ConfigurationSummary(BaseModel):
+    measurement_scope: Literal["brand_wide", "focused"]
+    measurement_focus: str | None
     target_brand_id: int | None
     target_brand: str | None
     target_brand_count: int
@@ -47,6 +49,8 @@ class ConfigurationSummary(BaseModel):
     competitor_count: int
     pending_competitor_suggestion_count: int
     active_prompt_count: int
+    proposed_prompt_count: int
+    prompt_coverage_state: Literal["ready", "needs_review", "blocked"]
     prompt_categories: list[str]
     usable_page_count: int
     usable_word_count: int
