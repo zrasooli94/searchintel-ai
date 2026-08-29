@@ -31,10 +31,21 @@ class StarterPromptGenerationService:
         "home", "official", "platform", "solutions", "product", "products", "learn",
         "resources", "documentation", "developers", "company", "using", "build",
     }
+    AI_AGENT_THEME_TERMS = {
+        "ai", "agent", "agents", "agentic", "llm", "llms", "model", "models",
+        "generative", "inference",
+    }
 
     @staticmethod
     def normalize_text(value: str) -> str:
         return re.sub(r"[^a-z0-9 ]", "", re.sub(r"\s+", " ", value.strip().lower()))
+
+    @classmethod
+    def semantic_theme_signature(cls, value: str) -> str:
+        terms = set(cls.normalize_text(value).split())
+        if terms & cls.AI_AGENT_THEME_TERMS:
+            return "ai_agent_ecosystem"
+        return " ".join(sorted(terms))
 
     @classmethod
     def is_near_duplicate(cls, value: str, existing: list[str]) -> bool:
@@ -149,9 +160,21 @@ class StarterPromptGenerationService:
             for item in prompts
         )
         largest_family_share = max(families.values(), default=0) / max(1, len(prompts))
-        theme_by_cluster = {
+        raw_theme_by_cluster = {
             item["name"]: item.get("super_theme") or item.get("topic_family") or item["name"]
             for item in (topic_clusters or [])
+        }
+        raw_theme_names = set(raw_theme_by_cluster.values())
+        grouped_theme_names = {
+            name: " / ".join(sorted(
+                candidate for candidate in raw_theme_names
+                if cls.semantic_theme_signature(candidate) == cls.semantic_theme_signature(name)
+            ))
+            for name in raw_theme_names
+        }
+        theme_by_cluster = {
+            cluster: grouped_theme_names[theme]
+            for cluster, theme in raw_theme_by_cluster.items()
         }
         super_themes = Counter(
             theme_by_cluster.get(item["topic_cluster"], item["topic_cluster"])
@@ -168,7 +191,8 @@ class StarterPromptGenerationService:
                        for term in normalized_target_terms)
         ]
         core_family = (core_category or {}).get("topic_family")
-        core_super_theme = (core_category or {}).get("super_theme") or core_family
+        raw_core_super_theme = (core_category or {}).get("super_theme") or core_family
+        core_super_theme = grouped_theme_names.get(raw_core_super_theme, raw_core_super_theme)
         represented_families = set(families)
         represented_super_themes = set(super_themes)
         major_families = {
@@ -177,7 +201,10 @@ class StarterPromptGenerationService:
             if item.get("is_major_family") and item.get("topic_family")
         }
         major_super_themes = {
-            item.get("super_theme") or item.get("topic_family")
+            grouped_theme_names.get(
+                item.get("super_theme") or item.get("topic_family"),
+                item.get("super_theme") or item.get("topic_family"),
+            )
             for item in (topic_clusters or [])
             if (item.get("is_major_super_theme", item.get("is_major_family"))
                 and (item.get("super_theme") or item.get("topic_family")))
@@ -208,7 +235,7 @@ class StarterPromptGenerationService:
         if scope == "brand_wide" and largest_super_theme_share > cls.MAX_SUPER_THEME_SHARE:
             dominant_theme, dominant_count = super_themes.most_common(1)[0]
             justified = any(
-                item.get("super_theme") == dominant_theme
+                grouped_theme_names.get(item.get("super_theme"), item.get("super_theme")) == dominant_theme
                 and item.get("dominance_justified")
                 for item in (topic_clusters or [])
             ) and (core_category or {}).get("market_structure") == "single_theme"
@@ -262,6 +289,16 @@ class StarterPromptGenerationService:
         blueprint.setdefault("core_category", None)
         blueprint.setdefault("brand_wide_checklist", {})
         blueprint.setdefault("crawl_sample_bias", {"detected": False, "reason": None, "evidence": []})
+        warnings = list(proposal.warnings)
+        if proposal.generator_version == cls.GENERATOR_VERSION:
+            blueprint, computed_warnings = cls.coverage(
+                proposal.prompts,
+                proposal.measurement_scope,
+                clusters,
+                blueprint.get("core_category"),
+                blueprint.get("crawl_sample_bias"),
+            )
+            warnings = list(dict.fromkeys([*warnings, *computed_warnings]))
         return {
             "id": proposal.id, "project_id": proposal.project_id, "status": proposal.status,
             "generator_version": proposal.generator_version,
@@ -275,7 +312,7 @@ class StarterPromptGenerationService:
             "requested_count": len(proposal.prompts), "generated_count": len(proposal.prompts),
             "topic_clusters": clusters,
             "coverage_blueprint": blueprint,
-            "warnings": proposal.warnings, "prompts": proposal.prompts,
+            "warnings": warnings, "prompts": proposal.prompts,
             "created_at": proposal.created_at,
         }
 

@@ -20,6 +20,7 @@ from app.repositories.prompt_repository import PromptRepository
 from app.repositories.technical_audit_repository import TechnicalAuditRepository
 from app.repositories.website_repository import WebsiteRepository
 from app.services.ai_model_service import AIModelService
+from app.services.starter_prompt_generation_service import StarterPromptGenerationService
 from app.repositories.competitor_discovery_repository import CompetitorDiscoveryRepository
 
 
@@ -207,6 +208,20 @@ class ProjectReadinessService:
             .where(PromptSetProposal.project_id == project_id)
             .order_by(PromptSetProposal.created_at.desc(), PromptSetProposal.id.desc())
         )
+        latest_coverage = latest_proposal.coverage_blueprint if latest_proposal else {}
+        latest_coverage_warnings = list(latest_proposal.warnings) if latest_proposal else []
+        if (latest_proposal and getattr(latest_proposal, "generator_version", None)
+                == StarterPromptGenerationService.GENERATOR_VERSION):
+            latest_coverage, computed_warnings = StarterPromptGenerationService.coverage(
+                latest_proposal.prompts,
+                latest_proposal.measurement_scope,
+                latest_proposal.topic_clusters,
+                latest_coverage.get("core_category"),
+                latest_coverage.get("crawl_sample_bias"),
+            )
+            latest_coverage_warnings = list(dict.fromkeys([
+                *latest_coverage_warnings, *computed_warnings,
+            ]))
         proposed_prompt_count = (
             len(latest_proposal.prompts)
             if latest_proposal and latest_proposal.status == "proposed"
@@ -315,12 +330,12 @@ class ProjectReadinessService:
                 categories,
             ))
         if latest_proposal and latest_proposal.status == "proposed":
-            for message in latest_proposal.warnings:
+            for message in latest_coverage_warnings:
                 warnings.append(cls._issue(
                     "prompt_coverage_needs_review", message,
                     "Review topic and intent coverage before applying the proposal.",
                 ))
-            bias = latest_proposal.coverage_blueprint.get("crawl_sample_bias", {})
+            bias = latest_coverage.get("crawl_sample_bias", {})
             if bias.get("detected"):
                 warnings.append(cls._issue(
                     "prompt_crawl_sample_bias",
@@ -472,23 +487,23 @@ class ProjectReadinessService:
                 "prompt_coverage_state": (
                     "blocked" if not active_prompts and not proposed_prompt_count else
                     "needs_review" if proposed_prompt_count or (
-                        latest_proposal and latest_proposal.warnings
+                        latest_proposal and latest_coverage_warnings
                     ) else "ready"
                 ),
                 "proposed_prompt_coverage_status": (
-                    latest_proposal.coverage_blueprint.get("concentration_status")
+                    latest_coverage.get("concentration_status")
                     if latest_proposal and latest_proposal.status == "proposed" else None
                 ),
                 "proposed_largest_topic_family_share": (
-                    latest_proposal.coverage_blueprint.get("largest_topic_family_share")
+                    latest_coverage.get("largest_topic_family_share")
                     if latest_proposal and latest_proposal.status == "proposed" else None
                 ),
                 "proposed_largest_super_theme_share": (
-                    latest_proposal.coverage_blueprint.get("largest_super_theme_share")
+                    latest_coverage.get("largest_super_theme_share")
                     if latest_proposal and latest_proposal.status == "proposed" else None
                 ),
                 "proposed_crawl_sample_bias": (
-                    bool(latest_proposal.coverage_blueprint.get("crawl_sample_bias", {}).get("detected"))
+                    bool(latest_coverage.get("crawl_sample_bias", {}).get("detected"))
                     if latest_proposal and latest_proposal.status == "proposed" else None
                 ),
                 "prompt_categories": categories,

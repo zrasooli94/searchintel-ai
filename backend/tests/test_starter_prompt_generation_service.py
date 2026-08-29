@@ -166,6 +166,25 @@ class StarterPromptGenerationServiceTests(unittest.TestCase):
         self.assertEqual(blueprint["largest_super_theme_share"], 0.5)
         self.assertTrue(any("super-theme guard" in warning for warning in warnings))
 
+    def test_ai_and_agent_super_theme_labels_are_semantically_grouped(self):
+        prompts = self.broad_prompts()
+        clusters = [
+            {"name": "Gateway", "topic_family": "AI Platform", "super_theme": "AI application development", "is_major_family": True, "is_major_super_theme": True},
+            {"name": "Agents", "topic_family": "Agents", "super_theme": "Agentic infrastructure", "is_major_family": True, "is_major_super_theme": True},
+            {"name": "Deployments", "topic_family": "Deploy", "super_theme": "Web delivery", "is_major_family": True, "is_major_super_theme": True},
+            {"name": "Security", "topic_family": "Trust", "super_theme": "Trust", "is_major_family": True, "is_major_super_theme": True},
+            {"name": "Analytics", "topic_family": "Observe", "super_theme": "Operations", "is_major_family": True, "is_major_super_theme": True},
+            {"name": "Core Cloud", "topic_family": "Cloud", "super_theme": "Cloud", "is_major_family": True, "is_major_super_theme": True},
+        ]
+        core = {"name": "Cloud", "topic_family": "Cloud", "super_theme": "Cloud",
+                "target_terms": ["Example"], "market_structure": "multi_theme"}
+
+        blueprint, _warnings = StarterPromptGenerationService.coverage(prompts, "brand_wide", clusters, core)
+
+        grouped_name = next(name for name in blueprint["super_theme_distribution"] if "AI application" in name)
+        self.assertIn("Agentic infrastructure", grouped_name)
+        self.assertEqual(blueprint["super_theme_distribution"][grouped_name], 2)
+
     def test_genuinely_single_theme_brand_can_justify_dominance(self):
         prompts = self.broad_prompts()
         clusters = [
