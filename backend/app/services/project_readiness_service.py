@@ -320,6 +320,14 @@ class ProjectReadinessService:
                     "prompt_coverage_needs_review", message,
                     "Review topic and intent coverage before applying the proposal.",
                 ))
+            bias = latest_proposal.coverage_blueprint.get("crawl_sample_bias", {})
+            if bias.get("detected"):
+                warnings.append(cls._issue(
+                    "prompt_crawl_sample_bias",
+                    bias.get("reason") or "The bounded crawl overrepresents one product area.",
+                    "Review the core-market anchor and super-theme coverage before applying the proposal.",
+                    bias.get("evidence", []),
+                ))
 
         suggestions = cls._first_party_suggestions(
             db, project_id, target.id if target else None,
@@ -473,6 +481,14 @@ class ProjectReadinessService:
                 ),
                 "proposed_largest_topic_family_share": (
                     latest_proposal.coverage_blueprint.get("largest_topic_family_share")
+                    if latest_proposal and latest_proposal.status == "proposed" else None
+                ),
+                "proposed_largest_super_theme_share": (
+                    latest_proposal.coverage_blueprint.get("largest_super_theme_share")
+                    if latest_proposal and latest_proposal.status == "proposed" else None
+                ),
+                "proposed_crawl_sample_bias": (
+                    bool(latest_proposal.coverage_blueprint.get("crawl_sample_bias", {}).get("detected"))
                     if latest_proposal and latest_proposal.status == "proposed" else None
                 ),
                 "prompt_categories": categories,

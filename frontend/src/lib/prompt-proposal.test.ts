@@ -21,9 +21,11 @@ test("brand-wide coverage exposes macro-family review without claiming an indust
   const result = brandWideCoverageSummary({
     status: "needs_review",
     largestTopicFamilyShare: 0.526,
+    largestSuperThemeShare: 0.632,
     checklist: { core_category: true, unbranded_recommendation: false },
   });
   assert.equal(result.largestTopicFamilyPercent, 52.6);
+  assert.equal(result.largestSuperThemePercent, 63.2);
   assert.equal(result.isBalanced, false);
   assert.match(result.constraintNote, /not an industry standard/i);
 });

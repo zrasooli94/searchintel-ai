@@ -29,6 +29,34 @@ class StarterPromptGenerationServiceTests(unittest.TestCase):
         self.assertIn("invoicing", terms)
         self.assertNotIn("unrelated", terms)
 
+    def test_homepage_and_top_level_evidence_are_prioritized_over_deep_pages(self):
+        pages = [
+            SimpleNamespace(url="https://example.com/", title="Core market", h1="Core platform"),
+            SimpleNamespace(url="https://example.com/products", title="Products", h1="Product areas"),
+            SimpleNamespace(url="https://example.com/docs/ai/agents/tutorial", title="Agent tutorial", h1="Agents"),
+        ]
+
+        tiers = StarterPromptGenerationService.evidence_tiers(pages)
+
+        self.assertEqual([page.url for page in tiers["homepage"]], ["https://example.com/"])
+        self.assertEqual([page.url for page in tiers["top_level"]], ["https://example.com/products"])
+        self.assertEqual([page.url for page in tiers["broader_corpus"]], ["https://example.com/docs/ai/agents/tutorial"])
+
+    def test_biased_deep_crawl_is_detected_against_stronger_evidence(self):
+        pages = [
+            SimpleNamespace(url="https://example.com/", title="Application platform", h1="Deploy applications"),
+            SimpleNamespace(url="https://example.com/products", title="Cloud products", h1="Platform products"),
+        ] + [
+            SimpleNamespace(url=f"https://example.com/docs/agents/{index}", title="Agent runtime", h1="Agent tools")
+            for index in range(6)
+        ]
+
+        result = StarterPromptGenerationService.crawl_sample_bias_signal(pages)
+
+        self.assertTrue(result["detected"])
+        self.assertIn("deeper pages", result["reason"])
+        self.assertGreaterEqual(len(result["evidence"]), 1)
+
     def test_brand_wide_concentration_and_missing_intents_need_review(self):
         prompts = [
             {"topic_cluster": "AI", "category": "informational"},
@@ -92,6 +120,67 @@ class StarterPromptGenerationServiceTests(unittest.TestCase):
         self.assertEqual(blueprint["concentration_status"], "needs_review")
         self.assertTrue(any("AI Platform" in warning and "50%" in warning for warning in warnings))
 
+    def test_two_families_in_one_super_theme_trigger_super_theme_guard(self):
+        prompts = self.broad_prompts()
+        clusters = [
+            {"name": "Gateway", "topic_family": "AI Apps", "super_theme": "AI Ecosystem", "is_major_family": True, "is_major_super_theme": True},
+            {"name": "Agents", "topic_family": "Agent Runtime", "super_theme": "AI Ecosystem", "is_major_family": True, "is_major_super_theme": True},
+            {"name": "Deployments", "topic_family": "Deploy", "super_theme": "Web Platform", "is_major_family": True, "is_major_super_theme": True},
+            {"name": "Security", "topic_family": "Trust", "super_theme": "Trust", "is_major_family": True, "is_major_super_theme": True},
+            {"name": "Analytics", "topic_family": "Observe", "super_theme": "Operations", "is_major_family": True, "is_major_super_theme": True},
+            {"name": "Core Cloud", "topic_family": "Cloud", "super_theme": "Cloud", "is_major_family": True, "is_major_super_theme": True},
+        ]
+        core = {"name": "Cloud", "topic_family": "Cloud", "super_theme": "Cloud", "target_terms": ["Example"], "market_structure": "multi_theme"}
+
+        blueprint, warnings = StarterPromptGenerationService.coverage(prompts, "brand_wide", clusters, core)
+
+        self.assertEqual(blueprint["largest_topic_family_share"], round(1 / 6, 4))
+        self.assertEqual(blueprint["largest_super_theme_share"], round(2 / 6, 4))
+        self.assertFalse(any("super-theme guard" in warning for warning in warnings))
+
+        for cluster in clusters[:3]:
+            cluster["super_theme"] = "AI Ecosystem"
+        blueprint, warnings = StarterPromptGenerationService.coverage(prompts, "brand_wide", clusters, core)
+        self.assertEqual(blueprint["largest_super_theme_share"], 0.5)
+        self.assertTrue(any("AI Ecosystem" in warning and "50%" in warning for warning in warnings))
+
+    def test_renaming_related_clusters_does_not_evade_super_theme_guard(self):
+        prompts = [
+            {"text": f"Question {index}", "topic_cluster": name, "category": category}
+            for index, (name, category) in enumerate(zip(
+                ["AI One", "AI Two", "AI Three", "Core", "Trust", "Ops"],
+                ["brand", "informational", "problem_solution", "recommendation", "comparison", "commercial"],
+            ))
+        ]
+        clusters = [
+            {"name": name, "topic_family": name, "super_theme": "AI Ecosystem" if name.startswith("AI") else name,
+             "is_major_family": True, "is_major_super_theme": True}
+            for name in ["AI One", "AI Two", "AI Three", "Core", "Trust", "Ops"]
+        ]
+        core = {"name": "Core", "topic_family": "Core", "super_theme": "Core", "target_terms": ["Example"], "market_structure": "multi_theme"}
+
+        blueprint, warnings = StarterPromptGenerationService.coverage(prompts, "brand_wide", clusters, core)
+
+        self.assertEqual(blueprint["largest_topic_share"], round(1 / 6, 4))
+        self.assertEqual(blueprint["largest_topic_family_share"], round(1 / 6, 4))
+        self.assertEqual(blueprint["largest_super_theme_share"], 0.5)
+        self.assertTrue(any("super-theme guard" in warning for warning in warnings))
+
+    def test_genuinely_single_theme_brand_can_justify_dominance(self):
+        prompts = self.broad_prompts()
+        clusters = [
+            {"name": topic, "topic_family": topic, "super_theme": "Payments",
+             "is_major_family": True, "is_major_super_theme": True, "dominance_justified": True}
+            for topic in ["Gateway", "Agents", "Deployments", "Security", "Analytics", "Core Cloud"]
+        ]
+        core = {"name": "Payments", "topic_family": "Gateway", "super_theme": "Payments",
+                "target_terms": ["Example"], "market_structure": "single_theme"}
+
+        blueprint, warnings = StarterPromptGenerationService.coverage(prompts, "brand_wide", clusters, core)
+
+        self.assertEqual(blueprint["largest_super_theme_share"], 1.0)
+        self.assertFalse(any("super-theme guard" in warning for warning in warnings))
+
     def test_brand_wide_checklist_requires_core_and_unbranded_discovery(self):
         prompts = self.broad_prompts()
         clusters = [
@@ -108,6 +197,28 @@ class StarterPromptGenerationServiceTests(unittest.TestCase):
         self.assertTrue(all(blueprint["brand_wide_checklist"].values()))
         self.assertEqual(blueprint["concentration_status"], "balanced")
         self.assertEqual(warnings, [])
+
+    def test_crawl_sample_bias_is_preserved_as_structured_provenance(self):
+        prompts = self.broad_prompts()
+        clusters = [
+            {"name": topic, "topic_family": family, "super_theme": family,
+             "is_major_family": True, "is_major_super_theme": True}
+            for topic, family in zip(
+                ["Gateway", "Agents", "Deployments", "Security", "Analytics", "Core Cloud"],
+                ["AI", "Automation", "Deployment", "Trust", "Observability", "Cloud Platform"],
+            )
+        ]
+        core = {"name": "Cloud Platform", "topic_family": "Cloud Platform",
+                "super_theme": "Cloud Platform", "target_terms": ["Example"]}
+        bias = {"detected": True, "reason": "Deep pages overrepresent one product area.",
+                "evidence": ["https://example.com/"]}
+
+        blueprint, _warnings = StarterPromptGenerationService.coverage(
+            prompts, "brand_wide", clusters, core, bias
+        )
+
+        self.assertTrue(blueprint["crawl_sample_bias"]["detected"])
+        self.assertIn("Deep pages", blueprint["crawl_sample_bias"]["reason"])
 
     def test_brand_wide_distribution_is_not_forced_to_be_equal(self):
         prompts = self.broad_prompts() + [

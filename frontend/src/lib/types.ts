@@ -902,6 +902,8 @@ export type ProjectReadiness = {
     prompt_coverage_state: "ready" | "needs_review" | "blocked";
     proposed_prompt_coverage_status: "balanced" | "needs_review" | "focused" | null;
     proposed_largest_topic_family_share: number | null;
+    proposed_largest_super_theme_share: number | null;
+    proposed_crawl_sample_bias: boolean | null;
     prompt_categories: string[];
     usable_page_count: number;
     usable_word_count: number;
@@ -1065,24 +1067,37 @@ export type StarterPromptGenerationResult = {
   topic_clusters: {
     name: string;
     topic_family: string;
+    super_theme: string;
     evidence: string[];
     is_major_family: boolean;
+    is_major_super_theme: boolean;
+    dominance_justified: boolean;
     allocated_prompts: number;
   }[];
   coverage_blueprint: {
     topic_distribution: Record<string, number>;
     topic_family_distribution: Record<string, number>;
+    super_theme_distribution: Record<string, number>;
     intent_distribution: Record<string, number>;
     largest_topic_share: number;
     largest_topic_family_share: number;
+    largest_super_theme_share: number;
     concentration_status: "balanced" | "needs_review" | "focused";
     core_category: {
       name: string;
       topic_family: string;
+      super_theme: string;
       evidence: string[];
+      market_structure: "single_theme" | "multi_theme";
+      weighting_note: string | null;
       target_terms: string[];
     } | null;
     brand_wide_checklist: Record<string, boolean>;
+    crawl_sample_bias: {
+      detected: boolean;
+      reason: string | null;
+      evidence: string[];
+    };
   };
   warnings: string[];
   created_at: string;

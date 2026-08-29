@@ -32,6 +32,7 @@ class PromptProposalApplyService:
             proposal.measurement_scope,
             proposal.topic_clusters,
             proposal.coverage_blueprint.get("core_category"),
+            proposal.coverage_blueprint.get("crawl_sample_bias"),
         )
         existing = list(db.scalars(select(Prompt).where(Prompt.project_id == project_id)).all())
         by_text = {StarterPromptGenerationService.normalize_text(item.text): item for item in existing}

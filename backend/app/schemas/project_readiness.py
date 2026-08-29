@@ -53,6 +53,8 @@ class ConfigurationSummary(BaseModel):
     prompt_coverage_state: Literal["ready", "needs_review", "blocked"]
     proposed_prompt_coverage_status: Literal["balanced", "needs_review", "focused"] | None
     proposed_largest_topic_family_share: float | None
+    proposed_largest_super_theme_share: float | None
+    proposed_crawl_sample_bias: bool | None
     prompt_categories: list[str]
     usable_page_count: int
     usable_word_count: int

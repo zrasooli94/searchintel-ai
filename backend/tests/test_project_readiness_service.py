@@ -290,6 +290,8 @@ class ProjectReadinessServiceTests(unittest.TestCase):
             coverage_blueprint={
                 "concentration_status": "needs_review",
                 "largest_topic_family_share": 0.6,
+                "largest_super_theme_share": 0.7,
+                "crawl_sample_bias": {"detected": True},
             },
         )
 
@@ -298,7 +300,10 @@ class ProjectReadinessServiceTests(unittest.TestCase):
         self.assertEqual(result["configuration"]["prompt_coverage_state"], "needs_review")
         self.assertEqual(result["configuration"]["proposed_prompt_coverage_status"], "needs_review")
         self.assertEqual(result["configuration"]["proposed_largest_topic_family_share"], 0.6)
+        self.assertEqual(result["configuration"]["proposed_largest_super_theme_share"], 0.7)
+        self.assertTrue(result["configuration"]["proposed_crawl_sample_bias"])
         self.assertIn("prompt_coverage_needs_review", [item["code"] for item in result["warnings"]])
+        self.assertIn("prompt_crawl_sample_bias", [item["code"] for item in result["warnings"]])
         self.db.add.assert_not_called()
         self.db.commit.assert_not_called()
 

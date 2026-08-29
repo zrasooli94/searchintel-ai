@@ -26,11 +26,13 @@ export function proposalConfirmation(input: {
 export function brandWideCoverageSummary(input: {
   status: "balanced" | "needs_review" | "focused";
   largestTopicFamilyShare: number;
+  largestSuperThemeShare?: number;
   checklist: Record<string, boolean>;
 }) {
   return {
     status: input.status,
     largestTopicFamilyPercent: Math.round(input.largestTopicFamilyShare * 1000) / 10,
+    largestSuperThemePercent: Math.round((input.largestSuperThemeShare ?? input.largestTopicFamilyShare) * 1000) / 10,
     represented: Object.values(input.checklist).filter(Boolean).length,
     total: Object.keys(input.checklist).length,
     isBalanced: input.status === "balanced" && Object.values(input.checklist).every(Boolean),

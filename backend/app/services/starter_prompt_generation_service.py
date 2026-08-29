@@ -20,9 +20,10 @@ from app.services.ai_model_service import AIModelService
 
 
 class StarterPromptGenerationService:
-    GENERATOR_VERSION = "brand-wide-v3"
+    GENERATOR_VERSION = "market-anchor-v4"
     MAX_TOPIC_SHARE = 0.35
     MAX_FAMILY_SHARE = 0.40
+    MAX_SUPER_THEME_SHARE = 0.45
     REQUIRED_INTENTS = {"brand", "informational", "problem_solution", "recommendation", "comparison", "commercial"}
     VALID_CATEGORIES = REQUIRED_INTENTS | {"navigational", "transactional"}
     STOP_WORDS = {
@@ -80,12 +81,61 @@ class StarterPromptGenerationService:
         return [term for term, _count in counts.most_common(30)]
 
     @classmethod
+    def evidence_tiers(cls, pages: list) -> dict[str, list]:
+        def depth(page) -> int:
+            return len([part for part in urlparse(page.url).path.split("/") if part])
+
+        homepage = [page for page in pages if depth(page) == 0]
+        top_level = [page for page in pages if depth(page) == 1]
+        broader = [page for page in pages if page not in homepage and page not in top_level]
+        return {
+            "homepage": homepage,
+            "top_level": sorted(top_level, key=lambda item: item.url),
+            "broader_corpus": sorted(broader, key=lambda item: item.url),
+        }
+
+    @classmethod
+    def crawl_sample_bias_signal(cls, pages: list) -> dict:
+        tiers = cls.evidence_tiers(pages)
+
+        def page_terms(page) -> set[str]:
+            parsed = urlparse(page.url)
+            values = [page.title or "", page.h1 or "", parsed.path.replace("-", " ").replace("/", " ")]
+            return {
+                token.strip(".-")
+                for value in values
+                for token in re.findall(r"[A-Za-z][A-Za-z0-9+.-]{2,}", value.lower())
+                if token.strip(".-") not in cls.STOP_WORDS and not token.strip(".-").isdigit()
+            }
+
+        strong_terms = set().union(*(page_terms(page) for tier in ("homepage", "top_level")
+                                     for page in tiers[tier]))
+        deep_pages = tiers["broader_corpus"]
+        counts = Counter(term for page in deep_pages for term in page_terms(page))
+        candidates = [
+            (term, count) for term, count in counts.most_common()
+            if term not in strong_terms and count / max(1, len(deep_pages)) >= 0.4
+        ]
+        if len(deep_pages) < 5 or not candidates:
+            return {"detected": False, "reason": None, "evidence": []}
+        term, count = candidates[0]
+        return {
+            "detected": True,
+            "reason": (
+                f"The bounded crawl repeatedly emphasizes '{term}' on {count} of {len(deep_pages)} "
+                "deeper pages without matching emphasis in stored homepage/top-level evidence."
+            ),
+            "evidence": [page.url for page in deep_pages if term in page_terms(page)][:4],
+        }
+
+    @classmethod
     def coverage(
         cls,
         prompts: list[dict],
         scope: str,
         topic_clusters: list[dict] | None = None,
         core_category: dict | None = None,
+        crawl_sample_bias: dict | None = None,
     ) -> tuple[dict, list[str]]:
         topics = Counter(item["topic_cluster"] for item in prompts)
         intents = Counter(item["category"] for item in prompts)
@@ -99,6 +149,15 @@ class StarterPromptGenerationService:
             for item in prompts
         )
         largest_family_share = max(families.values(), default=0) / max(1, len(prompts))
+        theme_by_cluster = {
+            item["name"]: item.get("super_theme") or item.get("topic_family") or item["name"]
+            for item in (topic_clusters or [])
+        }
+        super_themes = Counter(
+            theme_by_cluster.get(item["topic_cluster"], item["topic_cluster"])
+            for item in prompts
+        )
+        largest_super_theme_share = max(super_themes.values(), default=0) / max(1, len(prompts))
         target_terms = set((core_category or {}).get("target_terms", []))
         normalized_target_terms = {
             cls.normalize_text(value) for value in target_terms if value
@@ -109,14 +168,26 @@ class StarterPromptGenerationService:
                        for term in normalized_target_terms)
         ]
         core_family = (core_category or {}).get("topic_family")
+        core_super_theme = (core_category or {}).get("super_theme") or core_family
         represented_families = set(families)
+        represented_super_themes = set(super_themes)
         major_families = {
             item.get("topic_family")
             for item in (topic_clusters or [])
             if item.get("is_major_family") and item.get("topic_family")
         }
+        major_super_themes = {
+            item.get("super_theme") or item.get("topic_family")
+            for item in (topic_clusters or [])
+            if (item.get("is_major_super_theme", item.get("is_major_family"))
+                and (item.get("super_theme") or item.get("topic_family")))
+        }
         checklist = {
-            "core_category": bool(core_category and core_family in represented_families),
+            "core_category": bool(
+                core_category and core_family in represented_families
+                and core_super_theme in represented_super_themes
+            ),
+            "major_super_themes": bool(major_super_themes) and major_super_themes <= represented_super_themes,
             "major_product_families": bool(major_families) and major_families <= represented_families,
             "general_brand_discovery": intents.get("brand", 0) > 0,
             "unbranded_recommendation": any(
@@ -134,6 +205,18 @@ class StarterPromptGenerationService:
                 f"{dominant_family} represents {dominant_count / len(prompts):.0%} of this "
                 "brand-wide proposal, above SearchIntel's 40% topic-family guard."
             )
+        if scope == "brand_wide" and largest_super_theme_share > cls.MAX_SUPER_THEME_SHARE:
+            dominant_theme, dominant_count = super_themes.most_common(1)[0]
+            justified = any(
+                item.get("super_theme") == dominant_theme
+                and item.get("dominance_justified")
+                for item in (topic_clusters or [])
+            ) and (core_category or {}).get("market_structure") == "single_theme"
+            if not justified:
+                warnings.append(
+                    f"{dominant_theme} represents {dominant_count / len(prompts):.0%} of this "
+                    "brand-wide proposal, above SearchIntel's 45% super-theme guard."
+                )
         missing = sorted(cls.REQUIRED_INTENTS - set(intents))
         if missing:
             warnings.append("Missing major intent categories: " + ", ".join(missing) + ".")
@@ -145,11 +228,14 @@ class StarterPromptGenerationService:
         return {
             "topic_distribution": dict(topics),
             "topic_family_distribution": dict(families),
+            "super_theme_distribution": dict(super_themes),
             "intent_distribution": dict(intents),
             "largest_topic_share": round(largest_share, 4),
             "largest_topic_family_share": round(largest_family_share, 4),
+            "largest_super_theme_share": round(largest_super_theme_share, 4),
             "concentration_status": status,
             "core_category": core_category,
+            "crawl_sample_bias": crawl_sample_bias or {"detected": False, "reason": None, "evidence": []},
             "brand_wide_checklist": checklist,
         }, warnings
 
@@ -160,7 +246,10 @@ class StarterPromptGenerationService:
             {
                 **item,
                 "topic_family": item.get("topic_family") or item["name"],
+                "super_theme": item.get("super_theme") or item.get("topic_family") or item["name"],
                 "is_major_family": bool(item.get("is_major_family", True)),
+                "is_major_super_theme": bool(item.get("is_major_super_theme", True)),
+                "dominance_justified": bool(item.get("dominance_justified", False)),
             }
             for item in proposal.topic_clusters
         ]
@@ -168,8 +257,11 @@ class StarterPromptGenerationService:
         if "topic_family_distribution" not in blueprint:
             blueprint["topic_family_distribution"] = dict(blueprint.get("topic_distribution", {}))
         blueprint.setdefault("largest_topic_family_share", blueprint.get("largest_topic_share", 0))
+        blueprint.setdefault("super_theme_distribution", dict(blueprint.get("topic_family_distribution", {})))
+        blueprint.setdefault("largest_super_theme_share", blueprint.get("largest_topic_family_share", 0))
         blueprint.setdefault("core_category", None)
         blueprint.setdefault("brand_wide_checklist", {})
+        blueprint.setdefault("crawl_sample_bias", {"detected": False, "reason": None, "evidence": []})
         return {
             "id": proposal.id, "project_id": proposal.project_id, "status": proposal.status,
             "generator_version": proposal.generator_version,
@@ -220,14 +312,28 @@ class StarterPromptGenerationService:
         if len(terms) < 3:
             raise HTTPException(status_code=400, detail="Crawled pages contain too little topic evidence.")
         existing = PromptRepository.list_by_project(db, project_id)
+        tiers = cls.evidence_tiers(pages)
+        deterministic_bias = cls.crawl_sample_bias_signal(pages)
         excerpts = []
-        for page in sorted(pages, key=lambda item: item.word_count or 0, reverse=True)[:12]:
-            excerpts.append(f"URL: {page.url}\nTitle: {page.title or ''}\nH1: {page.h1 or ''}\nExcerpt: {(page.content_text or '')[:1200]}")
+        tier_limits = {"homepage": 2, "top_level": 10, "broader_corpus": 8}
+        for tier_name, tier_pages in tiers.items():
+            excerpts.append(f"\n{tier_name.upper()} EVIDENCE (priority tier):")
+            selected = sorted(
+                tier_pages,
+                key=lambda item: item.word_count or 0,
+                reverse=True,
+            )[:tier_limits[tier_name]]
+            for page in selected:
+                excerpts.append(
+                    f"URL: {page.url}\nTitle: {page.title or ''}\nH1: {page.h1 or ''}"
+                    f"\nExcerpt: {(page.content_text or '')[:1000]}"
+                )
         scope_instruction = (
-            "Cover the brand's core market and major product families, not merely the most frequent crawl topic. "
-            "Group related micro-clusters into broader topic families. No cluster may exceed 35% and no family may "
-            "exceed 40% of prompts. Include company-wide brand discovery plus realistic unbranded category discovery, "
-            "recommendation, comparison, and commercial questions."
+            "Anchor the proposal in the brand's broad primary market using homepage and top-level evidence before "
+            "broader crawl frequency. Group related micro-clusters into topic families and related families into "
+            "market-level super-themes. No cluster may exceed 35%, no family 40%, and no super-theme 45% unless "
+            "the evidence establishes a genuinely single-theme company. Include company identity and realistic "
+            "unbranded core-category discovery, recommendation, comparison, and commercial-evaluation questions."
             if measurement_scope == "brand_wide" else
             f"Concentrate on this approved focus: {focus_label}. Concentration is expected, but remain varied by intent."
         )
@@ -236,13 +342,14 @@ TARGET: {target.name}
 SCOPE: {measurement_scope}
 APPROVED COMPETITORS: {', '.join(item.name for item in competitors) or '(none)'}
 DETERMINISTIC EVIDENCE TERMS: {', '.join(terms)}
+DETERMINISTIC CRAWL-SAMPLE BIAS SIGNAL: {json.dumps(deterministic_bias)}
 {scope_instruction}
 
 Return JSON only with exactly this shape:
-{{"core_category":{{"name":"...","topic_family":"exact family name","evidence":["exact supplied term or URL"]}},"topic_families":[{{"name":"...","evidence":["exact supplied term or URL"],"is_major":true}}],"topic_clusters":[{{"name":"...","topic_family":"exact family name","evidence":["exact supplied term or URL"],"allocated_prompts":3}}],"prompts":[{{"text":"...","category":"comparison","topic_cluster":"exact cluster name","rationale":"..."}}]}}
+{{"core_category":{{"name":"...","topic_family":"exact family name","super_theme":"exact super-theme name","market_structure":"multi_theme","evidence":["exact supplied term or URL"],"weighting_note":"..."}},"crawl_sample_bias":{{"detected":false,"reason":"...","evidence":["exact supplied term or URL"]}},"super_themes":[{{"name":"...","evidence":["exact supplied term or URL"],"is_major":true,"dominance_justified":false}}],"topic_families":[{{"name":"...","super_theme":"exact super-theme name","evidence":["exact supplied term or URL"],"is_major":true}}],"topic_clusters":[{{"name":"...","topic_family":"exact family name","evidence":["exact supplied term or URL"],"allocated_prompts":3}}],"prompts":[{{"text":"...","category":"comparison","topic_cluster":"exact cluster name","rationale":"..."}}]}}
 
-Create exactly {count} realistic questions. Use at least these intents: brand, informational, problem_solution, recommendation, comparison, commercial. At least 70% must be unbranded. Use only approved competitors. Avoid near-duplicates, keyword strings, benchmark language, unsupported claims, and these current prompts: {[item.text for item in existing]}.
-Every category, family, and cluster must be grounded by an exact evidence term or URL below. Related clusters must share a family instead of using renamed micro-clusters to evade the family guard. Cluster allocations must equal prompt assignments.
+Create exactly {count} realistic questions. Include at least one of every intent: brand, informational, problem_solution, recommendation, comparison, commercial. Commercial means a defensible buying, cost, operational-tradeoff, or vendor-evaluation question—not artificial sales language. At least 70% must be unbranded. Use only approved competitors. Avoid near-duplicates, keyword strings, benchmark language, unsupported claims, and these current prompts: {[item.text for item in existing]}.
+Every anchor, theme, family, and cluster must be grounded by an exact evidence term or URL below. Related families must share a super-theme instead of being renamed to evade the super-theme guard. Homepage and top-level evidence outweigh repeated deep-page topics. Cluster allocations must equal prompt assignments.
 
 FIRST-PARTY EVIDENCE:
 {chr(10).join(excerpts)}"""
@@ -260,35 +367,75 @@ FIRST-PARTY EVIDENCE:
         except Exception as exc:
             raise HTTPException(status_code=502, detail=f"AI starter prompt generation failed: {exc}") from exc
         raw_core_category = payload.get("core_category")
+        raw_bias = payload.get("crawl_sample_bias")
+        raw_super_themes = payload.get("super_themes")
         raw_families = payload.get("topic_families")
         raw_clusters = payload.get("topic_clusters")
         raw_prompts = payload.get("prompts")
-        if (not isinstance(raw_core_category, dict) or not isinstance(raw_families, list)
+        if (not isinstance(raw_core_category, dict) or not isinstance(raw_bias, dict)
+                or not isinstance(raw_super_themes, list) or not isinstance(raw_families, list)
                 or not isinstance(raw_clusters, list) or not isinstance(raw_prompts, list)):
             raise HTTPException(status_code=502, detail="Generator response omitted the coverage blueprint.")
         evidence_blob = " ".join(terms + [page.url.lower() for page in pages])
         def grounded(values: list) -> bool:
             return bool(values) and any(str(value).strip().lower() in evidence_blob for value in values)
 
-        family_names = set()
-        families = []
-        for item in raw_families:
+        super_theme_names = set()
+        super_themes = []
+        for item in raw_super_themes:
             name = str(item.get("name", "")).strip()
             evidence = [str(value).strip() for value in item.get("evidence", []) if str(value).strip()]
             if not name or not grounded(evidence):
                 continue
+            super_theme_names.add(name)
+            super_themes.append({
+                "name": name, "evidence": evidence[:4], "is_major": bool(item.get("is_major")),
+                "dominance_justified": bool(item.get("dominance_justified")),
+            })
+        family_names = set()
+        families = []
+        for item in raw_families:
+            name = str(item.get("name", "")).strip()
+            super_theme = str(item.get("super_theme", "")).strip()
+            evidence = [str(value).strip() for value in item.get("evidence", []) if str(value).strip()]
+            if not name or super_theme not in super_theme_names or not grounded(evidence):
+                continue
             family_names.add(name)
-            families.append({"name": name, "evidence": evidence[:4], "is_major": bool(item.get("is_major"))})
+            families.append({"name": name, "super_theme": super_theme,
+                             "evidence": evidence[:4], "is_major": bool(item.get("is_major"))})
         core_name = str(raw_core_category.get("name", "")).strip()
         core_family = str(raw_core_category.get("topic_family", "")).strip()
+        core_super_theme = str(raw_core_category.get("super_theme", "")).strip()
         core_evidence = [str(value).strip() for value in raw_core_category.get("evidence", []) if str(value).strip()]
-        if not core_name or core_family not in family_names or not grounded(core_evidence):
+        if (not core_name or core_family not in family_names or core_super_theme not in super_theme_names
+                or not grounded(core_evidence)):
             raise HTTPException(status_code=502, detail="Generator returned an ungrounded core market category.")
         core_category = {
             "name": core_name,
             "topic_family": core_family,
+            "super_theme": core_super_theme,
             "evidence": core_evidence[:4],
+            "market_structure": (
+                "single_theme" if raw_core_category.get("market_structure") == "single_theme"
+                else "multi_theme"
+            ),
+            "weighting_note": str(raw_core_category.get("weighting_note", "")).strip() or None,
             "target_terms": [target.name],
+        }
+        bias_evidence = [str(value).strip() for value in raw_bias.get("evidence", []) if str(value).strip()]
+        bias_detected = deterministic_bias["detected"] or (
+            bool(raw_bias.get("detected")) and grounded(bias_evidence)
+        )
+        crawl_sample_bias = {
+            "detected": bias_detected,
+            "reason": (
+                deterministic_bias["reason"] if deterministic_bias["detected"]
+                else str(raw_bias.get("reason", "")).strip() or None
+            ),
+            "evidence": (
+                deterministic_bias["evidence"] if deterministic_bias["detected"]
+                else bias_evidence[:4] if bias_detected else []
+            ),
         }
         clusters = []
         cluster_names = set()
@@ -300,8 +447,13 @@ FIRST-PARTY EVIDENCE:
                 continue
             cluster_names.add(name)
             family_meta = next(item for item in families if item["name"] == family)
-            clusters.append({"name": name, "topic_family": family, "evidence": evidence[:4],
-                             "is_major_family": family_meta["is_major"], "allocated_prompts": 0})
+            theme_meta = next(item for item in super_themes if item["name"] == family_meta["super_theme"])
+            clusters.append({"name": name, "topic_family": family,
+                             "super_theme": family_meta["super_theme"], "evidence": evidence[:4],
+                             "is_major_family": family_meta["is_major"],
+                             "is_major_super_theme": theme_meta["is_major"],
+                             "dominance_justified": theme_meta["dominance_justified"],
+                             "allocated_prompts": 0})
         output: list[dict] = []
         for item in raw_prompts:
             text = str(item.get("text", "")).strip()
@@ -319,7 +471,9 @@ FIRST-PARTY EVIDENCE:
             raise HTTPException(status_code=502, detail="Generator returned too few valid, grounded, unique prompts.")
         counts = Counter(item["topic_cluster"] for item in output)
         clusters = [{**item, "allocated_prompts": counts[item["name"]]} for item in clusters if counts[item["name"]]]
-        blueprint, warnings = cls.coverage(output, measurement_scope, clusters, core_category)
+        blueprint, warnings = cls.coverage(
+            output, measurement_scope, clusters, core_category, crawl_sample_bias
+        )
         project.measurement_scope = measurement_scope
         project.measurement_focus = focus_label.strip() if focus_label else None
         proposal = PromptSetProposal(
