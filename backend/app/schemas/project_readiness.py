@@ -45,6 +45,7 @@ class ConfigurationSummary(BaseModel):
     primary_domain: str | None
     first_party_domains: list[str]
     competitor_count: int
+    pending_competitor_suggestion_count: int
     active_prompt_count: int
     prompt_categories: list[str]
     usable_page_count: int

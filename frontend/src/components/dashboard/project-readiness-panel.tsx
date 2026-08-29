@@ -202,6 +202,14 @@ export default function ProjectReadinessPanel({
       </div>
 
       <div className="p-6">
+        <div className="mb-5 flex flex-wrap gap-2 text-xs">
+          <span className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-slate-600">
+            {readiness.configuration.competitor_count} configured competitors
+          </span>
+          <span className="rounded-full border border-violet-200 bg-violet-50 px-3 py-1.5 text-violet-700">
+            {readiness.configuration.pending_competitor_suggestion_count} competitor suggestions awaiting review
+          </span>
+        </div>
         <div className="grid gap-4 md:grid-cols-2">
           {Object.values(readiness.measurements).map((item) => (
             <ModeCard key={item.mode} item={item} />

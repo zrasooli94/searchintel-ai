@@ -40,6 +40,7 @@ class ProjectCompetitorService:
         db: Session,
         project_id: int,
         data,
+        commit: bool = True,
     ) -> dict:
 
         project = (
@@ -235,12 +236,13 @@ class ProjectCompetitorService:
 
                 canonical_entity_created = True
 
-            db.commit()
-
-            db.refresh(brand)
-
-            if website:
-                db.refresh(website)
+            if commit:
+                db.commit()
+                db.refresh(brand)
+                if website:
+                    db.refresh(website)
+            else:
+                db.flush()
 
         except Exception:
             db.rollback()

@@ -57,6 +57,7 @@ class ProjectReadinessServiceTests(unittest.TestCase):
         brand_roles=None,
         historical_modes=None,
         first_party_suggestions=None,
+        pending_competitor_suggestions=0,
     ):
         with ExitStack() as stack:
             stack.enter_context(patch(
@@ -106,6 +107,11 @@ class ProjectReadinessServiceTests(unittest.TestCase):
                 ProjectReadinessService,
                 "_competitor_suggestions",
                 return_value=[],
+            ))
+            stack.enter_context(patch(
+                "app.services.project_readiness_service."
+                "CompetitorDiscoveryRepository.pending_count",
+                return_value=pending_competitor_suggestions,
             ))
             return ProjectReadinessService.build(
                 self.db,
@@ -260,6 +266,18 @@ class ProjectReadinessServiceTests(unittest.TestCase):
         self.assertIn(
             "no_competitors",
             [item["code"] for item in result["warnings"]],
+        )
+
+    def test_readiness_distinguishes_pending_from_configured_competitors(self):
+        result = self.build(
+            brand_roles=[(self.target, "target")],
+            pending_competitor_suggestions=5,
+        )
+
+        self.assertEqual(result["configuration"]["competitor_count"], 0)
+        self.assertEqual(
+            result["configuration"]["pending_competitor_suggestion_count"],
+            5,
         )
 
 

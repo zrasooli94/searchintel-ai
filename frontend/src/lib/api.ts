@@ -1,6 +1,7 @@
 import type {
   ActionPlanSummary,
   AIVisibilityMetrics,
+  CompetitorDiscoverySuggestion,
   EntitiesSummary,
   ExperimentComparison,
   ExperimentsSummary,
@@ -394,6 +395,15 @@ export async function getProjectCompetitors(
 ): Promise<ProjectCompetitor[]> {
   return fetchJson<ProjectCompetitor[]>(
     `${searchIntelApiBaseUrl()}/projects/${projectId}/competitors`,
+  );
+}
+
+
+export async function getCompetitorDiscoverySuggestions(
+  projectId: number,
+): Promise<CompetitorDiscoverySuggestion[]> {
+  return fetchJson<CompetitorDiscoverySuggestion[]>(
+    `${searchIntelApiBaseUrl()}/projects/${projectId}/competitor-discovery-suggestions`,
   );
 }
 

@@ -20,6 +20,7 @@ import { isOperatorSession } from "@/lib/operator-session";
 
 import {
   getProjectCompetitors,
+  getCompetitorDiscoverySuggestions,
   getProjectPrompts,
   getProjectReadiness,
   getProjectWorkspace,
@@ -58,6 +59,7 @@ export default async function Page({
     competitors,
     prompts,
     operatorAuthorized,
+    discoverySuggestions,
   ] = await Promise.all([
     getProjectReadiness(projectId),
     getProjectCompetitors(
@@ -67,6 +69,7 @@ export default async function Page({
       projectId,
     ),
     isOperatorSession(),
+    getCompetitorDiscoverySuggestions(projectId),
   ]);
 
   const setupState =
@@ -214,7 +217,11 @@ export default async function Page({
           )}
 
           <SetupCompetitorsStep
+            key={`${competitors.map((item) => item.brand_id).join("-")}:${discoverySuggestions.map((item) => `${item.id}:${item.status}`).join("-")}`}
             projectId={projectId}
+            targetBrand={workspace.target_brand ?? "Target brand"}
+            operatorAuthorized={operatorAuthorized}
+            initialSuggestions={discoverySuggestions}
             initialCompetitors={
               competitors
             }

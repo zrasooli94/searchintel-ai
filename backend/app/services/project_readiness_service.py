@@ -19,6 +19,7 @@ from app.repositories.prompt_repository import PromptRepository
 from app.repositories.technical_audit_repository import TechnicalAuditRepository
 from app.repositories.website_repository import WebsiteRepository
 from app.services.ai_model_service import AIModelService
+from app.repositories.competitor_discovery_repository import CompetitorDiscoveryRepository
 
 
 class ProjectReadinessService:
@@ -429,6 +430,9 @@ class ProjectReadinessService:
                 "primary_domain": primary.domain if primary else None,
                 "first_party_domains": sorted(configured_domains),
                 "competitor_count": len(competitors),
+                "pending_competitor_suggestion_count": (
+                    CompetitorDiscoveryRepository.pending_count(db, project_id)
+                ),
                 "active_prompt_count": len(active_prompts),
                 "prompt_categories": categories,
                 "usable_page_count": len(usable_pages),

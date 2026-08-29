@@ -894,6 +894,7 @@ export type ProjectReadiness = {
     primary_domain: string | null;
     first_party_domains: string[];
     competitor_count: number;
+    pending_competitor_suggestion_count: number;
     active_prompt_count: number;
     prompt_categories: string[];
     usable_page_count: number;
@@ -959,6 +960,33 @@ export type ProjectCompetitor = {
   website_id: number | null;
   domain: string | null;
   base_url: string | null;
+};
+
+export type CompetitorDiscoverySuggestion = {
+  id: number;
+  project_id: number;
+  brand_name: string;
+  website_url: string;
+  domain: string;
+  competitor_type: "direct" | "adjacent" | "alternative";
+  confidence: "high" | "medium" | "low";
+  reason: string;
+  evidence: Array<{
+    url: string;
+    support: string;
+  }>;
+  status: "pending" | "ignored" | "approved";
+  model_name: string | null;
+  approved_brand_id: number | null;
+};
+
+export type CompetitorDiscoveryResult = {
+  project_id: number;
+  target_brand: string;
+  method: string;
+  max_candidates: number;
+  generated_count: number;
+  suggestions: CompetitorDiscoverySuggestion[];
 };
 
 export type ProjectCompetitorCreateResult = {

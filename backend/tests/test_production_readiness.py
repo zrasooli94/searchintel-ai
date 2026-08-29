@@ -163,6 +163,27 @@ class OperatorAuthorizationTests(unittest.TestCase):
             require_operator("test-token")
         )
 
+    def test_competitor_discovery_mutations_require_operator(self):
+        from app.api.routes.competitors import router
+
+        protected_paths = {
+            "/projects/{project_id}/competitor-discovery-suggestions/generate",
+            "/projects/{project_id}/competitor-discovery-suggestions/{suggestion_id}/approve",
+            "/projects/{project_id}/competitor-discovery-suggestions/{suggestion_id}/ignore",
+        }
+        routes = {
+            route.path: route
+            for route in router.routes
+            if getattr(route, "path", None) in protected_paths
+        }
+        self.assertEqual(set(routes), protected_paths)
+        for route in routes.values():
+            dependency_calls = {
+                dependency.call
+                for dependency in route.dependant.dependencies
+            }
+            self.assertIn(require_operator, dependency_calls)
+
 
 class ApiTokenMiddlewareTests(
     unittest.IsolatedAsyncioTestCase

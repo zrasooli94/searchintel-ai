@@ -19,19 +19,27 @@ import {
 } from "next/navigation";
 
 import type {
+  CompetitorDiscoverySuggestion,
   ProjectCompetitor,
 } from "@/lib/types";
+import SetupCompetitorDiscovery from "@/components/dashboard/setup-competitor-discovery";
 
 
 type Props = {
   projectId: number;
   initialCompetitors: ProjectCompetitor[];
+  initialSuggestions: CompetitorDiscoverySuggestion[];
+  targetBrand: string;
+  operatorAuthorized: boolean;
 };
 
 
 export default function SetupCompetitorsStep({
   projectId,
   initialCompetitors,
+  initialSuggestions,
+  targetBrand,
+  operatorAuthorized,
 }: Props) {
   const router = useRouter();
 
@@ -182,7 +190,16 @@ export default function SetupCompetitorsStep({
         </div>
       </div>
 
-      <div className="grid gap-6 p-6 lg:grid-cols-[0.9fr_1.1fr]">
+      <div className="p-6">
+        <SetupCompetitorDiscovery
+          projectId={projectId}
+          targetBrand={targetBrand}
+          operatorAuthorized={operatorAuthorized}
+          initialSuggestions={initialSuggestions}
+        />
+      </div>
+
+      <div className="grid gap-6 border-t border-slate-200/80 p-6 lg:grid-cols-[0.9fr_1.1fr]">
         <form
           onSubmit={submit}
           className="crystal-subcard rounded-[18px] p-5"
