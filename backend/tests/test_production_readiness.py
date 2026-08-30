@@ -191,6 +191,7 @@ class OperatorAuthorizationTests(unittest.TestCase):
             "/projects/{project_id}/prompts/starter-generate",
             "/projects/{project_id}/prompts/starter-proposals/{proposal_id}/apply",
             "/projects/{project_id}/prompts/starter-proposals/{proposal_id}/semantic-reevaluate",
+            "/projects/{project_id}/prompts/starter-proposals/{proposal_id}",
             "/projects/{project_id}/prompts/active-set",
             "/projects/{project_id}/prompts/bulk",
             "/projects/{project_id}/prompts",

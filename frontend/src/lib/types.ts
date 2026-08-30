@@ -1098,6 +1098,11 @@ export type StarterPromptGenerationResult = {
       effective_super_theme_distribution: Record<string, number>;
       reclassified_prompt_indices: number[];
     };
+    manual_revalidation?: {
+      revalidated_at: string;
+      coverage_status: "balanced" | "needs_review" | "focused";
+      effective_super_theme_distribution: Record<string, number>;
+    };
     intent_distribution: Record<string, number>;
     largest_topic_share: number;
     largest_topic_family_share: number;

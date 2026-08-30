@@ -61,6 +61,7 @@ class CoverageBlueprint(BaseModel):
     provider_super_theme_distribution: dict[str, int] = Field(default_factory=dict)
     effective_classifications: list[dict] = Field(default_factory=list)
     semantic_reevaluation: dict | None = None
+    manual_revalidation: dict | None = None
 
 
 class StarterPromptGenerationResult(BaseModel):
@@ -96,6 +97,10 @@ class StarterPromptGenerationResult(BaseModel):
 
 class PromptProposalApplyRequest(BaseModel):
     prompts: list[StarterPromptSuggestion] | None = Field(default=None, max_length=20)
+
+
+class PromptProposalEditRequest(BaseModel):
+    prompts: list[StarterPromptSuggestion] = Field(min_length=1, max_length=20)
 
 
 class PromptProposalApplyResult(BaseModel):

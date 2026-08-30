@@ -2,6 +2,7 @@ import json
 import math
 import re
 from collections import Counter
+from datetime import datetime, timezone
 from difflib import SequenceMatcher
 from urllib.parse import urlparse
 
@@ -525,6 +526,7 @@ class StarterPromptGenerationService:
         }:
             automatic_rebalance = blueprint.get("automatic_rebalance")
             semantic_reevaluation = blueprint.get("semantic_reevaluation")
+            manual_revalidation = blueprint.get("manual_revalidation")
             blueprint, computed_warnings = cls.coverage(
                 proposal.prompts,
                 proposal.measurement_scope,
@@ -541,6 +543,8 @@ class StarterPromptGenerationService:
                 blueprint["automatic_rebalance"] = automatic_rebalance
             if semantic_reevaluation:
                 blueprint["semantic_reevaluation"] = semantic_reevaluation
+            if manual_revalidation:
+                blueprint["manual_revalidation"] = manual_revalidation
             warnings = list(dict.fromkeys([*warnings, *computed_warnings]))
         return {
             "id": proposal.id, "project_id": proposal.project_id, "status": proposal.status,
@@ -568,6 +572,71 @@ class StarterPromptGenerationService:
             PromptSetProposal.project_id == project_id
         ).order_by(PromptSetProposal.created_at.desc(), PromptSetProposal.id.desc()))
         return cls._serialize(proposal) if proposal else None
+
+    @classmethod
+    def update_proposal(
+        cls, db: Session, project_id: int, proposal_id: int, prompts: list,
+    ) -> dict:
+        proposal = db.scalar(select(PromptSetProposal).where(
+            PromptSetProposal.id == proposal_id,
+            PromptSetProposal.project_id == project_id,
+        ))
+        if proposal is None:
+            raise HTTPException(status_code=404, detail="Prompt proposal not found.")
+        if proposal.status != "proposed":
+            raise HTTPException(status_code=409, detail="Only inactive prompt proposals can be edited.")
+        if len(prompts) != len(proposal.prompts):
+            raise HTTPException(status_code=400, detail="Manual edits cannot add or remove proposal prompts.")
+
+        selected = []
+        for index, item in enumerate(prompts):
+            value = item.model_dump()
+            text = value["text"].strip()
+            if not text:
+                raise HTTPException(status_code=400, detail="Proposal prompts cannot be empty.")
+            if value["category"] not in cls.VALID_CATEGORIES:
+                raise HTTPException(status_code=400, detail="Proposal prompt category is invalid.")
+            existing = proposal.prompts[index]
+            if value["topic_cluster"] != existing["topic_cluster"]:
+                raise HTTPException(status_code=400, detail="Manual edits cannot change proposal topic clusters.")
+            selected.append({
+                **existing,
+                "text": text,
+                "category": value["category"],
+                "topic_cluster": existing["topic_cluster"],
+            })
+        if any(cls.is_near_duplicate(
+            item["text"], [other["text"] for other in selected[:index]]
+        ) for index, item in enumerate(selected)):
+            raise HTTPException(status_code=400, detail="The edited proposal contains duplicate prompts.")
+
+        previous_blueprint = dict(proposal.coverage_blueprint)
+        blueprint, warnings = cls.coverage(
+            selected,
+            proposal.measurement_scope,
+            proposal.topic_clusters,
+            previous_blueprint.get("core_category"),
+            previous_blueprint.get("crawl_sample_bias"),
+        )
+        for key in ("automatic_rebalance", "semantic_reevaluation"):
+            if previous_blueprint.get(key):
+                blueprint[key] = previous_blueprint[key]
+        blueprint["manual_revalidation"] = {
+            "revalidated_at": datetime.now(timezone.utc).isoformat(),
+            "coverage_status": blueprint["concentration_status"],
+            "effective_super_theme_distribution": blueprint["super_theme_distribution"],
+        }
+        try:
+            proposal.prompts = selected
+            proposal.coverage_blueprint = blueprint
+            proposal.warnings = warnings
+            proposal.generator_version = cls.GENERATOR_VERSION
+            db.commit()
+            db.refresh(proposal)
+        except Exception:
+            db.rollback()
+            raise
+        return cls._serialize(proposal)
 
     @classmethod
     def reevaluate_and_repair(

@@ -17,6 +17,7 @@ from app.schemas.prompt_bulk import (
 )
 from app.schemas.starter_prompt_generation import (
     PromptProposalApplyRequest,
+    PromptProposalEditRequest,
     PromptProposalApplyResult,
     StarterPromptGenerateRequest,
     StarterPromptGenerationResult,
@@ -98,6 +99,22 @@ def reevaluate_starter_prompt_proposal(
     _operator: None = Depends(require_operator),
 ):
     return StarterPromptGenerationService.reevaluate_and_repair(db, project_id, proposal_id)
+
+
+@router.put(
+    "/projects/{project_id}/prompts/starter-proposals/{proposal_id}",
+    response_model=StarterPromptGenerationResult,
+)
+def update_starter_prompt_proposal(
+    project_id: int,
+    proposal_id: int,
+    data: PromptProposalEditRequest,
+    db: Session = Depends(get_db),
+    _operator: None = Depends(require_operator),
+):
+    return StarterPromptGenerationService.update_proposal(
+        db, project_id, proposal_id, data.prompts
+    )
 
 
 @router.post(

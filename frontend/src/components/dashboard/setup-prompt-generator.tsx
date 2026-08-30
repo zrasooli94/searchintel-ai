@@ -2,8 +2,8 @@
 
 import { Bot, CheckCircle2, Loader2, Sparkles, TriangleAlert } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
-import type { StarterPromptGenerationResult } from "@/lib/types";
+import { useMemo, useRef, useState } from "react";
+import type { StarterPromptGenerationResult, StarterPromptSuggestion } from "@/lib/types";
 import { canGeneratePromptProposal } from "@/lib/prompt-proposal";
 
 type Props = {
@@ -29,9 +29,12 @@ export default function SetupPromptGenerator(props: Props) {
   const [generating, setGenerating] = useState(false);
   const [applying, setApplying] = useState(false);
   const [reevaluating, setReevaluating] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [semanticConfirming, setSemanticConfirming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const saveQueue = useRef<Promise<void>>(Promise.resolve());
+  const editRevision = useRef(0);
   const proposal = result?.status === "proposed" ? result : null;
   const topicEntries = useMemo(() => Object.entries(proposal?.coverage_blueprint.topic_distribution ?? {}), [proposal]);
   const familyEntries = useMemo(() => Object.entries(proposal?.coverage_blueprint.topic_family_distribution ?? {}), [proposal]);
@@ -80,12 +83,40 @@ export default function SetupPromptGenerator(props: Props) {
     finally { setReevaluating(false); }
   }
 
-  function editPrompt(index: number, field: "text" | "category", value: string) {
-    if (!proposal) return;
+  function editedPrompts(index: number, field: "text" | "category", value: string) {
+    if (!proposal) return null;
     const prompts = proposal.prompts.map((prompt, promptIndex) => (
       promptIndex === index ? { ...prompt, [field]: value } : prompt
     ));
+    editRevision.current += 1;
     setResult({ ...proposal, prompts });
+    return prompts;
+  }
+
+  function saveProposal(prompts: StarterPromptSuggestion[]) {
+    if (!proposal) return;
+    const proposalId = proposal.id;
+    const savedRevision = editRevision.current;
+    const snapshot = prompts.map((prompt) => ({ ...prompt }));
+    setSaving(true); setError(null); setSuccess(null);
+    const queued = saveQueue.current.then(async () => {
+      try {
+        const response = await fetch(`/api/projects/${props.projectId}/prompts/starter-proposals/${proposalId}`, {
+          method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompts: snapshot }),
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(typeof data?.detail === "string" ? data.detail : "Proposal edit failed.");
+        if (editRevision.current === savedRevision) setResult(data);
+        setSuccess("Proposal saved. Semantic coverage and readiness were recalculated.");
+        router.refresh();
+      } catch (caught) {
+        setError(caught instanceof Error ? caught.message : "Proposal edit failed.");
+      }
+    });
+    saveQueue.current = queued;
+    void queued.finally(() => {
+      if (saveQueue.current === queued) setSaving(false);
+    });
   }
 
   return (
@@ -124,7 +155,7 @@ export default function SetupPromptGenerator(props: Props) {
       {proposal && <div className="p-5">
         <div className="flex flex-wrap items-center justify-between gap-3"><div><div className="text-xs uppercase tracking-wide text-violet-600">Proposed starter set · awaiting approval</div><div className="mt-1 text-sm text-slate-600">{proposal.generated_count} proposed · {pretty(proposal.measurement_scope)} · active set remains {props.activePromptCount}</div></div>
           <span className="rounded-full bg-white px-3 py-1 text-xs text-slate-600">{pretty(proposal.coverage_blueprint.concentration_status)}</span></div>
-        {proposal.coverage_blueprint.automatic_rebalance && <div className="mt-4 rounded-xl border border-violet-100 bg-white p-4">
+        {proposal.coverage_blueprint.automatic_rebalance && !proposal.coverage_blueprint.manual_revalidation && <div className="mt-4 rounded-xl border border-violet-100 bg-white p-4">
           <div className="flex flex-wrap items-center justify-between gap-2"><div className="text-xs font-medium uppercase tracking-wide text-violet-600">Automatic rebalance</div><span className="rounded-full bg-violet-50 px-3 py-1 text-xs text-violet-700">{pretty(proposal.coverage_blueprint.automatic_rebalance.status)}</span></div>
           <div className="mt-3 grid gap-2 text-xs text-slate-600 sm:grid-cols-2"><div>Initial coverage: <span className="font-medium text-slate-900">{pretty(proposal.coverage_blueprint.automatic_rebalance.initial_validation.coverage_status)}</span></div><div>Final coverage: <span className="font-medium text-slate-900">{pretty(proposal.coverage_blueprint.automatic_rebalance.final_validation.coverage_status)}</span></div><div>{proposal.coverage_blueprint.automatic_rebalance.status === "completed" ? "Retained" : "Protected prompts"}: <span className="font-medium text-slate-900">{proposal.coverage_blueprint.automatic_rebalance.retained_count} prompts</span></div><div>{proposal.coverage_blueprint.automatic_rebalance.status === "completed" ? "Replaced" : "Repair candidates"}: <span className="font-medium text-slate-900">{proposal.coverage_blueprint.automatic_rebalance.replaced_count} prompts</span></div></div>
           {proposal.coverage_blueprint.automatic_rebalance.triggered && <p className="mt-3 text-xs leading-5 text-slate-500">{proposal.coverage_blueprint.automatic_rebalance.status === "completed" ? "SearchIntel repaired the detected coverage imbalance once, then reran the existing coverage validation." : "SearchIntel attempted one bounded repair, but the proposal still needs human review after revalidation."} No benchmark was created.</p>}
@@ -143,10 +174,11 @@ export default function SetupPromptGenerator(props: Props) {
         <p className="mt-3 text-xs text-slate-500">Largest topic share: {(proposal.coverage_blueprint.largest_topic_share * 100).toFixed(1)}%. Largest topic-family share: {(proposal.coverage_blueprint.largest_topic_family_share * 100).toFixed(1)}%. Largest super-theme share: {(proposal.coverage_blueprint.largest_super_theme_share * 100).toFixed(1)}%. The 35% cluster, 40% family, and 45% super-theme guards are SearchIntel benchmark-design constraints, not industry standards.</p>
         {proposal.warnings.map((warning) => <div key={warning} className="mt-2 rounded-lg bg-amber-50 p-3 text-xs text-amber-800">{warning}</div>)}
         <div className="mt-4 space-y-2">{proposal.prompts.map((prompt, index) => <div key={`${proposal.id}-${index}`} className="rounded-xl border border-slate-200 bg-white p-4">
-          <label className="text-xs text-slate-500">Prompt {index + 1}<textarea value={prompt.text} onChange={(event) => editPrompt(index, "text", event.target.value)} rows={2} className="mt-1 w-full resize-y rounded-lg border border-slate-200 px-3 py-2 text-sm leading-6 text-slate-800" /></label>
-          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs"><span className="rounded bg-violet-50 px-2 py-1 text-violet-700">{prompt.topic_cluster}</span><select value={prompt.category} onChange={(event) => editPrompt(index, "category", event.target.value)} className="rounded border border-slate-200 bg-slate-100 px-2 py-1">{["brand", "informational", "problem_solution", "recommendation", "comparison", "commercial", "navigational", "transactional"].map((category) => <option key={category} value={category}>{pretty(category)}</option>)}</select></div>
+          <label className="text-xs text-slate-500">Prompt {index + 1}<textarea value={prompt.text} onChange={(event) => editedPrompts(index, "text", event.target.value)} onBlur={() => saveProposal(proposal.prompts)} rows={2} className="mt-1 w-full resize-y rounded-lg border border-slate-200 px-3 py-2 text-sm leading-6 text-slate-800" /></label>
+          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs"><span className="rounded bg-violet-50 px-2 py-1 text-violet-700">{prompt.topic_cluster}</span><select value={prompt.category} onChange={(event) => { const prompts = editedPrompts(index, "category", event.target.value); if (prompts) saveProposal(prompts); }} className="rounded border border-slate-200 bg-slate-100 px-2 py-1">{["brand", "informational", "problem_solution", "recommendation", "comparison", "commercial", "navigational", "transactional"].map((category) => <option key={category} value={category}>{pretty(category)}</option>)}</select></div>
         </div>)}</div>
-        <button type="button" disabled={!props.operatorAuthorized || applying} onClick={applyProposal} className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-400 px-4 py-3 text-sm font-medium text-slate-950 disabled:opacity-50">{applying && <Loader2 className="h-4 w-4 animate-spin" />}Replace Active Set</button>
+        {saving && <p className="mt-3 flex items-center gap-2 text-xs text-violet-700"><Loader2 className="h-3.5 w-3.5 animate-spin" />Saving edit and recalculating semantic coverage…</p>}
+        <button type="button" disabled={!props.operatorAuthorized || applying || saving} onClick={applyProposal} className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-400 px-4 py-3 text-sm font-medium text-slate-950 disabled:opacity-50">{applying && <Loader2 className="h-4 w-4 animate-spin" />}Replace Active Set</button>
         <p className="mt-2 text-center text-xs text-slate-500">Explicit operator approval is required. Historical frozen benchmark snapshots are not changed.</p>
       </div>}
     </div>
