@@ -394,6 +394,7 @@ export type GeoOpportunitySummary = {
 
   target_brand_id: number;
   target_brand: string;
+  analysis_status: "completed" | "pending";
 
   total_prompts: number;
 
@@ -457,6 +458,7 @@ export type SiteRAGGapSummary = {
   project_id: number;
   target_brand_id: number;
   target_brand: string;
+  analysis_status: "completed" | "pending";
 
   total_prompts: number;
   gap_prompts: number;

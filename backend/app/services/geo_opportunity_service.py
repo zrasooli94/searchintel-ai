@@ -1,7 +1,7 @@
 from collections import defaultdict
 
 from fastapi import HTTPException
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.models.ai_response import AIResponse
@@ -722,6 +722,18 @@ class GeoOpportunityService:
             )
         )
 
+        analyzed_prompt_count = db.scalar(
+            select(func.count(func.distinct(AIRun.prompt_id)))
+            .join(AIResponse, AIResponse.run_id == AIRun.id)
+            .where(
+                AIRun.experiment_id == experiment_id,
+                AIRun.include_in_metrics.is_(True),
+                AIRun.status == "completed",
+                AIRun.benchmark_mode == "web_search",
+                AIResponse.visibility_analyzed_at.is_not(None),
+            )
+        ) or 0
+
         return {
             "experiment_id":
                 experiment_id,
@@ -731,8 +743,14 @@ class GeoOpportunityService:
                 target.id,
             "target_brand":
                 target.name,
+            "analysis_status": (
+                "completed"
+                if analyzed_prompt_count > 0
+                and len(opportunities) == analyzed_prompt_count
+                else "pending"
+            ),
             "total_prompts":
-                len(opportunities),
+                analyzed_prompt_count,
             "high_priority":
                 sum(
                     item.priority == "high"

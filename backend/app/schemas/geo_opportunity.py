@@ -45,6 +45,7 @@ class GeoOpportunitySummary(BaseModel):
     project_id: int
     target_brand_id: int
     target_brand: str
+    analysis_status: str
 
     total_prompts: int
 

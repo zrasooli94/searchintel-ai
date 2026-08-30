@@ -144,7 +144,7 @@ export default function SiteRAGGapsPanel({
           <ShieldAlert className="h-5 w-5 text-indigo-500" />
 
           <div className="crystal-value mt-5 text-3xl font-medium">
-            {gaps.gap_prompts}
+            {gaps.analysis_status === "completed" ? gaps.gap_prompts : "—"}
           </div>
 
           <div className="mt-2 text-xs text-slate-500">
@@ -156,7 +156,7 @@ export default function SiteRAGGapsPanel({
           <TriangleAlert className="h-5 w-5 text-indigo-500" />
 
           <div className="crystal-value mt-5 text-3xl font-medium">
-            {gaps.high_priority}
+            {gaps.analysis_status === "completed" ? gaps.high_priority : "—"}
           </div>
 
           <div className="mt-2 text-xs text-slate-500">
@@ -206,7 +206,17 @@ export default function SiteRAGGapsPanel({
           </p>
         </div>
 
-        {gaps.gaps.length === 0 ? (
+        {gaps.analysis_status === "pending" ? (
+          <div className="px-6 py-12 text-center">
+            <Database className="mx-auto h-6 w-6 text-indigo-500" />
+            <h3 className="mt-4 font-medium text-slate-900">
+              Evidence gap analysis pending
+            </h3>
+            <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
+              The Site RAG measurement is complete, but its deterministic evidence-gap analysis has not completed yet. Zero gaps are not assumed.
+            </p>
+          </div>
+        ) : gaps.gaps.length === 0 ? (
           <div className="px-6 py-12 text-center">
             <BookOpenCheck className="mx-auto h-6 w-6 text-emerald-500" />
 

@@ -587,6 +587,11 @@ class SiteRAGGapService:
             )
         )
 
+        analysis = SiteRAGGapAnalysisRepository.completed_by_experiment(
+            db,
+            experiment_id,
+        )
+
         metrics = (
             SiteRAGMetricsService.calculate(
                 db=db,
@@ -623,6 +628,12 @@ class SiteRAGGapService:
 
             "target_brand":
                 target.name,
+
+            "analysis_status": (
+                "completed"
+                if analysis is not None
+                else "pending"
+            ),
 
             "total_prompts":
                 total_prompts,

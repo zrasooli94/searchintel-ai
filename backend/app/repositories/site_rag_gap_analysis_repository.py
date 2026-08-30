@@ -11,6 +11,18 @@ from app.models.site_rag_gap_analysis import (
 class SiteRAGGapAnalysisRepository:
 
     @staticmethod
+    def completed_by_experiment(
+        db: Session,
+        experiment_id: int,
+    ) -> SiteRAGGapAnalysis | None:
+        return db.scalar(
+            select(SiteRAGGapAnalysis).where(
+                SiteRAGGapAnalysis.experiment_id == experiment_id,
+                SiteRAGGapAnalysis.status == "completed",
+            )
+        )
+
+    @staticmethod
     def record_completed(
         db: Session,
         experiment_id: int,

@@ -6,6 +6,37 @@ from app.services.site_rag_gap_service import SiteRAGGapService
 
 
 class SiteRAGGapServiceTests(unittest.TestCase):
+    @patch("app.services.site_rag_gap_service.SiteRAGMetricsService.calculate")
+    @patch("app.services.site_rag_gap_service.SiteRAGGapAnalysisRepository.completed_by_experiment")
+    @patch("app.services.site_rag_gap_service.SiteRAGGapRepository.list_by_experiment")
+    @patch.object(SiteRAGGapService, "_context")
+    def test_summary_does_not_present_missing_analysis_as_zero_gaps(
+        self,
+        context,
+        list_gaps,
+        completed_analysis,
+        calculate,
+    ):
+        db = Mock()
+        experiment = SimpleNamespace(id=22, project_id=8)
+        target = SimpleNamespace(id=50, name="Vercel")
+        rows = [SimpleNamespace(prompt_id=index) for index in range(19)]
+        context.return_value = (experiment, target, rows)
+        list_gaps.return_value = []
+        completed_analysis.return_value = None
+        calculate.return_value = {
+            "site_answerability_rate_v1": 78.95,
+            "unsupported_answer_rate_v1": 21.05,
+            "evidence_coverage_rate": 100.0,
+            "source_reference_rate": 100.0,
+            "evidence_utilization_rate": 100.0,
+        }
+
+        result = SiteRAGGapService.summary(db, 22)
+
+        self.assertEqual(result["total_prompts"], 19)
+        self.assertEqual(result["analysis_status"], "pending")
+        self.assertEqual(result["gap_prompts"], 0)
     @patch.object(SiteRAGGapService, "summary")
     @patch.object(SiteRAGGapService, "_context")
     @patch(

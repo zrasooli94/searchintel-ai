@@ -217,28 +217,28 @@ export default function PromptGapsDashboard({
           <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <MetricCard
               label="High Priority"
-              value={`${gaps.high_priority}`}
+              value={gaps.analysis_status === "completed" ? `${gaps.high_priority}` : "—"}
               detail="Highest-value visibility gaps"
               icon={AlertTriangle}
             />
 
             <MetricCard
               label="Medium Priority"
-              value={`${gaps.medium_priority}`}
+              value={gaps.analysis_status === "completed" ? `${gaps.medium_priority}` : "—"}
               detail="Secondary opportunities"
               icon={Target}
             />
 
             <MetricCard
               label="Competitor Dominance"
-              value={`${gaps.competitor_dominance_prompts}`}
+              value={gaps.analysis_status === "completed" ? `${gaps.competitor_dominance_prompts}` : "—"}
               detail="Competitor grounded, target absent"
               icon={Crosshair}
             />
 
             <MetricCard
               label="Top Opportunity"
-              value={topScore.toFixed(0)}
+              value={gaps.analysis_status === "completed" ? topScore.toFixed(0) : "—"}
               detail="SearchIntel Opportunity Score V1"
               icon={Gauge}
             />
@@ -255,7 +255,7 @@ export default function PromptGapsDashboard({
               Current prompt visibility state.
             </p>
 
-            {gaps.total_prompts === 0 ? (
+            {gaps.analysis_status === "pending" ? (
               <div className="mt-6 flex min-h-[260px] items-center justify-center rounded-[20px] border border-dashed border-slate-200 bg-slate-50/40 p-8 text-center">
                 <div>
                   <div className="crystal-icon mx-auto h-11 w-11">
@@ -263,11 +263,11 @@ export default function PromptGapsDashboard({
                   </div>
 
                   <h3 className="mt-4 font-medium text-slate-900">
-                    No measured prompt gaps yet
+                    Prompt gap analysis pending
                   </h3>
 
                   <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-slate-500">
-                    Run or select a compatible web-search experiment to generate opportunity data.
+                    The completed Web Search measurement is available, but its deterministic opportunity analysis has not completed yet. No gap counts are inferred until that analysis is stored.
                   </p>
                 </div>
               </div>

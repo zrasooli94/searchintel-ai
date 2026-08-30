@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timezone
 
 from fastapi import HTTPException
@@ -29,6 +30,9 @@ from app.services.site_rag_retrieval_service import (
 )
 from app.services.visibility_analysis_service import (
     VisibilityAnalysisService,
+)
+from app.services.measurement_derivation_service import (
+    MeasurementDerivationService,
 )
 
 
@@ -766,6 +770,23 @@ class BenchmarkService:
                         )
 
             db.commit()
+
+            if (
+                job.status == "completed"
+                and job.experiment_id is not None
+            ):
+                try:
+                    MeasurementDerivationService.refresh(
+                        db=db,
+                        experiment_id=job.experiment_id,
+                        benchmark_mode=job.benchmark_mode,
+                    )
+                except Exception:
+                    db.rollback()
+                    logging.getLogger(__name__).exception(
+                        "Deterministic derived analysis failed for experiment %s.",
+                        job.experiment_id,
+                    )
 
         except Exception as exc:
             db.rollback()
