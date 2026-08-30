@@ -22,7 +22,7 @@ from app.services.ai_model_service import AIModelService
 
 
 class StarterPromptGenerationService:
-    GENERATOR_VERSION = "semantic-classification-v6"
+    GENERATOR_VERSION = "semantic-classification-v7"
     REPAIR_GENERATOR_VERSION = "coverage-repair-v1"
     MAX_TOPIC_SHARE = 0.35
     MAX_FAMILY_SHARE = 0.40
@@ -59,6 +59,22 @@ class StarterPromptGenerationService:
             "phrases": {
                 "crm": 4, "lead nurturing": 4, "marketing automation": 4,
                 "sales pipeline": 3, "customer relationship": 3, "campaign automation": 3,
+            },
+        },
+        "web_delivery": {
+            "name": "Web application delivery",
+            "phrases": {
+                "web application": 2, "application deployment": 4, "deploying": 3,
+                "frontend": 3, "preview environment": 4,
+                "preview environments": 4, "edge delivery": 3, "managed domains": 3,
+            },
+        },
+        "production_ops": {
+            "name": "Production operations and security",
+            "phrases": {
+                "observability": 4, "production operations": 4, "production issue": 3,
+                "application traces": 3, "monitoring": 3, "operating": 2,
+                "production scaling": 3, "security": 2,
             },
         },
     }
@@ -131,9 +147,15 @@ class StarterPromptGenerationService:
         elif primary_key == "payments":
             micro = "Payment risk and checkout" if any(value in normalized for value in ("fraud", "checkout")) else "Payment operations"
             family = "Payments"
-        else:
+        elif primary_key == "marketing_crm":
             micro = "Marketing automation" if "automation" in normalized else "CRM operations"
             family = "Marketing and CRM"
+        elif primary_key == "web_delivery":
+            micro = "Framework deployment and previews"
+            family = "Web application delivery"
+        else:
+            micro = "Application security and observability"
+            family = "Production operations and security"
         effective_theme = cls.SEMANTIC_DOMAINS[primary_key]["name"]
         return {
             "effective_micro_cluster": micro,

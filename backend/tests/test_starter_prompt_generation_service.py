@@ -435,6 +435,32 @@ class StarterPromptGenerationServiceTests(unittest.TestCase):
         self.assertEqual(payment["effective_super_theme"], "Payments Ecosystem")
         self.assertEqual(crm["effective_super_theme"], "Marketing / CRM Ecosystem")
 
+    def test_manual_deployment_and_operations_edits_override_stale_ai_metadata(self):
+        ai_metadata = {
+            "name": "Agent frameworks",
+            "topic_family": "AI and agent infrastructure",
+            "super_theme": "AI / Agent Ecosystem",
+        }
+        deployment = StarterPromptGenerationService.semantic_prompt_classification(
+            {
+                "text": "Which platforms support globally deploying frontend applications with preview environments and edge delivery?",
+                "topic_cluster": "Agent frameworks",
+            },
+            ai_metadata,
+        )
+        operations = StarterPromptGenerationService.semantic_prompt_classification(
+            {
+                "text": "What platform capabilities support application deployment, observability, and production operations?",
+                "topic_cluster": "Agent frameworks",
+            },
+            ai_metadata,
+        )
+
+        self.assertEqual(deployment["effective_super_theme"], "Web application delivery")
+        self.assertEqual(operations["effective_super_theme"], "Production operations and security")
+        self.assertTrue(deployment["reclassified"])
+        self.assertTrue(operations["reclassified"])
+
     def test_core_brand_market_is_separate_from_strategic_emphasis(self):
         prompts, clusters, core = self.repair_fixture(ai_count=10)
         core["name"] = "Current AI Initiative"
