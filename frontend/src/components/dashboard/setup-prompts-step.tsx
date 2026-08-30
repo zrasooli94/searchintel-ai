@@ -25,6 +25,7 @@ import type {
   ProjectPrompt,
   StarterPromptGenerationResult,
 } from "@/lib/types";
+import { activePromptSet } from "@/lib/prompt-proposal";
 
 
 const categories = [
@@ -291,8 +292,10 @@ export default function SetupPromptsStep({
   }
 
 
+  const activePrompts = activePromptSet(prompts);
+
   const categoryCounts =
-    prompts.reduce<
+    activePrompts.reduce<
       Record<string, number>
     >(
       (
@@ -337,7 +340,7 @@ export default function SetupPromptsStep({
           </div>
 
           <div className="rounded-xl bg-slate-100 px-3 py-2 text-sm font-medium text-slate-700">
-            {prompts.length} prompts
+            {activePrompts.length} prompts
           </div>
         </div>
       </div>
@@ -346,7 +349,7 @@ export default function SetupPromptsStep({
         <SetupPromptGenerator
           projectId={projectId}
           targetBrand={targetBrand}
-          activePromptCount={prompts.filter((prompt) => prompt.is_active).length}
+          activePromptCount={activePrompts.length}
           initialProposal={initialProposal}
           operatorAuthorized={operatorAuthorized}
           initialScope={initialScope}
@@ -446,7 +449,7 @@ brand | what is ${targetBrand}`}
             </div>
           </div>
 
-          {prompts.length === 0 ? (
+          {activePrompts.length === 0 ? (
             <div className="p-8 text-center">
               <FileText className="mx-auto h-6 w-6 text-slate-400" />
 
@@ -481,7 +484,7 @@ brand | what is ${targetBrand}`}
               </div>
 
               <div className="max-h-[520px] divide-y divide-slate-200/70 overflow-y-auto">
-                {prompts.map(
+                {activePrompts.map(
                   (prompt) => (
                     <div
                       key={prompt.id}

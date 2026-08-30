@@ -1,3 +1,5 @@
+import type { ProjectPrompt } from "./types";
+
 export function canGeneratePromptProposal(input: {
   operatorAuthorized: boolean;
   generating: boolean;
@@ -38,4 +40,8 @@ export function brandWideCoverageSummary(input: {
     isBalanced: input.status === "balanced" && Object.values(input.checklist).every(Boolean),
     constraintNote: "SearchIntel measurement-quality constraint; not an industry standard.",
   };
+}
+
+export function activePromptSet(prompts: ProjectPrompt[]): ProjectPrompt[] {
+  return prompts.filter((prompt) => prompt.is_active);
 }
