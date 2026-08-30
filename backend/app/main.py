@@ -1,5 +1,6 @@
 import hmac
 import logging
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -10,6 +11,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from app.api.router import api_router
 from app.core.config import settings
 from app.db.session import SessionLocal
+from app.services.measurement_derivation_service import MeasurementDerivationService
 
 
 APP_VERSION = "1.0.0"
@@ -17,9 +19,25 @@ APP_VERSION = "1.0.0"
 logger = logging.getLogger(__name__)
 
 
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    try:
+        with SessionLocal() as db:
+            refreshed = MeasurementDerivationService.backfill_missing(db)
+            if refreshed:
+                logger.info(
+                    "Backfilled %s missing deterministic measurement analyses.",
+                    len(refreshed),
+                )
+    except Exception:
+        logger.exception("Deterministic measurement analysis backfill failed.")
+    yield
+
+
 app = FastAPI(
     title=settings.app_name,
     version=APP_VERSION,
+    lifespan=lifespan,
 )
 
 app.add_middleware(
