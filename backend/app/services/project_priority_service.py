@@ -16,10 +16,13 @@ from app.repositories.project_repository import ProjectRepository
 from app.repositories.site_rag_gap_analysis_repository import SiteRAGGapAnalysisRepository
 from app.services.project_readiness_service import ProjectReadinessService
 from app.services.technical_seo_summary_service import TechnicalSEOSummaryService
+from app.services.technical_recommendation_service import TechnicalRecommendationService
 
 
 class ProjectPriorityService:
     """Deterministically reconcile stored evidence into an agency work queue."""
+
+    GENERATOR_VERSION = "priority-center-v1.1"
 
     VALID_STATUSES = {
         "open", "in_progress", "implemented", "ready_to_recheck",
@@ -64,6 +67,7 @@ class ProjectPriorityService:
 
     @classmethod
     def _finalize(cls, item: dict) -> dict:
+        item["provenance"]["generator_version"] = cls.GENERATOR_VERSION
         modes = sorted(set(item["source_modes"]))
         severity = item.pop("severity")
         confidence_points = 15 if item["confidence"] == "high" else 10 if item["confidence"] == "medium" else 5
@@ -105,23 +109,30 @@ class ProjectPriorityService:
                 return []
             raise
         grouped: dict[str, list] = {}
-        for recommendation in summary["recommendations"]:
-            family = recommendation["issue_code"].lower()
-            grouped.setdefault(family, []).append(recommendation)
-        pages_by_id = {page["id"]: page["url"] for page in summary["pages"]}
+        for issue in summary["issues"]:
+            grouped.setdefault(issue["code"].lower(), []).append(issue)
+        recommendations = {
+            item["issue_code"].lower(): item for item in summary["recommendations"]
+        }
         candidates = []
-        for family, recommendations in grouped.items():
-            top = max(recommendations, key=lambda item: item["priority_score"])
-            pages = sorted({pages_by_id.get(item["page_id"], "") for item in recommendations} - {""})
-            severity = 60 if top["priority"] == "high" else 45 if top["priority"] == "medium" else 25
+        for family, issues in grouped.items():
+            rule = TechnicalRecommendationService.RULES.get(
+                issues[0]["code"],
+                {"title": "Review technical SEO issue", "recommendation": issues[0]["message"], "priority_score": 30},
+            )
+            persisted = recommendations.get(family)
+            score = persisted["priority_score"] if persisted else rule["priority_score"]
+            level = TechnicalRecommendationService.priority_from_score(score)
+            pages = sorted({item["page_url"] for item in issues})
+            severity = 60 if level == "high" else 45 if level == "medium" else 25
             candidates.append({
-                "stable_key": f"technical:{family}", "title": top["title"], "severity": severity,
-                "impact": top["priority"], "effort": "medium", "confidence": "high",
-                "observed_evidence": [f"{len(recommendations)} stored finding(s) in the latest bounded technical audit."],
+                "stable_key": f"technical:{family}", "title": persisted["title"] if persisted else rule["title"], "severity": severity,
+                "impact": level, "effort": "medium", "confidence": "high",
+                "observed_evidence": [f"{len(issues)} stored finding(s) in the latest bounded technical audit."],
                 "interpretation": "The repeated page-level findings represent one technical work package, not separate strategic tasks.",
-                "recommended_action": top["recommendation"], "affected_prompts": [],
+                "recommended_action": persisted["recommendation"] if persisted else rule["recommendation"], "affected_prompts": [],
                 "affected_pages": pages, "affected_entities": [], "source_modes": ["technical_seo"],
-                "provenance": {"technical_audit_id": summary["audit"]["id"] if summary["audit"] else None, "issue_code": top["issue_code"]},
+                "provenance": {"technical_audit_id": summary["audit"]["id"] if summary["audit"] else None, "issue_code": issues[0]["code"], "finding_ids": [item["id"] for item in issues]},
             })
         return candidates
 
@@ -284,7 +295,11 @@ class ProjectPriorityService:
     def backfill_missing(cls, db: Session) -> list[int]:
         refreshed = []
         for project in ProjectRepository.list_all(db):
-            if ProjectPriorityRepository.list_by_project(db, project.id):
+            records = ProjectPriorityRepository.list_by_project(db, project.id)
+            if records and all(
+                record.provenance.get("generator_version") == cls.GENERATOR_VERSION
+                for record in records
+            ):
                 continue
             if cls.build_candidates(db, project.id):
                 cls.refresh(db, project.id)

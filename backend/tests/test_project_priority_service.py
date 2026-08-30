@@ -17,6 +17,20 @@ def candidate(mode, prompt, *, monitor=False):
 
 
 class ProjectPriorityServiceTests(unittest.TestCase):
+    @patch("app.services.project_priority_service.TechnicalSEOSummaryService.build")
+    def test_technical_findings_consolidate_without_persisted_recommendations(self, build):
+        build.return_value = {
+            "audit": {"id": 7}, "recommendations": [], "pages": [],
+            "issues": [
+                {"id": 1, "code": "MISSING_TITLE", "page_url": "https://example.com/a", "message": "Missing title"},
+                {"id": 2, "code": "MISSING_TITLE", "page_url": "https://example.com/b", "message": "Missing title"},
+            ],
+        }
+        items = ProjectPriorityService._technical_candidates(MagicMock(), 8)
+        self.assertEqual(len(items), 1)
+        self.assertEqual(items[0]["title"], "Add a descriptive title")
+        self.assertEqual(len(items[0]["affected_pages"]), 2)
+
     def test_cross_mode_prompt_evidence_merges_into_one_priority(self):
         web = candidate("web_search", "How do I troubleshoot production deployments?")
         site = candidate("site_rag", "Production deployment troubleshooting guide")
@@ -73,7 +87,8 @@ class ProjectPriorityServiceTests(unittest.TestCase):
         self, list_projects, list_priorities, build, refresh
     ):
         list_projects.return_value = [MagicMock(id=1), MagicMock(id=8)]
-        list_priorities.side_effect = [[MagicMock()], []]
+        current = MagicMock(provenance={"generator_version": ProjectPriorityService.GENERATOR_VERSION})
+        list_priorities.side_effect = [[current], []]
         build.return_value = [candidate("web_search", "Production troubleshooting")]
         result = ProjectPriorityService.backfill_missing(MagicMock())
         self.assertEqual(result, [8])
