@@ -12,6 +12,7 @@ from app.api.router import api_router
 from app.core.config import settings
 from app.db.session import SessionLocal
 from app.services.measurement_derivation_service import MeasurementDerivationService
+from app.services.project_priority_service import ProjectPriorityService
 
 
 APP_VERSION = "1.0.0"
@@ -28,6 +29,12 @@ async def lifespan(_app: FastAPI):
                 logger.info(
                     "Backfilled %s missing deterministic measurement analyses.",
                     len(refreshed),
+                )
+            priority_projects = ProjectPriorityService.backfill_missing(db)
+            if priority_projects:
+                logger.info(
+                    "Backfilled deterministic priorities for %s project(s).",
+                    len(priority_projects),
                 )
     except Exception:
         logger.exception("Deterministic measurement analysis backfill failed.")

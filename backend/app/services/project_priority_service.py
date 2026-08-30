@@ -281,6 +281,17 @@ class ProjectPriorityService:
         return cls.summary(db, project_id)
 
     @classmethod
+    def backfill_missing(cls, db: Session) -> list[int]:
+        refreshed = []
+        for project in ProjectRepository.list_all(db):
+            if ProjectPriorityRepository.list_by_project(db, project.id):
+                continue
+            if cls.build_candidates(db, project.id):
+                cls.refresh(db, project.id)
+                refreshed.append(project.id)
+        return refreshed
+
+    @classmethod
     def summary(cls, db: Session, project_id: int) -> dict:
         if ProjectRepository.get_by_id(db, project_id) is None:
             raise HTTPException(status_code=404, detail="Project not found.")

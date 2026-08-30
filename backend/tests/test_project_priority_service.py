@@ -65,6 +65,21 @@ class ProjectPriorityServiceTests(unittest.TestCase):
         db.commit.assert_not_called()
         db.add.assert_not_called()
 
+    @patch("app.services.project_priority_service.ProjectPriorityService.refresh")
+    @patch("app.services.project_priority_service.ProjectPriorityService.build_candidates")
+    @patch("app.services.project_priority_service.ProjectPriorityRepository.list_by_project")
+    @patch("app.services.project_priority_service.ProjectRepository.list_all")
+    def test_startup_backfill_only_populates_projects_without_priority_history(
+        self, list_projects, list_priorities, build, refresh
+    ):
+        list_projects.return_value = [MagicMock(id=1), MagicMock(id=8)]
+        list_priorities.side_effect = [[MagicMock()], []]
+        build.return_value = [candidate("web_search", "Production troubleshooting")]
+        result = ProjectPriorityService.backfill_missing(MagicMock())
+        self.assertEqual(result, [8])
+        refresh.assert_called_once()
+        self.assertEqual(refresh.call_args.args[1], 8)
+
 
 if __name__ == "__main__":
     unittest.main()
