@@ -18,6 +18,7 @@ from app.api.routes.brands import router as brands_router
 from app.api.routes.projects import router as projects_router
 from app.api.routes.technical_audits import router as technical_audits_router
 from app.api.routes.websites import router as websites_router
+from app.api.routes.project_priorities import router as project_priorities_router
 
 
 api_router = APIRouter()
@@ -43,3 +44,4 @@ api_router.include_router(geo_opportunities_router)
 api_router.include_router(site_rag_gaps_router)
 api_router.include_router(geo_content_diagnoses_router)
 api_router.include_router(geo_action_plans_router)
+api_router.include_router(project_priorities_router)

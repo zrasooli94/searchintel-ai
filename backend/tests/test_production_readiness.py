@@ -210,6 +210,24 @@ class OperatorAuthorizationTests(unittest.TestCase):
                 {dependency.call for dependency in route.dependant.dependencies},
             )
 
+    def test_priority_refresh_and_lifecycle_mutations_require_operator(self):
+        from app.api.routes.project_priorities import router
+
+        protected_paths = {
+            "/projects/{project_id}/priorities/refresh",
+            "/projects/{project_id}/priorities/{priority_id}",
+        }
+        routes = {
+            route.path: route for route in router.routes
+            if getattr(route, "path", None) in protected_paths
+        }
+        self.assertEqual(set(routes), protected_paths)
+        for route in routes.values():
+            self.assertIn(
+                require_operator,
+                {dependency.call for dependency in route.dependant.dependencies},
+            )
+
 
 class ApiTokenMiddlewareTests(
     unittest.IsolatedAsyncioTestCase

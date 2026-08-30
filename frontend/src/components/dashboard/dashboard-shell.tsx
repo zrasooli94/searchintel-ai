@@ -16,6 +16,7 @@ import {
   FolderKanban,
   LayoutDashboard,
   ListChecks,
+  ListTodo,
   Radar,
   Search,
 } from "lucide-react";
@@ -35,6 +36,11 @@ const navigation = [
     label: "Overview",
     path: "",
     icon: LayoutDashboard,
+  },
+  {
+    label: "Priority Center",
+    path: "/priorities",
+    icon: ListTodo,
   },
   {
     label: "Technical SEO",

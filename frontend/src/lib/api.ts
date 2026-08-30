@@ -12,6 +12,7 @@ import type {
   ProjectPrompt,
   ProjectWorkspace,
   ProjectReadiness,
+  ProjectPrioritySummary,
   TechnicalAuditSetupState,
   TechnicalSEOSummary,
   VisibilitySummary,
@@ -116,6 +117,12 @@ export async function getProjectReadiness(
 ): Promise<ProjectReadiness> {
   return fetchJson<ProjectReadiness>(
     `${searchIntelApiBaseUrl()}/projects/${projectId}/readiness`,
+  );
+}
+
+export async function getProjectPriorities(projectId: number): Promise<ProjectPrioritySummary> {
+  return fetchJson<ProjectPrioritySummary>(
+    `${searchIntelApiBaseUrl()}/projects/${projectId}/priorities`,
   );
 }
 

@@ -10,6 +10,24 @@ export type GeoExperiment = {
   created_at: string;
 };
 
+export type ProjectPriority = {
+  id: number; project_id: number; stable_key: string; title: string;
+  priority: "high" | "medium" | "low" | "monitor"; priority_score: number;
+  impact: "high" | "medium" | "low"; effort: "high" | "medium" | "low";
+  confidence: "high" | "medium" | "low"; status: string;
+  observed_evidence: string[]; interpretation: string; recommended_action: string;
+  affected_prompts: string[]; affected_pages: string[]; affected_entities: string[];
+  source_modes: string[]; score_components: Record<string, number | boolean>;
+  provenance: Record<string, unknown>; is_resolved: boolean; resolved_at: string | null;
+  created_at: string; updated_at: string;
+};
+
+export type ProjectPrioritySummary = {
+  project_id: number; open_priorities: number; high_priority: number;
+  in_progress: number; ready_to_recheck: number; priorities: ProjectPriority[];
+  provenance_note: string;
+};
+
 export type VisibilityLeader = {
   brand_id: number;
   name: string;
