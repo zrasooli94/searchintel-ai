@@ -29,12 +29,11 @@ import {
 
 async function fetchJson<T>(
   url: string,
+  init: RequestInit = {},
 ): Promise<T> {
   const response = await searchIntelFetch(
     url,
-    {
-      cache: "no-store",
-    },
+    { ...init, cache: "no-store" },
   );
 
   if (!response.ok) {
@@ -430,4 +429,15 @@ export async function getProjectPrompts(
   return fetchJson<ProjectPrompt[]>(
     `${searchIntelApiBaseUrl()}/projects/${projectId}/prompts`,
   );
+}
+
+export async function getClientReports(projectId: number): Promise<import("@/lib/types").ClientReport[]> {
+  const { operatorBackendHeaders } = await import("@/lib/operator-session");
+  return fetchJson(`${searchIntelApiBaseUrl()}/projects/${projectId}/client-reports`, {
+    headers: await operatorBackendHeaders(), cache: "no-store",
+  });
+}
+
+export async function getSharedClientReport(token: string): Promise<import("@/lib/types").ClientReport> {
+  return fetchJson(`${searchIntelApiBaseUrl()}/client-reports/share/${encodeURIComponent(token)}`, { cache: "no-store" });
 }

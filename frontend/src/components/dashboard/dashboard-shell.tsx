@@ -17,6 +17,7 @@ import {
   LayoutDashboard,
   ListChecks,
   ListTodo,
+  FileText,
   Radar,
   Search,
 } from "lucide-react";
@@ -71,6 +72,11 @@ const navigation = [
     label: "Action Plan",
     path: "/action-plan",
     icon: ListChecks,
+  },
+  {
+    label: "Client Reports",
+    path: "/client-reports",
+    icon: FileText,
   },
 ];
 

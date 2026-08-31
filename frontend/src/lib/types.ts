@@ -28,6 +28,13 @@ export type ProjectPrioritySummary = {
   provenance_note: string;
 };
 
+export type ClientReport = {
+  id: number; project_id: number; title: string; period_label: string | null;
+  status: "draft" | "published" | "revoked"; snapshot_version: string;
+  snapshot: Record<string, unknown>; content_hash: string; share_token_hint: string | null;
+  expires_at: string | null; published_at: string | null; revoked_at: string | null; created_at: string;
+};
+
 export type VisibilityLeader = {
   brand_id: number;
   name: string;
