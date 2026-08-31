@@ -228,6 +228,17 @@ class OperatorAuthorizationTests(unittest.TestCase):
                 {dependency.call for dependency in route.dependant.dependencies},
             )
 
+    def test_monitoring_mutations_require_operator(self):
+        from app.api.routes.monitoring import router
+
+        routes = [route for route in router.routes if "GET" not in getattr(route, "methods", set())]
+        self.assertEqual(len(routes), 3)
+        for route in routes:
+            self.assertIn(
+                require_operator,
+                {dependency.call for dependency in route.dependant.dependencies},
+            )
+
 
 class ApiTokenMiddlewareTests(
     unittest.IsolatedAsyncioTestCase

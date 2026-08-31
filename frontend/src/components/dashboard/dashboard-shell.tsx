@@ -19,6 +19,7 @@ import {
   ListTodo,
   FileText,
   Radar,
+  Clock3,
   Search,
 } from "lucide-react";
 
@@ -77,6 +78,11 @@ const navigation = [
     label: "Client Reports",
     path: "/client-reports",
     icon: FileText,
+  },
+  {
+    label: "Monitoring",
+    path: "/monitoring",
+    icon: Clock3,
   },
 ];
 

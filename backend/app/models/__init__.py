@@ -34,6 +34,8 @@ from app.models.competitor_discovery_suggestion import CompetitorDiscoverySugges
 from app.models.prompt_set_proposal import PromptSetProposal
 from app.models.project_priority import ProjectPriority
 from app.models.client_report import ClientReport
+from app.models.monitoring_schedule import MonitoringSchedule
+from app.models.monitoring_run import MonitoringRun
 
 __all__ = [
     "SearchEntity",
@@ -72,4 +74,6 @@ __all__ = [
     "PromptSetProposal",
     "ProjectPriority",
     "ClientReport",
+    "MonitoringSchedule",
+    "MonitoringRun",
 ]

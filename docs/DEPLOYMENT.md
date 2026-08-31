@@ -105,6 +105,16 @@ settings and are not returned by health responses.
 | `SEARCHINTEL_API_BASE_URL` | Production | Backend URL including `/api/v1`, for example `https://api.example.com/api/v1`. |
 | `SEARCHINTEL_API_TOKEN` | Production | Must exactly match backend `API_TOKEN`; used only by server code. |
 | `SEARCHINTEL_OPERATOR_SECRET` | Production operations | High-entropy operator passphrase used only by the Next.js server to issue an eight-hour HttpOnly operator session. |
+| `CRON_SECRET` | Production monitoring | High-entropy Vercel secret used to authenticate the daily durable monitoring dispatcher. Never expose it to browser code. |
+
+## Scheduled monitoring
+
+Monitoring schedules and execution history live in Neon. Vercel Cron invokes
+`/api/cron/monitoring` daily; that server-only route authenticates with
+`CRON_SECRET` and asks Render to claim due schedules transactionally. The
+dispatcher recovers interrupted runs, prevents equivalent overlap, and creates
+normal historical audits or frozen-prompt benchmark experiments. Do not replace
+this with an in-memory timer in the Render web process.
 
 The production frontend fails fast when either variable is absent. Local
 development alone falls back to `http://127.0.0.1:8000/api/v1`. Neither

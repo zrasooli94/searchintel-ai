@@ -15,6 +15,7 @@ import type {
   ProjectPrioritySummary,
   TechnicalAuditSetupState,
   TechnicalSEOSummary,
+  MonitoringSummary,
   VisibilitySummary,
   WebsiteSetupState,
 } from "@/lib/types";
@@ -123,6 +124,10 @@ export async function getProjectPriorities(projectId: number): Promise<ProjectPr
   return fetchJson<ProjectPrioritySummary>(
     `${searchIntelApiBaseUrl()}/projects/${projectId}/priorities`,
   );
+}
+
+export async function getProjectMonitoring(projectId: number): Promise<MonitoringSummary> {
+  return fetchJson<MonitoringSummary>(`${searchIntelApiBaseUrl()}/projects/${projectId}/monitoring`);
 }
 
 export async function getStarterPromptProposal(

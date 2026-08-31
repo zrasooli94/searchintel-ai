@@ -1240,3 +1240,19 @@ export type BenchmarkJob = {
 
   created_at: string;
 };
+
+export type MonitoringSchedule = {
+  id: number | null; project_id: number; mode: "technical_seo" | "memory" | "web_search" | "site_rag";
+  enabled: boolean; cadence_hours: number; next_due_at: string | null; last_attempted_at: string | null;
+  last_successful_at: string | null; last_result: Record<string, unknown>; source_benchmark_job_id: number | null;
+  model_id: number | null; prompt_count: number | null; run_after_crawl: boolean; failure_message: string | null;
+  overdue: boolean; state: string; estimated_monthly_runs: number;
+};
+
+export type MonitoringSummary = {
+  project_id: number;
+  agency: { needs_attention: number; due: number; overdue: number; failed: number; recently_improved: number };
+  schedules: MonitoringSchedule[];
+  runs: Array<{ id: number; mode: string; status: string; change_classification: string | null; change_evidence: Record<string, unknown>; error_message: string | null; started_at: string; completed_at: string | null }>;
+  compatible_sources: Array<{ id: number; mode: string; model_id: number; prompt_count: number; completed_at: string | null; config_snapshot: Record<string, unknown> }>;
+};
