@@ -33,6 +33,7 @@ from app.models.website import Website
 from app.models.competitor_discovery_suggestion import CompetitorDiscoverySuggestion
 from app.models.prompt_set_proposal import PromptSetProposal
 from app.models.project_priority import ProjectPriority
+from app.models.client_report import ClientReport
 
 __all__ = [
     "SearchEntity",
@@ -70,4 +71,5 @@ __all__ = [
     "CompetitorDiscoverySuggestion",
     "PromptSetProposal",
     "ProjectPriority",
+    "ClientReport",
 ]
