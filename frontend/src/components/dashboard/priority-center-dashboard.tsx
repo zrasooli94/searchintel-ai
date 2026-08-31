@@ -60,6 +60,18 @@ export default function PriorityCenterDashboard({ initialSummary, operatorAuthor
     ["Ready to recheck", active.filter((item) => item.status === "ready_to_recheck").length],
   ];
 
+  function recheckComparison(item: ProjectPriority) {
+    const value = item.provenance.recheck_comparison;
+    if (!value || typeof value !== "object") return null;
+    return value as {
+      outcome: string;
+      measurement_mode: string;
+      baseline: { experiment_id: number; gap_count: number };
+      recheck: { experiment_id: number; gap_count: number; total_prompts: number };
+      note: string;
+    };
+  }
+
   return <DashboardShell summary={shellSummary} title="Priority Center">
     <div className="crystal-page mx-auto max-w-[1450px] space-y-7 p-5 lg:p-8 xl:px-10">
       <section className="crystal-panel rounded-[22px] p-6 lg:p-8">
@@ -84,7 +96,9 @@ export default function PriorityCenterDashboard({ initialSummary, operatorAuthor
         </div>
       </section>
 
-      <section className="space-y-4">{visible.map((item) => <article key={item.id} className={`crystal-panel rounded-[22px] p-6 ${item.is_resolved ? "opacity-60" : ""}`}>
+      <section className="space-y-4">{visible.map((item) => {
+        const comparison = recheckComparison(item);
+        return <article key={item.id} className={`crystal-panel rounded-[22px] p-6 ${item.is_resolved ? "opacity-60" : ""}`}>
         <div className="flex flex-wrap items-start justify-between gap-4"><div className="min-w-0 flex-1">
           <div className="flex flex-wrap gap-2"><span className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase ${tone(item.priority)}`}>{item.priority}</span>{item.source_modes.map((mode) => <span key={mode} className="rounded-full border border-violet-200 bg-violet-50 px-2.5 py-1 text-[11px] text-violet-700">{pretty(mode)}</span>)}{item.is_resolved && <span className="rounded-full border px-2.5 py-1 text-[11px]">Resolved by newer evidence</span>}</div>
           <h3 className="mt-4 text-xl font-medium tracking-[-0.025em] text-slate-950">{item.title}</h3>
@@ -92,8 +106,16 @@ export default function PriorityCenterDashboard({ initialSummary, operatorAuthor
         <div className="mt-5 grid gap-3 sm:grid-cols-3">{[["Impact", item.impact], ["Effort", item.effort], ["Confidence", item.confidence]].map(([label, value]) => <div key={label} className="rounded-xl bg-slate-50 px-4 py-3"><div className="text-[10px] uppercase tracking-wider text-slate-400">{label}</div><div className="mt-1 text-sm font-medium">{pretty(value)}</div></div>)}</div>
         <div className="mt-5 grid gap-5 lg:grid-cols-3"><div><div className="crystal-eyebrow">Observed evidence</div><ul className="mt-3 space-y-2 text-sm leading-6 text-slate-600">{item.observed_evidence.map((evidence) => <li key={evidence} className="flex gap-2"><CircleDot className="mt-1 h-3.5 w-3.5 shrink-0 text-violet-500" />{evidence}</li>)}</ul></div><div><div className="crystal-eyebrow">Interpretation</div><p className="mt-3 text-sm leading-6 text-slate-600">{item.interpretation}</p></div><div><div className="crystal-eyebrow">Recommended action</div><p className="mt-3 text-sm leading-6 text-slate-600">{item.recommended_action}</p></div></div>
         <details className="mt-5 rounded-xl border border-slate-200 bg-white"><summary className="flex cursor-pointer items-center justify-between px-4 py-3 text-sm font-medium">Evidence details & ranking <ChevronDown className="h-4 w-4" /></summary><div className="border-t border-slate-100 p-4 text-xs leading-6 text-slate-500"><p>{String(item.provenance.why_ranked ?? "Deterministic V1 scoring from stored evidence.")}</p>{item.affected_prompts.length > 0 && <p className="mt-2"><b>Prompts:</b> {item.affected_prompts.join(" · ")}</p>}{item.affected_pages.length > 0 && <p className="mt-2"><b>Pages:</b> {item.affected_pages.join(" · ")}</p>}{item.affected_entities.length > 0 && <p className="mt-2"><b>Entities:</b> {item.affected_entities.join(" · ")}</p>}</div></details>
+        {comparison && <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50/60 p-5">
+          <div className="crystal-eyebrow">Compatible {pretty(comparison.measurement_mode)} recheck</div>
+          <div className="mt-3 flex flex-wrap items-baseline gap-x-6 gap-y-2">
+            <span className="text-lg font-medium text-emerald-800">{pretty(comparison.outcome)}</span>
+            <span className="text-sm text-slate-600">Experiment #{comparison.baseline.experiment_id}: {comparison.baseline.gap_count} gap(s) → Experiment #{comparison.recheck.experiment_id}: {comparison.recheck.gap_count} gap(s) across {comparison.recheck.total_prompts} prompts</span>
+          </div>
+          <p className="mt-2 text-xs leading-5 text-slate-500">{comparison.note}</p>
+        </div>}
         <div className="mt-5 flex flex-wrap items-center justify-between gap-3"><span className="text-xs text-slate-400">Lifecycle: {pretty(item.status)}</span>{operatorAuthorized && !item.is_resolved && <select disabled={pending === item.id} value={item.status} onChange={(event) => setStatus(item, event.target.value)} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm">{statuses.map((status) => <option key={status} value={status}>{pretty(status)}</option>)}</select>}</div>
-      </article>)}{visible.length === 0 && <div className="crystal-panel rounded-[22px] p-12 text-center"><ListTodo className="mx-auto h-8 w-8 text-slate-300" /><h3 className="mt-4 text-lg font-medium">No priorities match these filters</h3><p className="mt-2 text-sm text-slate-500">An operator can refresh this queue explicitly from stored evidence.</p></div>}</section>
+      </article>})}{visible.length === 0 && <div className="crystal-panel rounded-[22px] p-12 text-center"><ListTodo className="mx-auto h-8 w-8 text-slate-300" /><h3 className="mt-4 text-lg font-medium">No priorities match these filters</h3><p className="mt-2 text-sm text-slate-500">An operator can refresh this queue explicitly from stored evidence.</p></div>}</section>
       <p className="text-xs leading-5 text-slate-400">{summary.provenance_note}</p>
     </div>
   </DashboardShell>;

@@ -263,9 +263,74 @@ class ProjectPriorityService:
         return [cls._finalize(item) for item in cls._merge(raw)]
 
     @classmethod
+    def _site_rag_recheck(
+        cls,
+        record: ProjectPriority,
+        candidate: dict | None,
+        latest_analysis,
+    ) -> dict | None:
+        """Compare a ready priority only when a newer Site RAG analysis exists."""
+        if record.status != "ready_to_recheck" or latest_analysis is None:
+            return None
+
+        prior = dict(record.provenance or {})
+        baseline_experiment_id = prior.get("site_rag_experiment_id")
+        if (
+            baseline_experiment_id is None
+            or baseline_experiment_id == latest_analysis.experiment_id
+        ):
+            return None
+
+        before_gap_ids = list(prior.get("site_rag_gap_ids") or [])
+        current = (candidate or {}).get("provenance", {})
+        after_gap_ids = (
+            list(current.get("site_rag_gap_ids") or [])
+            if current.get("site_rag_experiment_id")
+            == latest_analysis.experiment_id
+            else []
+        )
+        before_count = len(before_gap_ids)
+        after_count = len(after_gap_ids)
+        if after_count < before_count:
+            outcome = "improved"
+        elif after_count > before_count:
+            outcome = "worsened"
+        else:
+            outcome = "unchanged"
+
+        record.status = f"rechecked_{outcome}"
+        return {
+            "measurement_mode": "site_rag",
+            "outcome": outcome,
+            "baseline": {
+                "experiment_id": baseline_experiment_id,
+                "gap_ids": before_gap_ids,
+                "gap_count": before_count,
+            },
+            "recheck": {
+                "experiment_id": latest_analysis.experiment_id,
+                "analysis_id": latest_analysis.id,
+                "total_prompts": latest_analysis.total_prompts,
+                "gap_ids": after_gap_ids,
+                "gap_count": after_count,
+            },
+            "compared_at": datetime.now(timezone.utc).isoformat(),
+            "note": (
+                "This lifecycle result compares persisted Site RAG gap evidence "
+                "from compatible completed analyses. Other source modes remain independent."
+            ),
+        }
+
+    @classmethod
     def refresh(cls, db: Session, project_id: int) -> dict:
         candidates = cls.build_candidates(db, project_id)
         existing = ProjectPriorityRepository.by_key(db, project_id)
+        latest_site_rag_analysis = (
+            SiteRAGGapAnalysisRepository.latest_completed_by_project(
+                db,
+                project_id,
+            )
+        )
         seen = set()
         now = datetime.now(timezone.utc)
         for candidate in candidates:
@@ -275,17 +340,36 @@ class ProjectPriorityService:
             if record is None:
                 record = ProjectPriority(project_id=project_id, stable_key=key, status="open")
                 db.add(record)
+            recheck = cls._site_rag_recheck(
+                record,
+                candidate,
+                latest_site_rag_analysis,
+            )
             for field in (
                 "title", "priority", "priority_score", "impact", "effort", "confidence",
                 "observed_evidence", "interpretation", "recommended_action", "affected_prompts",
                 "affected_pages", "affected_entities", "source_modes", "score_components", "evidence_fingerprint",
             ):
                 setattr(record, field, candidate[field])
-            record.provenance = {**candidate["provenance"], "why_ranked": candidate["why_ranked"]}
+            record.provenance = {
+                **candidate["provenance"],
+                "why_ranked": candidate["why_ranked"],
+                **({"recheck_comparison": recheck} if recheck else {}),
+            }
             record.is_resolved = False
             record.resolved_at = None
         for key, record in existing.items():
             if key not in seen and not record.is_resolved:
+                recheck = cls._site_rag_recheck(
+                    record,
+                    None,
+                    latest_site_rag_analysis,
+                )
+                if recheck:
+                    record.provenance = {
+                        **(record.provenance or {}),
+                        "recheck_comparison": recheck,
+                    }
                 record.is_resolved = True
                 record.resolved_at = now
         db.commit()

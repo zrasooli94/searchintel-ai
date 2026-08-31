@@ -70,6 +70,71 @@ class ProjectPriorityServiceTests(unittest.TestCase):
         self.assertFalse(record.is_resolved)
         db.commit.assert_called_once()
 
+    def test_new_compatible_site_rag_analysis_classifies_fewer_gaps_as_improved(self):
+        record = ProjectPriority(
+            project_id=4,
+            stable_key="evidence:comparison",
+            status="ready_to_recheck",
+            provenance={
+                "site_rag_experiment_id": 10,
+                "site_rag_gap_ids": [6, 7],
+            },
+        )
+        latest = MagicMock(
+            id=9,
+            experiment_id=21,
+            total_prompts=20,
+        )
+        result = ProjectPriorityService._site_rag_recheck(
+            record,
+            {
+                "provenance": {
+                    "site_rag_experiment_id": 21,
+                    "site_rag_gap_ids": [30],
+                }
+            },
+            latest,
+        )
+        self.assertEqual(record.status, "rechecked_improved")
+        self.assertEqual(result["baseline"]["gap_count"], 2)
+        self.assertEqual(result["recheck"]["gap_count"], 1)
+
+    def test_new_zero_gap_analysis_resolves_ready_priority_as_improved(self):
+        record = ProjectPriority(
+            project_id=4,
+            stable_key="evidence:comparison",
+            status="ready_to_recheck",
+            provenance={
+                "site_rag_experiment_id": 10,
+                "site_rag_gap_ids": [6, 7],
+            },
+        )
+        result = ProjectPriorityService._site_rag_recheck(
+            record,
+            None,
+            MagicMock(id=10, experiment_id=22, total_prompts=20),
+        )
+        self.assertEqual(record.status, "rechecked_improved")
+        self.assertEqual(result["recheck"]["gap_count"], 0)
+
+    def test_same_site_rag_analysis_does_not_classify_recheck(self):
+        record = ProjectPriority(
+            project_id=4,
+            stable_key="evidence:comparison",
+            status="ready_to_recheck",
+            provenance={
+                "site_rag_experiment_id": 10,
+                "site_rag_gap_ids": [6, 7],
+            },
+        )
+        result = ProjectPriorityService._site_rag_recheck(
+            record,
+            None,
+            MagicMock(id=8, experiment_id=10, total_prompts=20),
+        )
+        self.assertIsNone(result)
+        self.assertEqual(record.status, "ready_to_recheck")
+
     @patch("app.services.project_priority_service.ProjectPriorityRepository.list_by_project", return_value=[])
     @patch("app.services.project_priority_service.ProjectRepository.get_by_id", return_value=object())
     def test_summary_get_is_read_only(self, _project, _list):
