@@ -9,7 +9,7 @@ import { estimatedMonthlyRuns, monitoringConfirmation } from "@/lib/monitoring-s
 const labels: Record<string, string> = { technical_seo: "Technical SEO", memory: "Memory", web_search: "Web Search", site_rag: "Site RAG" };
 const descriptions: Record<string, string> = { technical_seo: "Bounded crawl and technical audit", memory: "Latent model knowledge using frozen prompts", web_search: "Controlled paid API web-search measurement", site_rag: "First-party crawled-site answerability" };
 const pretty = (value: string) => value.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
-const date = (value: string | null) => value ? new Date(value).toLocaleString() : "Never";
+const date = (value: string | null) => value ? `${new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" }).format(new Date(value))} UTC` : "Never";
 
 export default function MonitoringDashboard({ initial, operatorAuthorized, shellSummary }: { initial: MonitoringSummary; operatorAuthorized: boolean; shellSummary: DashboardShellSummary }) {
   const [summary, setSummary] = useState(initial); const [pending, setPending] = useState<string | null>(null); const [error, setError] = useState<string | null>(null);
