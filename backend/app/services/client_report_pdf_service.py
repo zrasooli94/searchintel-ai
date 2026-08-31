@@ -45,8 +45,9 @@ class ClientReportPDFService:
         section("Competitor Position", ", ".join(snapshot["competitor_position"]["configured_competitors"]) or "No configured competitors.")
         story.append(PageBreak())
         story.append(Paragraph("Priorities and Progress", styles["Section"]))
-        rows = [["Priority", "Status", "Next action"]] + [[p["title"], p["status"].replace("_", " ").title(), p["recommended_action"]] for p in snapshot["priorities"]]
-        table = Table(rows, colWidths=[48 * mm, 28 * mm, 82 * mm], repeatRows=1)
+        cell_style = ParagraphStyle(name="Cell", parent=styles["BodyText"], fontSize=8, leading=10)
+        rows = [[Paragraph("Priority", cell_style), Paragraph("Status", cell_style), Paragraph("Next action", cell_style)]] + [[Paragraph(escape(p["title"]), cell_style), Paragraph(escape(p["status"].replace("_", " ").title()), cell_style), Paragraph(escape(p["recommended_action"]), cell_style)] for p in snapshot["priorities"]]
+        table = Table(rows, colWidths=[43 * mm, 38 * mm, 77 * mm], repeatRows=1)
         table.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#EEF2FF")), ("TEXTCOLOR", (0, 0), (-1, 0), colors.HexColor("#312E81")), ("GRID", (0, 0), (-1, -1), .35, colors.HexColor("#CBD5E1")), ("VALIGN", (0, 0), (-1, -1), "TOP"), ("FONTSIZE", (0, 0), (-1, -1), 8), ("LEADING", (0, 0), (-1, -1), 10), ("PADDING", (0, 0), (-1, -1), 5)]))
         story.append(table)
         for item in snapshot["compatible_rechecks"]:
