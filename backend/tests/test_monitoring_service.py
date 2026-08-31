@@ -54,6 +54,8 @@ class MonitoringServiceTests(unittest.TestCase):
         self.assertEqual(MonitoringService._classification({"completed_runs": 18}, {"completed_runs": 18}), "stable")
         self.assertEqual(MonitoringService._benchmark_classification({"gap_count": 2, "answerability_rate": 90}, {"gap_count": 0, "answerability_rate": 100}), "resolved_issue")
         self.assertEqual(MonitoringService._benchmark_classification({"gap_count": 0, "answerability_rate": 100}, {"gap_count": 1, "answerability_rate": 95}), "new_issue")
+        self.assertEqual(MonitoringService._technical_classification({"issue_count": 6, "score": 80}, {"issue_count": 6, "score": 85}), "improved")
+        self.assertEqual(MonitoringService._technical_classification({"issue_count": 2, "score": 90}, {"issue_count": 0, "score": 100}), "resolved_issue")
 
 
 if __name__ == "__main__":

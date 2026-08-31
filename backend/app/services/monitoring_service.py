@@ -69,7 +69,7 @@ class MonitoringService:
         all_schedules = list(db.scalars(select(MonitoringSchedule)).all())
         serialized_all = [cls._serialize_schedule(item) for item in all_schedules]
         recent_improved = db.scalar(select(func.count()).select_from(MonitoringRun).where(
-            MonitoringRun.change_classification == "improved",
+            MonitoringRun.change_classification.in_(["improved", "resolved_issue"]),
             MonitoringRun.completed_at >= cls._now() - timedelta(days=30),
         )) or 0
         return {
@@ -185,6 +185,20 @@ class MonitoringService:
             return "stable"
         return "improved" if new > old else "declined"
 
+    @staticmethod
+    def _technical_classification(before, after):
+        if before is None:
+            return "new_issue" if after["issue_count"] else "stable"
+        if before["issue_count"] > 0 and after["issue_count"] == 0:
+            return "resolved_issue"
+        if after["issue_count"] > before["issue_count"]:
+            return "new_issue"
+        if after["issue_count"] < before["issue_count"]:
+            return "improved"
+        if after["score"] == before["score"]:
+            return "stable"
+        return "improved" if after["score"] > before["score"] else "declined"
+
     @classmethod
     def execute(cls, db: Session, schedule_id: int):
         schedule = db.scalar(select(MonitoringSchedule).where(MonitoringSchedule.id == schedule_id).with_for_update())
@@ -208,7 +222,7 @@ class MonitoringService:
                 before = {"score": previous.score, "issue_count": previous.issue_count, "pages_checked": previous.pages_checked} if previous else None
                 after = {"score": audit.score, "issue_count": audit.issue_count, "pages_checked": audit.pages_checked}
                 run.technical_audit_id = audit.id
-                run.change_classification = cls._classification(before, after, lower_is_better=True)
+                run.change_classification = cls._technical_classification(before, after)
                 followup_site_rag_id = db.scalar(select(MonitoringSchedule.id).where(
                     MonitoringSchedule.project_id == schedule.project_id,
                     MonitoringSchedule.mode == "site_rag",
