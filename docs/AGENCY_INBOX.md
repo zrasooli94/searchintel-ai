@@ -34,3 +34,32 @@ prove identical coverage. Memory is not mixed with Web Search or Site RAG.
 The Inbox does not run AI, refresh measurements, enable schedules, or send messages.
 No email, assignments or custom alert rules are included. Read-only pages use the
 existing server-only API credential; operator credentials never enter public JS.
+
+## V1.1 signal quality
+
+The default view shows meaningful changes observed in the last 30 days and
+verified ongoing monitoring/recheck follow-ups. Ranking is actionability, severity,
+then occurrence time. Stable/unknown event types do not enter the default view.
+Needs Attention excludes confirmations; Unread excludes imports. Counters describe
+the default non-archived view, not the entire Priority Center backlog.
+
+Migration `e91c4a7b302d` marks only the reviewed 34-event import transaction
+(`2026-09-04T04:35:51.013004+00:00`) as `origin=backfill`. It does not change
+evidence, IDs, dedup keys or saved read/unread/archive state. Historical records
+are explicitly labeled as not-new alerts, even when their preserved status is
+unread. All / Historical filters expose them. Later events remain `workflow`.
+For future deliberate imports, operators can use `POST .../reconcile?backfill=true`;
+ordinary reconciliation defaults to workflow and never relabels existing events.
+
+New priority transitions from the same reconciliation, project, mode and source
+audit/experiment are emitted as one work-package event with every priority ID,
+original evidence and provenance. Imported individual records are grouped only
+for display by the same source/import transaction and saved status; expanding
+the card exposes each original record and its individual lifecycle controls.
+
+Historical generic priorities stay in History / Priority Center. An unchanged or
+worsened recheck can remain in the default view only while its priority is
+unresolved, its stored lifecycle/comparison still matches, and it references the
+latest completed Site RAG analysis. Paused/cleared monitoring conditions no longer
+count as current attention. These are read-only projections over durable evidence,
+not new events, scoring changes or GET-side reconciliation.

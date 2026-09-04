@@ -2,7 +2,7 @@
 import hashlib
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from fastapi import HTTPException
 from sqlalchemy import select
@@ -72,7 +72,8 @@ class AgencyInboxService:
             source_mode=mode, title=title[:255], summary=summary,
             evidence={"before": before, "after": after, "rules_version": cls.VERSION},
             related_ids=related, evidence_path=f"/projects/{project_id}/{page}",
-            dedup_key=key, occurred_at=occurred_at or datetime.now(timezone.utc), status="unread"))
+            dedup_key=key, occurred_at=occurred_at or datetime.now(timezone.utc), status="unread",
+            origin=db.info.get("inbox_origin", "workflow")))
         db.flush()
 
     @staticmethod
@@ -107,6 +108,7 @@ class AgencyInboxService:
 
     @classmethod
     def priorities(cls, db, project_id):
+        groups = {}
         for p in db.scalars(select(ProjectPriority).where(ProjectPriority.project_id == project_id)).all():
             modes = [m for m in (p.source_modes or []) if m != "readiness"]
             mode = modes[0] if len(modes) == 1 else "multiple"
@@ -114,10 +116,10 @@ class AgencyInboxService:
             before, revision = cls.observe(db, project_id, f"priority:{p.id}", {"active_high": active, "resolved": p.is_resolved})
             if revision and (active or (before and before["active_high"] and p.is_resolved)):
                 resolved = p.is_resolved
-                cls.emit(db, project_id, revision, "priority_resolved" if resolved else "priority_new_high",
-                         "low" if resolved else "high", mode, ("Resolved: " if resolved else "Needs attention: ") + p.title,
-                         p.interpretation, before, {"observed_evidence": p.observed_evidence, "resolved": resolved},
-                         {"priority_id": p.id, **(p.provenance or {})}, p.resolved_at or p.updated_at, "priorities")
+                source = {k: v for k, v in (p.provenance or {}).items() if k in
+                          ("technical_audit_id", "web_experiment_id", "site_rag_experiment_id", "readiness_state")}
+                key = cls.digest([mode, resolved, source])
+                groups.setdefault(key, []).append((p, revision, before, mode, source))
             comparison = (p.provenance or {}).get("recheck_comparison")
             if p.status.startswith("rechecked_") and comparison and comparison.get("baseline") and comparison.get("recheck") and cls.compatible_recheck(db, project_id, comparison):
                 outcome = comparison.get("outcome")
@@ -130,6 +132,22 @@ class AgencyInboxService:
                          "The stored compatible recheck found " + outcome + " evidence. Review the before/after details before choosing the next action.",
                          comparison["baseline"], comparison["recheck"], {"priority_id": p.id},
                          datetime.fromisoformat(comparison["compared_at"]) if comparison.get("compared_at") else p.updated_at, "priorities")
+        for members in groups.values():
+            members.sort(key=lambda item: item[0].id)
+            p, _, _, mode, source = members[0]
+            resolved = p.is_resolved
+            count = len(members)
+            label = "Technical audit" if source.get("technical_audit_id") else "Evidence review"
+            cls.emit(db, project_id, [item[1] for item in members],
+                     "priority_resolved" if resolved else "priority_new_high",
+                     "low" if resolved else "high", mode,
+                     f"{label}: {count} {'resolved' if resolved else 'new actionable'} work package{'s' if count != 1 else ''}",
+                     "Related high-priority work is grouped here. Priority Center retains each item and its evidence.",
+                     {str(item.id): previous for item, _, previous, _, _ in members},
+                     {"resolved": resolved, "work_packages": [{"priority_id": item.id, "title": item.title,
+                       "observed_evidence": item.observed_evidence, "provenance": item.provenance} for item, *_ in members]},
+                     {**source, "priority_ids": [item.id for item, *_ in members]},
+                     max(item.resolved_at or item.updated_at for item, *_ in members), "priorities")
 
     @classmethod
     def monitoring(cls, db, project_id, now):
@@ -226,15 +244,20 @@ class AgencyInboxService:
                              before, after, {"technical_audit_id": audit.id}, audit.created_at, "technical-seo")
 
     @classmethod
-    def reconcile(cls, db, project_id=None):
+    def reconcile(cls, db, project_id=None, *, backfill=False):
         ids = [project_id] if project_id else list(db.scalars(select(Project.id).order_by(Project.id)).all())
         for pid in ids:
             # Serialize writers per project, including simultaneous backfill/completion/cron.
             if db.scalar(select(Project).where(Project.id == pid).with_for_update()) is None:
                 continue
-            cls.priorities(db, pid)
-            cls.monitoring(db, pid, datetime.now(timezone.utc))
-            cls.measurements(db, pid)
+            previous_origin = db.info.get("inbox_origin", "workflow")
+            db.info["inbox_origin"] = "backfill" if backfill else "workflow"
+            try:
+                cls.priorities(db, pid)
+                cls.monitoring(db, pid, datetime.now(timezone.utc))
+                cls.measurements(db, pid)
+            finally:
+                db.info["inbox_origin"] = previous_origin
         db.commit()
 
     @classmethod
@@ -246,10 +269,73 @@ class AgencyInboxService:
             # Do not turn a completed measurement into a failed job or log provider payloads.
             logging.getLogger(__name__).error("Inbox reconciliation failed; retry through the operator reconciliation endpoint or dispatcher.")
 
-    @staticmethod
-    def list_events(db):
+    @classmethod
+    def list_events(cls, db):
         rows = db.execute(select(InboxEvent, Project.name).join(Project, Project.id == InboxEvent.project_id).order_by(InboxEvent.occurred_at.desc(), InboxEvent.id.desc())).all()
-        return [{**{column.name: getattr(event, column.name) for column in InboxEvent.__table__.columns if column.name != "dedup_key"}, "project_name": name} for event, name in rows]
+        priorities = {p.id: p for p in db.scalars(select(ProjectPriority)).all()}
+        schedules = {s.id: s for s in db.scalars(select(MonitoringSchedule)).all()}
+        latest_runs = {}
+        for run in db.scalars(select(MonitoringRun).order_by(MonitoringRun.id.desc())).all():
+            latest_runs.setdefault(run.schedule_id, run)
+        latest_analyses = {}
+        for pid in {event.project_id for event, _ in rows if event.event_type.startswith("priority_rechecked_")}:
+            latest_analyses[pid] = SiteRAGGapAnalysisRepository.latest_completed_by_project(db, pid)
+        now = datetime.now(timezone.utc)
+        return [{**{column.name: getattr(event, column.name) for column in InboxEvent.__table__.columns if column.name != "dedup_key"},
+                 "project_name": name, **cls.signal(event, priorities, schedules, latest_runs, latest_analyses, now)} for event, name in rows]
+
+    @staticmethod
+    def signal(event, priorities, schedules, latest_runs, latest_analyses, now):
+        """Read-only presentation policy. Never rewrite event evidence or lifecycle."""
+        kind, related = event.event_type, event.related_ids or {}
+        occurred = event.occurred_at
+        if occurred.tzinfo is None:
+            occurred = occurred.replace(tzinfo=timezone.utc)
+        recent = now - timedelta(days=30) <= occurred <= now
+        historical = event.origin == "backfill"
+        improvement = "improved" in kind or "resolved" in kind or kind == "target_coverage_gained"
+        rank, ongoing = 0, False
+        reason = "Historical evidence; not a new notification." if historical else "Outside the recent meaningful-change window."
+        ids = related.get("priority_ids", [related.get("priority_id")])
+        current = [priorities[i] for i in ids if i in priorities and priorities[i].project_id == event.project_id]
+        if kind.startswith("priority_rechecked_") and not improvement:
+            for p in current:
+                comparison = (p.provenance or {}).get("recheck_comparison", {})
+                latest = latest_analyses.get(event.project_id)
+                if (not p.is_resolved and p.status == kind.removeprefix("priority_")
+                        and comparison.get("baseline") == event.evidence.get("before")
+                        and comparison.get("recheck") == event.evidence.get("after")
+                        and latest and latest.experiment_id == comparison.get("recheck", {}).get("experiment_id")):
+                    ongoing = True
+                    rank = 4 if kind.endswith("worsened") else 2
+                    reason = "The latest persisted compatible recheck still requires follow-up."
+        elif kind in {"monitoring_failed", "monitoring_overdue"}:
+            schedule = schedules.get(related.get("schedule_id"))
+            run = latest_runs.get(related.get("schedule_id"))
+            if schedule and schedule.project_id == event.project_id:
+                due = schedule.next_due_at
+                if due and due.tzinfo is None:
+                    due = due.replace(tzinfo=timezone.utc)
+                ongoing = bool(schedule.enabled and ((kind == "monitoring_overdue" and due and due < now
+                               and event.evidence.get("after", {}).get("next_due_at") == due.isoformat())
+                               or (kind == "monitoring_failed" and run and run.status == "failed"
+                                   and run.id == related.get("execution_id"))))
+                if ongoing:
+                    rank, reason = 4, "The current monitoring condition still needs attention."
+        elif recent and not historical:
+            if kind == "priority_new_high":
+                if any(p.priority == "high" and not p.is_resolved and p.status in {"open", "in_progress"} for p in current):
+                    rank = 3
+            elif improvement:
+                rank = 1
+            elif kind.endswith("declined") or kind == "target_coverage_lost":
+                rank = 4
+            elif kind == "site_rag_gap_new" or kind.startswith("competitor_position_changed_"):
+                rank = 3
+            if rank:
+                reason = "Meaningful change observed within the last 30 days."
+        return {"default_visible": bool(rank and (ongoing or (recent and not historical))),
+                "attention_rank": rank, "attention_reason": reason, "is_improvement": improvement}
 
     @staticmethod
     def set_status(db, event_id, status):

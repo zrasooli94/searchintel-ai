@@ -26,6 +26,6 @@ def update_inbox(event_id: int, data: InboxStatus, db: Session = Depends(get_db)
 
 
 @router.post("/reconcile")
-def reconcile_inbox(db: Session = Depends(get_db), _operator=Depends(require_operator)):
-    AgencyInboxService.reconcile(db)
+def reconcile_inbox(backfill: bool = False, db: Session = Depends(get_db), _operator=Depends(require_operator)):
+    AgencyInboxService.reconcile(db, backfill=backfill)
     return {"status": "reconciled"}

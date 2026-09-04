@@ -1,4 +1,5 @@
 import unittest
+from types import SimpleNamespace
 from datetime import datetime, timedelta, timezone
 from unittest.mock import patch, MagicMock
 
@@ -186,6 +187,98 @@ class AgencyInboxTests(unittest.TestCase):
         priority.is_resolved = True; priority.resolved_at = self.now; self.db.flush()
         Inbox.priorities(self.db, 1)
         self.assertEqual(self.events()[-1].event_type, "priority_resolved")
+
+    def test_workflow_aggregation_retry_and_manual_status_preservation(self):
+        self.test_current_high_priority_backfill_dedup_resolution()
+        original = self.db.scalar(select(ProjectPriority))
+        fields = {c.name: getattr(original, c.name) for c in ProjectPriority.__table__.columns
+                  if c.name not in {"id", "created_at", "updated_at"}}
+        ids = []
+        for n in range(4):
+            p = ProjectPriority(**{**fields, "stable_key": f"technical:{n}", "is_resolved": False,
+                                 "resolved_at": None, "source_modes": ["technical_seo"],
+                                 "provenance": {"technical_audit_id": 10, "finding_ids": [n]}})
+            self.db.add(p); self.db.flush(); ids.append(p.id)
+        Inbox.priorities(self.db, 1); self.db.commit()
+        event = self.events()[-1]
+        self.assertEqual(event.related_ids["priority_ids"], ids)
+        self.assertEqual(len(event.evidence["after"]["work_packages"]), 4)
+        self.assertIn("4 new actionable work packages", event.title)
+        for status in ("read", "unread", "archived"):
+            Inbox.set_status(self.db, event.id, status)
+            Inbox.priorities(self.db, 1); self.db.commit()
+            self.assertEqual(len(self.events()), 3)
+            self.assertEqual(self.events()[-1].status, status)
+
+    def test_explicit_backfill_origin_does_not_relabel_later_workflows(self):
+        self.schedule()
+        with patch.object(Inbox, "measurements"), patch.object(Inbox, "priorities"):
+            Inbox.reconcile(self.db, 1, backfill=True)
+            self.assertEqual(self.events()[0].origin, "backfill")
+            self.assertEqual(self.db.info["inbox_origin"], "workflow")
+            s = self.db.scalar(select(MonitoringSchedule)); s.enabled = False
+            self.db.commit(); Inbox.reconcile(self.db, 1)
+            self.assertEqual(self.events()[-1].origin, "workflow")
+
+    def test_signal_current_unchanged_recheck_not_stale_or_resolved(self):
+        before, after = {"experiment_id": 10}, {"experiment_id": 23, "gap_count": 2}
+        event = SimpleNamespace(event_type="priority_rechecked_unchanged", project_id=1,
+            related_ids={"priority_id": 18}, occurred_at=self.now - timedelta(days=60), origin="backfill",
+            evidence={"before": before, "after": after})
+        p = SimpleNamespace(project_id=1, is_resolved=False, status="rechecked_unchanged",
+                            provenance={"recheck_comparison": {"baseline": before, "recheck": after}})
+        latest = {1: SimpleNamespace(experiment_id=23)}
+        signal = lambda: Inbox.signal(event, {18: p}, {}, {}, latest, self.now)
+        self.assertTrue(signal()["default_visible"])
+        self.assertEqual(signal()["attention_rank"], 2)
+        p.is_resolved = True
+        self.assertFalse(signal()["default_visible"])
+        p.is_resolved = False; latest[1].experiment_id = 24
+        self.assertFalse(signal()["default_visible"])
+
+    def test_signal_historical_recent_stable_and_future_measurements(self):
+        event = SimpleNamespace(event_type="score_declined", project_id=1, related_ids={},
+            occurred_at=self.now, origin="backfill", evidence={})
+        signal = lambda: Inbox.signal(event, {}, {}, {}, {}, self.now)
+        self.assertFalse(signal()["default_visible"])
+        event.origin = "workflow"
+        self.assertTrue(signal()["default_visible"])
+        self.assertEqual(signal()["attention_rank"], 4)
+        event.event_type = "score_stable"
+        self.assertFalse(signal()["default_visible"])
+        event.event_type = "score_improved"
+        self.assertEqual(signal()["attention_rank"], 1)
+        event.occurred_at = self.now - timedelta(days=31)
+        self.assertFalse(signal()["default_visible"])
+
+    def test_signal_monitoring_ongoing_and_cleared(self):
+        s = self.schedule(); Inbox.monitoring(self.db, 1, self.now)
+        event = self.events()[0]
+        signal = lambda: Inbox.signal(event, {}, {s.id: s}, {}, {}, self.now)
+        self.assertTrue(signal()["default_visible"])
+        s.enabled = False
+        self.assertFalse(signal()["default_visible"])
+
+    def test_origin_migration_only_marks_reviewed_import_preserves_status_and_evidence(self):
+        from alembic.migration import MigrationContext
+        from alembic.operations import Operations
+        from sqlalchemy import text
+        engine = create_engine("sqlite://")
+        import importlib.util
+        from pathlib import Path
+        spec = importlib.util.spec_from_file_location("inbox_migration", Path(__file__).parents[1] / "alembic/versions/e91c4a7b302d_inbox_signal_origin.py")
+        migration = importlib.util.module_from_spec(spec); spec.loader.exec_module(migration)
+        with engine.begin() as connection:
+            connection.execute(text("CREATE TABLE inbox_events (id INTEGER, created_at TEXT, event_type TEXT, status TEXT, evidence TEXT)"))
+            for n, state in enumerate(("unread", "read", "archived")):
+                connection.execute(text("INSERT INTO inbox_events VALUES (:id, :created, 'priority_new_high', :status, 'original')"),
+                                   {"id": n, "created": "2026-09-04T04:35:51.013004+00:00", "status": state})
+            connection.execute(text("INSERT INTO inbox_events VALUES (4, '2026-09-05T00:00:00+00:00', 'priority_new_high', 'unread', 'later')"))
+            with patch.object(migration, "op", Operations(MigrationContext.configure(connection))): migration.upgrade()
+            rows = connection.execute(text("SELECT status, evidence, origin FROM inbox_events ORDER BY id")).all()
+            self.assertEqual(rows[:3], [(state, "original", "backfill") for state in ("unread", "read", "archived")])
+            self.assertEqual(rows[3], ("unread", "later", "workflow"))
+        engine.dispose()
 
 
 if __name__ == "__main__":

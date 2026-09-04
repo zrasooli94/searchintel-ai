@@ -23,6 +23,7 @@ class InboxEvent(Base):
     occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     status: Mapped[str] = mapped_column(String(10), default="unread", index=True)
+    origin: Mapped[str] = mapped_column(String(30), default="workflow", server_default="workflow")
 
 
 class InboxCheckpoint(Base):
