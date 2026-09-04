@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import OperatorAccessPanel from "@/components/dashboard/operator-access-panel";
 import { useRef, useState } from "react";
 import { filterInbox, inboxCounts, initialInboxFilters, type InboxEvent, type InboxFilters } from "@/lib/agency-inbox";
 
@@ -28,7 +29,8 @@ export default function AgencyInbox({ initial, operator }: { initial: InboxEvent
   }
   const select = (key: keyof InboxFilters, label: string, options: [string, string][]) => <label className="text-xs text-slate-500">{label}<select aria-label={label} value={filters[key]} onChange={(e) => setFilters({ ...filters, [key]: e.target.value })} className="mt-2 w-full rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-800">{options.map(([value, text]) => <option key={value} value={value}>{text}</option>)}</select></label>;
   return <main className="crystal-page min-h-screen"><div className="mx-auto max-w-[1240px] space-y-6 px-5 py-8 lg:px-10">
-    <header className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-6"><div><Link href="/" className="text-sm font-semibold text-violet-700">SearchIntel</Link><h1 className="mt-3 text-3xl font-medium tracking-tight">Agency Inbox</h1><p className="mt-2 text-sm text-slate-500">What across all clients needs your attention?</p></div><div className="flex gap-4 text-sm"><Link href="/">All projects</Link>{!operator && <Link href="/operator">Operator access</Link>}</div></header>
+    <header className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-6"><div><Link href="/" className="text-sm font-semibold text-violet-700">SearchIntel</Link><h1 className="mt-3 text-3xl font-medium tracking-tight">Agency Inbox</h1><p className="mt-2 text-sm text-slate-500">What across all clients needs your attention?</p></div><Link href="/" className="text-sm">All projects</Link></header>
+    <OperatorAccessPanel initialAuthorized={operator}/>
     <section aria-label="Inbox summary" className="grid gap-4 sm:grid-cols-4">{Object.entries(inboxCounts(events)).map(([label, count]) => <div key={label} className="crystal-panel rounded-2xl p-5"><div className="text-xs text-slate-500">{label}</div><div className="mt-2 text-3xl font-medium">{count}</div></div>)}</section>
     <section aria-label="Inbox filters" className="crystal-panel grid gap-4 rounded-2xl p-5 sm:grid-cols-2 lg:grid-cols-5">
       {select("project", "Project", [["", "All projects"], ...projects])}
