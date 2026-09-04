@@ -781,6 +781,8 @@ class BenchmarkService:
                         experiment_id=job.experiment_id,
                         benchmark_mode=job.benchmark_mode,
                     )
+                    from app.services.agency_inbox_service import AgencyInboxService
+                    AgencyInboxService.reconcile_safely(db, job.project_id)
                 except Exception:
                     db.rollback()
                     logging.getLogger(__name__).exception(

@@ -559,6 +559,8 @@ class SiteRAGGapService:
 
         db.commit()
 
+        from app.services.agency_inbox_service import AgencyInboxService
+        AgencyInboxService.reconcile_safely(db, experiment.project_id)
         return cls.summary(
             db,
             experiment_id,

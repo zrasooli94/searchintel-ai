@@ -123,6 +123,8 @@ class MonitoringService:
         schedule.failure_message = None
         db.commit()
         db.refresh(schedule)
+        from app.services.agency_inbox_service import AgencyInboxService
+        AgencyInboxService.reconcile_safely(db, project_id)
         return cls._serialize_schedule(schedule)
 
     @classmethod
@@ -264,12 +266,16 @@ class MonitoringService:
         db.commit()
         db.refresh(run)
         result = cls._serialize_run(run)
+        from app.services.agency_inbox_service import AgencyInboxService
+        AgencyInboxService.reconcile_safely(db, schedule.project_id)
         if run.status == "completed" and followup_site_rag_id is not None:
             cls.execute(db, followup_site_rag_id)
         return result
 
     @classmethod
     def process_due(cls, db: Session, limit=10):
+        from app.services.agency_inbox_service import AgencyInboxService
+        AgencyInboxService.reconcile_safely(db)
         now = cls._now()
         stale = list(db.scalars(select(MonitoringRun).where(
             MonitoringRun.status.in_(["pending", "running"]),

@@ -17,6 +17,11 @@ def candidate(mode, prompt, *, monitor=False):
 
 
 class ProjectPriorityServiceTests(unittest.TestCase):
+    def setUp(self):
+        hook = patch("app.services.agency_inbox_service.AgencyInboxService.reconcile_safely")
+        self.inbox_hook = hook.start()
+        self.addCleanup(hook.stop)
+
     @patch("app.services.project_priority_service.TechnicalSEOSummaryService.build")
     def test_technical_findings_consolidate_without_persisted_recommendations(self, build):
         build.return_value = {
@@ -61,6 +66,7 @@ class ProjectPriorityServiceTests(unittest.TestCase):
     def test_refresh_preserves_lifecycle_for_rediscovered_stable_key(self, summary, build, by_key):
         record = ProjectPriority(project_id=8, stable_key="evidence:production", status="in_progress")
         record.is_resolved = False
+        record.provenance = {"recheck_comparison": {"outcome": "unchanged"}}
         by_key.return_value = {record.stable_key: record}
         build.return_value = [ProjectPriorityService._finalize(candidate("web_search", "Production")) | {"stable_key": record.stable_key}]
         summary.return_value = {"project_id": 8}
@@ -68,6 +74,8 @@ class ProjectPriorityServiceTests(unittest.TestCase):
         ProjectPriorityService.refresh(db, 8)
         self.assertEqual(record.status, "in_progress")
         self.assertFalse(record.is_resolved)
+        self.assertEqual(record.provenance["recheck_comparison"]["outcome"], "unchanged")
+        self.inbox_hook.assert_called_once_with(db, 8)
         db.commit.assert_called_once()
 
     def test_new_compatible_site_rag_analysis_classifies_fewer_gaps_as_improved(self):

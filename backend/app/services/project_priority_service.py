@@ -352,6 +352,7 @@ class ProjectPriorityService:
             ):
                 setattr(record, field, candidate[field])
             record.provenance = {
+                **({"recheck_comparison": record.provenance["recheck_comparison"]} if record.provenance and record.provenance.get("recheck_comparison") else {}),
                 **candidate["provenance"],
                 "why_ranked": candidate["why_ranked"],
                 **({"recheck_comparison": recheck} if recheck else {}),
@@ -373,6 +374,8 @@ class ProjectPriorityService:
                 record.is_resolved = True
                 record.resolved_at = now
         db.commit()
+        from app.services.agency_inbox_service import AgencyInboxService
+        AgencyInboxService.reconcile_safely(db, project_id)
         return cls.summary(db, project_id)
 
     @classmethod
@@ -416,4 +419,6 @@ class ProjectPriorityService:
         record.status = status
         db.commit()
         db.refresh(record)
+        from app.services.agency_inbox_service import AgencyInboxService
+        AgencyInboxService.reconcile_safely(db, project_id)
         return record

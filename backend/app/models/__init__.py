@@ -36,6 +36,7 @@ from app.models.project_priority import ProjectPriority
 from app.models.client_report import ClientReport
 from app.models.monitoring_schedule import MonitoringSchedule
 from app.models.monitoring_run import MonitoringRun
+from app.models.inbox_event import InboxEvent, InboxCheckpoint
 
 __all__ = [
     "SearchEntity",

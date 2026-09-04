@@ -295,6 +295,8 @@ class TechnicalAuditService:
                 "Audit could not be reloaded."
             )
 
+        from app.services.agency_inbox_service import AgencyInboxService
+        AgencyInboxService.reconcile_safely(db)
         return result
 
     @staticmethod

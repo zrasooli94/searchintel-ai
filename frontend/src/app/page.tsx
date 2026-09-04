@@ -56,7 +56,7 @@ export default async function Home() {
             </div>
           </div>
 
-          <NewProjectButton />
+          <div className="flex items-center gap-4"><Link href="/agency-inbox" className="text-sm font-medium text-violet-700">Agency Inbox</Link><NewProjectButton /></div>
         </header>
 
         <section className="pt-14">

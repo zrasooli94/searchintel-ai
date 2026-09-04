@@ -49,3 +49,5 @@ api_router.include_router(geo_action_plans_router)
 api_router.include_router(project_priorities_router)
 api_router.include_router(client_reports_router)
 api_router.include_router(monitoring_router)
+from app.api.routes.agency_inbox import router as agency_inbox_router
+api_router.include_router(agency_inbox_router)
