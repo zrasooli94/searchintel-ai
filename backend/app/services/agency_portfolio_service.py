@@ -190,7 +190,10 @@ class AgencyPortfolioService:
             monitoring_state = "problem" if monitoring_problems else "monitoring" if enabled else "not_configured"
 
             report = reports_by_project[project.id][0] if reports_by_project[project.id] else None
-            latest_event = next((event for event in inbox_by_project[project.id] if event["origin"] != "backfill"), None)
+            latest_event = next(
+                (event for event in inbox_by_project[project.id] if event["default_visible"]),
+                next((event for event in inbox_by_project[project.id] if event["origin"] != "backfill"), None),
+            )
             latest_run = latest_run_by_project.get(project.id)
             last_change = cls._last_change(latest_event, latest_run)
 

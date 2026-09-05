@@ -65,7 +65,11 @@ class AgencyPortfolioServiceTests(unittest.TestCase):
             self.assertFalse(persist_snapshot)
             return {"web_visibility_score_v1": {1: 70.0, 2: 80.0}[experiment_id]}
 
-        with patch("app.services.agency_portfolio_service.AgencyInboxService.list_events", return_value=[]), \
+        inbox_event = {"project_id": 2, "origin": "backfill", "default_visible": True, "status": "unread",
+                       "attention_rank": 2, "severity": "medium", "title": "Recheck unchanged",
+                       "summary": "The compatible recheck still needs follow-up.", "source_mode": "site_rag",
+                       "occurred_at": self.now, "evidence_path": "/projects/2/priorities"}
+        with patch("app.services.agency_portfolio_service.AgencyInboxService.list_events", return_value=[inbox_event]), \
              patch("app.services.agency_portfolio_service.VisibilityMetricsService.calculate", side_effect=metrics):
             result = AgencyPortfolioService.build(self.db)
 
@@ -74,6 +78,7 @@ class AgencyPortfolioServiceTests(unittest.TestCase):
         self.assertEqual(by_id[1]["web_search"]["trend"]["state"], "improved")
         self.assertEqual(by_id[2]["status"], "needs_attention")
         self.assertEqual(by_id[2]["priorities"], {"open": 1, "high": 1})
+        self.assertEqual(by_id[2]["last_meaningful_change"]["title"], "Recheck unchanged")
         self.assertEqual(by_id[3]["status"], "setup_required")
         self.assertIsNone(by_id[3]["technical_seo"]["score"])
         self.assertIsNone(by_id[3]["web_search"]["value"])
