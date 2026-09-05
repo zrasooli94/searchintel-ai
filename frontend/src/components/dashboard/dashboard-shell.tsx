@@ -142,6 +142,7 @@ export default function DashboardShell({
         </Link>
 
         <nav className="mt-12 space-y-1.5">
+          <Link href="/clients" className="flex items-center gap-3 rounded-xl px-3.5 py-3 text-sm text-violet-700 hover:bg-violet-50">Clients</Link>
           <Link href="/agency-inbox" className="flex items-center gap-3 rounded-xl px-3.5 py-3 text-sm text-violet-700 hover:bg-violet-50">Agency Inbox</Link>
           {navigation.map(
             ({

@@ -21,6 +21,7 @@ from app.api.routes.websites import router as websites_router
 from app.api.routes.project_priorities import router as project_priorities_router
 from app.api.routes.client_reports import router as client_reports_router
 from app.api.routes.monitoring import router as monitoring_router
+from app.api.routes.agency_portfolio import router as agency_portfolio_router
 
 
 api_router = APIRouter()
@@ -51,3 +52,4 @@ api_router.include_router(client_reports_router)
 api_router.include_router(monitoring_router)
 from app.api.routes.agency_inbox import router as agency_inbox_router
 api_router.include_router(agency_inbox_router)
+api_router.include_router(agency_portfolio_router)
